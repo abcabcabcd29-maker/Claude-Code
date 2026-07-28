@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Soulor · 灵镜</title>
+<meta name="description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
+<meta property="og:title" content="Soulor · 灵镜">
+<meta property="og:description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://soulor.id/">
+<meta name="theme-color" content="#050409">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><radialGradient id=%22g%22><stop offset=%220%25%22 stop-color=%22%23FFF6E4%22/><stop offset=%2245%25%22 stop-color=%22%23FFD09A%22/><stop offset=%22100%25%22 stop-color=%22%23050409%22/></radialGradient></defs><rect width=%22100%22 height=%22100%22 fill=%22%23050409%22/><circle cx=%2250%22 cy=%2250%22 r=%2246%22 fill=%22url(%23g)%22/></svg>">
+<link rel="stylesheet" href="font.css">
+</head>
+<body>
+<!--
+  soulor.id · 一页到底的滚动叙事站
+  ────────────────────────────────────────────────────────────
+  单主题：这是一个刻意的黑夜世界，不做浅色适配。
+  这是一个**选择**，不是遗漏 —— 整页的叙事是"星尘被引力聚拢、点亮成太阳"，
+  白底会把这个故事讲成另一件事。所以这里没有 prefers-color-scheme 分支。
+
+  性能：所有逐像素的东西（光斑 / 红温核 / 星球）只在启动和 resize 时烘焙一次，
+  烘成 offscreen sprite。主循环里只有 drawImage / arc / fillText。
+-->
+
+<style>
+/* Instrument Serif 见 font.css（同域加载，禁第三方字体源——国内访问不到） */
+
+:root{
+  --bg:#050409;
+  --ink:#F2EDE4;
+  --ink2:#B9AFC4;
+  --mut:#8B8395;
+  --core:#FFD9A0;
+  --core2:#E5B584;
+  --line:#26202E;
+  --serif:"Instrument Serif",Georgia,serif;          /* 只给拉丁 / 数字，永不套中文 */
+  --sans:"PingFang SC","Hiragino Sans GB",-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+html,body{overflow-x:hidden;max-width:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.8;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+/* 04 点亮之后：光碰到了字。幅度极小，是"被照到"不是换主题。 */
+body.lit{--ink:#F6EFE2}
+
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid rgba(255,217,160,.55);outline-offset:3px;border-radius:4px}
+
+/* ── 底层：canvas + 颗粒 ── */
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+#grain{position:fixed;inset:0;z-index:1;opacity:.05;mix-blend-mode:overlay;pointer-events:none}
+/* 窄屏专用雾：上方留给太阳，下方交给文字 */
+#fog{position:fixed;inset:0;z-index:1;pointer-events:none;display:none}
+
+/* ── Nav ── */
+#nav{
+  position:fixed;top:0;left:0;right:0;z-index:30;
+  display:flex;align-items:center;gap:14px;
+  padding:13px clamp(18px,4vw,34px);
+  border-bottom:1px solid transparent;
+  transition:background .45s ease,backdrop-filter .45s ease,border-color .45s ease;
+}
+#nav.scrolled{background:rgba(5,4,9,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom-color:var(--line)}
+#nav .wordmark{font-family:var(--serif);font-size:19px;letter-spacing:.02em;color:#F4EFE6;text-decoration:none;line-height:1}
+#nav .dom{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:rgba(255,217,160,.5);margin-left:auto}
+#nav .pill{
+  font-size:11.5px;padding:6px 13px;border-radius:999px;line-height:1.3;
+  border:1px solid rgba(255,217,160,.3);color:var(--core);text-decoration:none;white-space:nowrap;
+  transition:background .3s ease,border-color .3s ease;
+}
+#nav .pill:hover{background:rgba(255,217,160,.1);border-color:rgba(255,217,160,.55)}
+@media(max-width:430px){#nav .dom{display:none}#nav .pill{margin-left:auto}}
+
+/* ── Rail ── */
+#rail{
+  position:fixed;right:15px;top:50%;transform:translateY(-50%);z-index:30;
+  display:flex;flex-direction:column;gap:11px;align-items:center;
+}
+@media(max-width:719px){#rail{display:none}}
+#rail a{width:16px;height:16px;display:flex;align-items:center;justify-content:center;position:relative;text-decoration:none}
+#rail a b{display:block;width:5px;height:5px;border-radius:3px;background:#3B3446;transition:width .45s cubic-bezier(.16,.8,.24,1),height .45s cubic-bezier(.16,.8,.24,1),background .45s ease}
+#rail a.act b{width:2px;height:14px;background:var(--core)}
+#rail a span{
+  position:absolute;right:20px;top:50%;transform:translateY(-50%);white-space:nowrap;
+  font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:rgba(255,217,160,.62);
+  opacity:0;transition:opacity .3s ease;pointer-events:none;
+}
+#rail a:hover span,#rail a:focus-visible span{opacity:1}
+
+/* ── 节 ── */
+section{
+  position:relative;z-index:2;
+  min-height:112vh;min-height:112svh;
+  display:flex;align-items:center;
+  padding:0 clamp(24px,6vw,80px);
+}
+#hero,#begin{min-height:100vh;min-height:100svh}
+/* 正文列局部径向暗化：让字永远不压在亮部上。
+   贴在 section 上做整幅出血 —— 贴在文字列上会在盒子边缘留一道可见的接缝。
+   半径取 56%/66%：纵向在节的上下边界正好衰减到 0，所以节与节之间没有断层。 */
+section::before{
+  content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(56% 66% at 27% 50%,rgba(5,4,9,.88),rgba(5,4,9,.52) 44%,rgba(5,4,9,0) 76%);
+}
+#planets::before{background:radial-gradient(56% 66% at 27% 50%,rgba(5,4,9,.92),rgba(5,4,9,.60) 44%,rgba(5,4,9,0) 76%)}
+
+.col{
+  position:relative;width:100%;max-width:560px;padding:104px 0 72px;
+  text-shadow:0 1px 24px rgba(5,4,9,.9);
+}
+
+/* ── 入场：行升起 ── */
+.ln{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+.ln>i{display:block;font-style:normal;transform:translateY(108%);transition:transform .85s cubic-bezier(.16,.8,.24,1)}
+.on .ln>i{transform:none}
+.on .ln:nth-child(1)>i{transition-delay:.05s}
+.on .ln:nth-child(2)>i{transition-delay:.17s}
+.fu{opacity:0;transform:translateY(10px);transition:opacity .8s ease,transform .8s ease}
+.on .fu{opacity:1;transform:none}
+.on .fu.d1{transition-delay:.30s}
+.on .fu.d2{transition-delay:.44s}
+.on .fu.d3{transition-delay:.60s}
+.on .fu.d4{transition-delay:.74s}
+
+/* ── 字级 ── */
+.eyebrow{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;
+  color:rgba(255,217,160,.55);margin:0 0 20px;line-height:1.6;
+}
+h1,h2{
+  margin:0;font-family:var(--sans);font-weight:500;
+  font-size:clamp(27px,4.6vw,50px);line-height:1.24;letter-spacing:-.01em;
+}
+.l1{color:var(--ink);transition:color .8s ease}
+.l2{color:var(--ink2);transition:color .8s ease}
+.en{
+  margin:17px 0 0;font-family:var(--serif);font-weight:400;
+  font-size:clamp(15px,1.6vw,19px);line-height:1.42;color:rgba(255,217,160,.6);
+}
+.body{margin:22px 0 0;font-size:14.8px;line-height:1.8;color:#98909F}
+.body b{color:#CFC7D6;font-weight:600}
+.sub{margin:22px 0 0;font-size:14.8px;line-height:1.78;color:#98909F}
+.sub b{color:#E8E2D6;font-weight:600}
+.sub .nb{display:block;white-space:nowrap}
+@media(max-width:640px){.sub .nb{white-space:normal}.body,.sub{font-size:13.8px}}
+
+/* ── hero ── */
+.actions{margin-top:30px;display:flex;flex-wrap:wrap;gap:13px 18px;align-items:center}
+.cta{
+  display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:999px;
+  text-decoration:none;font-size:13.5px;font-weight:600;text-shadow:none;
+  color:#241A0C;background:linear-gradient(100deg,#FFE7BE,#FFD09A);
+  box-shadow:0 0 0 0 rgba(255,209,154,.4);transition:box-shadow .4s ease,transform .25s ease;
+}
+.cta:hover{box-shadow:0 0 32px 0 rgba(255,209,154,.28);transform:translateY(-1px)}
+.ghost{font-size:13px;color:#8B8395;text-decoration:none;border-bottom:1px solid #2A2632;padding-bottom:2px}
+.ghost:hover{color:#C9C1D4}
+.hint{
+  position:absolute;left:50%;bottom:26px;width:1px;height:28px;
+  background:rgba(255,217,160,.35);transform-origin:top center;
+  transform:translateX(-50%);animation:breathe 3s ease-in-out infinite;
+}
+@keyframes breathe{
+  0%,100%{transform:translateX(-50%) scaleY(.34);opacity:.5}
+  50%    {transform:translateX(-50%) scaleY(1);opacity:1}
+}
+
+/* ── 通用 vignette 卡 ── */
+.card{
+  margin:26px 0 0;max-width:420px;padding:18px 20px;border-radius:14px;
+  background:rgba(20,16,25,.78);border:1px solid #2E2A3A;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);text-shadow:none;
+}
+.lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:rgba(255,217,160,.55);line-height:1.6}
+.foot{margin-top:12px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:#7C7488;line-height:1.6}
+.bub{max-width:90%;padding:10px 14px;border-radius:14px;font-size:13.6px;line-height:1.62;width:fit-content}
+.bub.me{
+  margin:13px 0 0 auto;border-bottom-right-radius:5px;color:#EFE7DA;
+  background:linear-gradient(100deg,rgba(255,222,180,.17),rgba(255,205,150,.10));
+  border:1px solid rgba(255,217,160,.22);
+}
+.bub.ai{margin:10px auto 0 0;border-bottom-left-radius:5px;color:#B4ABBE;background:transparent;border:1px solid #302B3C}
+.face{margin:13px 0 0;font-size:16px;line-height:1.7;color:#E4DCEB}
+.face.sm{font-size:13.9px;line-height:1.74;color:#C6BDD2}
+.dateline{margin-top:13px;font-size:14px;color:var(--core2);line-height:1.4}
+.dateline .n{font-family:var(--serif);font-size:19px;letter-spacing:.01em}
+
+/* ── 05 七品类 + 双卡 ── */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:24px 0 0}
+.chip{
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;line-height:1.5;
+  border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:#9C93A8;
+  background:rgba(12,10,17,.5);text-shadow:none;
+}
+.duo{display:grid;gap:12px;grid-template-columns:1fr;margin-top:22px}
+@media(min-width:641px){.duo{grid-template-columns:1fr 1fr}}
+.duo .card{margin:0;max-width:none;padding:16px 17px}
+.duo .card p{margin:9px 0 0;font-size:13.8px;line-height:1.66;color:#DCD4E4}
+.duo .card.dim{background:rgba(13,11,18,.72);border-color:#241F2E}
+.duo .card.dim p{color:#948BA1}
+.duo .card.dim .lab{color:rgba(255,217,160,.32)}
+.duo .card.dim .foot{color:#5F5870}
+
+/* ── 06 词源行 ── */
+.etym{margin:28px 0 0;font-size:15px;line-height:1.8;color:var(--ink2)}
+.etym .s{font-family:var(--serif);font-size:17.5px;letter-spacing:.01em;color:#DCCDB6}
+
+/* ── 07 三张事实卡 ── */
+.facts{display:flex;flex-direction:column;gap:12px;margin-top:24px;max-width:460px}
+.fact{
+  padding:15px 18px;border-radius:14px;text-shadow:none;
+  background:rgba(20,16,25,.78);border:1px solid #2E2A3A;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.fact p{margin:7px 0 0;font-size:13.8px;line-height:1.68;color:#ADA4B8}
+
+/* ── 08 begin ── */
+#begin{
+  flex-direction:column;justify-content:space-between;align-items:stretch;
+  padding:17svh clamp(24px,6vw,80px) 0;
+}
+#begin .col{max-width:840px;padding:0}
+.beginwrap{display:flex;gap:44px;align-items:flex-start;flex-wrap:wrap}
+.begintext{flex:1 1 300px;min-width:260px}
+.qr{
+  flex:none;width:120px;height:120px;border:1px dashed rgba(255,217,160,.35);border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:rgba(255,217,160,.5);
+  text-shadow:none;line-height:1.4;
+}
+@media(max-width:640px){.beginwrap{flex-direction:column;gap:26px}.begintext{flex:0 0 auto}}
+.mailrow{margin:24px 0 0;font-family:var(--mono);font-size:12px;color:#8B8395;letter-spacing:.04em}
+.mailrow a{color:var(--core);text-decoration:none;border-bottom:1px solid rgba(255,217,160,.25);padding-bottom:1px;transition:border-color .3s ease}
+.mailrow a:hover{border-bottom-color:var(--core)}
+.footbar{
+  position:relative;z-index:2;width:100%;max-width:840px;margin-top:56px;
+  padding:16px 0 22px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;
+}
+.footbar .l{font-size:12px;color:var(--mut)}
+.footbar .r{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:rgba(255,217,160,.45)}
+
+/* ── 窄屏：上方留给天空，下方交给文字 ── */
+@media(max-width:799px){
+  section:not(#begin){align-items:flex-end}
+  .col{padding:0 0 12svh;max-width:none}
+  #hero .col{padding-bottom:17svh}
+  section::before{background:none}
+  #fog{display:block}
+  /* 窄屏 begin：核在上方，文字整体下沉，别叠在光上 */
+  #begin{padding-top:24svh}
+  .card,.facts{max-width:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .ln>i{transform:none;transition:none}
+  .fu{transform:none;transition:opacity .5s ease}
+  .on .fu{transform:none}
+  .hint{animation:none;transform:translateX(-50%) scaleY(1);opacity:.55}
+  .cta,.ghost,#rail a b,#nav{transition:none}
+}
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div id="fog" aria-hidden="true"></div>
+<div id="grain" aria-hidden="true"></div>
+
+<header id="nav">
+  <a class="wordmark" href="#hero">Soulor</a>
+  <span class="dom">SOULOR.ID</span>
+  <a class="pill" href="#begin">进内测 →</a>
+</header>
+
+<nav id="rail" aria-label="章节">
+  <a href="#hero"      data-i="0"><b></b><span>序幕</span></a>
+  <a href="#scatter"   data-i="1"><b></b><span>虚无</span></a>
+  <a href="#drop"      data-i="2"><b></b><span>落下</span></a>
+  <a href="#gather"    data-i="3"><b></b><span>聚拢</span></a>
+  <a href="#ignite"    data-i="4"><b></b><span>点亮</span></a>
+  <a href="#sun"       data-i="5"><b></b><span>成形</span></a>
+  <a href="#planets"   data-i="6"><b></b><span>照亮</span></a>
+  <a href="#sovereign" data-i="7"><b></b><span>主权</span></a>
+  <a href="#begin"     data-i="8"><b></b><span>开始</span></a>
+</nav>
+
+<main>
+
+<section id="hero" data-stage="hero">
+  <div class="col">
+    <p class="eyebrow fu">SOULOR · 灵镜 · 2026</p>
+    <h1>
+      <span class="ln"><i class="l1">你对外的一切，</i></span>
+      <span class="ln"><i class="l2">都源自那个内核。</i></span>
+    </h1>
+    <p class="en fu d1">Everything you show the world begins at the core.</p>
+    <p class="sub fu d2">
+      <span class="nb">Soulor 接住你随口说的话，替你把内核存下来。</span>
+      <span class="nb"><b>今晚，它会写成日记。</b></span>
+    </p>
+    <div class="actions fu d3">
+      <a class="cta" href="#begin">开始说第一句 →</a>
+      <a class="ghost" href="#scatter">往下看它怎么发生 ↓</a>
+    </div>
+  </div>
+  <div class="hint" aria-hidden="true"></div>
+</section>
+
+<section id="scatter" data-stage="scatter">
+  <div class="col">
+    <p class="eyebrow fu">01 · 虚无 / THE SCATTER</p>
+    <h2>
+      <span class="ln"><i class="l1">你每天说几千句话，</i></span>
+      <span class="ln"><i class="l2">留下来的是零。</i></span>
+    </h2>
+    <p class="en fu d1">A galaxy of dust. Everywhere, and nowhere.</p>
+    <p class="body fu d2">深夜的胡思乱想、没发出去的消息、对朋友说过就忘的那句真话——蒸发得比你想的快。你的内心一直在说话，只是从来没有人记下来。</p>
+  </div>
+</section>
+
+<section id="drop" data-stage="drop">
+  <div class="col">
+    <p class="eyebrow fu">02 · 第一句 / ONE GRAIN</p>
+    <h2>
+      <span class="ln"><i class="l1">说一句，</i></span>
+      <span class="ln"><i class="l2">就落下一粒。</i></span>
+    </h2>
+    <p class="en fu d1">One sentence. One grain of matter.</p>
+    <p class="body fu d2">Drop——随口一句就走。AI 接住它、归好类，不评判、不给建议。说完这件事就结束了，剩下的交给引力。</p>
+    <div class="card fu d3">
+      <div class="lab">DROP · 随口一句</div>
+      <div class="bub me">今天开会，话到嘴边又咽回去了。</div>
+      <div class="bub ai">接住了。这句放进「表达风格」，随时能翻回来。</div>
+    </div>
+  </div>
+</section>
+
+<section id="gather" data-stage="gather">
+  <div class="col">
+    <p class="eyebrow fu">03 · 聚拢 / GRAVITY</p>
+    <h2>
+      <span class="ln"><i class="l1">想聊透的时候，</i></span>
+      <span class="ln"><i class="l2">引力会变大。</i></span>
+    </h2>
+    <p class="en fu d1">Gravity does the gathering.</p>
+    <p class="body fu d2">Chat——想聊透一件事。它见证式地回应，把你的话一层层拆开听懂，最后问你一句：这样理解，对吗？不知道说什么的时候，抽一张回响牌。</p>
+    <div class="card fu d3">
+      <div class="lab">回响牌 · 不知道说什么的时候</div>
+      <p class="face">「最近有没有一件小事，你嘴上说算了，心里其实没算？」</p>
+      <div class="foot">抽一张 · 答不答都行</div>
+    </div>
+  </div>
+</section>
+
+<section id="ignite" data-stage="ignite">
+  <div class="col">
+    <p class="eyebrow fu">04 · 点亮 / FIRST LIGHT</p>
+    <h2>
+      <span class="ln"><i class="l1">到了晚上，</i></span>
+      <span class="ln"><i class="l2">它亮了。</i></span>
+    </h2>
+    <p class="en fu d1">At night, it ignites.</p>
+    <p class="body fu d2">白天随口说过的话，23:59 自动写成一篇日记——用你的原话，不加想象。你不用写日记。你只要说话，日记自己会来。</p>
+    <div class="card fu d3">
+      <div class="lab">日记 · 23:59 自动写成</div>
+      <div class="dateline"><span class="n">7.28</span> · 周二</div>
+      <p class="face sm">白天你说，话到嘴边又咽了回去。到了晚上你补了一句：其实也没那么难开口。这两句放在一起，就是今天。</p>
+      <div class="foot">由你今天的 6 句话写成 · 每句都能翻回原文</div>
+    </div>
+  </div>
+</section>
+
+<section id="sun" data-stage="sun">
+  <div class="col">
+    <p class="eyebrow fu">05 · 成形 / THE SUN TAKES SHAPE</p>
+    <h2>
+      <span class="ln"><i class="l1">攒够证据，</i></span>
+      <span class="ln"><i class="l2">它才开口说你是谁。</i></span>
+    </h2>
+    <p class="en fu d1">It speaks only with evidence.</p>
+    <p class="body fu d2">七个品类的人格声音——每一条判断都标着依据，点开就是你的原话。证据不够时它会直说：还不够。判断永远可反驳——镜子不产生你，它只让你看见。</p>
+    <div class="chips fu d3">
+      <span class="chip">特质倾向</span><span class="chip">价值观</span><span class="chip">世界观</span><span class="chip">动机</span><span class="chip">习惯</span><span class="chip">表达</span><span class="chip">自我叙事</span>
+    </div>
+    <div class="duo fu d4">
+      <div class="card">
+        <div class="lab">人格声音 · 表达风格</div>
+        <p>你在人多的场合，会把话收起来。</p>
+        <div class="foot">依据 4 条原话 ›</div>
+      </div>
+      <div class="card dim">
+        <div class="lab">人格声音 · 世界观与信念</div>
+        <p>3 条还不够下判断。宁可慢。</p>
+        <div class="foot">还在积累中</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="planets" data-stage="planets">
+  <div class="col">
+    <p class="eyebrow fu">06 · 照亮 / ONE CORE, EVERY PLANET</p>
+    <h2>
+      <span class="ln"><i class="l1">一个内核，</i></span>
+      <span class="ln"><i class="l2">照亮所有星球。</i></span>
+    </h2>
+    <p class="en fu d1">One core. Every planet lit.</p>
+    <p class="body fu d2">现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍，未来的机器人还要重新认识你一次。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。</p>
+    <p class="etym fu d3"><span class="s">Soul</span>（灵魂） + <span class="s">-or</span>（<span class="s">Mirr-or</span>，镜子） + <span class="s">Sol</span>（<span class="s">Solar</span>，太阳）</p>
+  </div>
+</section>
+
+<section id="sovereign" data-stage="sovereign">
+  <div class="col">
+    <p class="eyebrow fu">07 · 主权 / YOURS ALONE</p>
+    <h2>
+      <span class="ln"><i class="l1">这一切，</i></span>
+      <span class="ln"><i class="l2">只发生在你的手机里。</i></span>
+    </h2>
+    <p class="en fu d1">It never leaves your hand.</p>
+    <div class="facts">
+      <div class="fact fu d2">
+        <div class="lab">本地存储</div>
+        <p>数据只在你手机里。不是「承诺不看」，是架构上就没有上传。</p>
+      </div>
+      <div class="fact fu d3">
+        <div class="lab">不给建议</div>
+        <p>它接住你，不指导你的人生。</p>
+      </div>
+      <div class="fact fu d4">
+        <div class="lab">可反驳</div>
+        <p>每条判断都翻得回原话，也都删得掉。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="begin" data-stage="begin">
+  <div class="col">
+    <div class="beginwrap">
+      <div class="begintext">
+        <p class="eyebrow fu">08 · 第一句 / BEGIN</p>
+        <h2>
+          <span class="ln"><i class="l1">从你的第一句开始。</i></span>
+        </h2>
+        <p class="en fu d1">Begin with one sentence.</p>
+        <p class="body fu d2">现在是内测阶段——进群领邀请码，装上就能说话。</p>
+        <p class="mailrow fu d3">或者写信：<a href="mailto:hello@soulor.id">hello@soulor.id</a></p>
+      </div>
+      <div class="qr fu d3" aria-label="内测群二维码，即将放上">
+        <span>内测群二维码</span>
+        <span>即将放上</span>
+      </div>
+    </div>
+  </div>
+  <div class="footbar">
+    <div class="l">Soulor · 灵镜 — 一面灵魂的镜子</div>
+    <div class="r">SOULOR.ID · © 2026</div>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+'use strict';
+
+/* ══════════ 0. 文字入场（先装，保证 canvas 万一挂了文字也在） ══════════ */
+var cols = [].slice.call(document.querySelectorAll('.col'));
+if('IntersectionObserver' in window){
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('on'); });
+  }, {threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  cols.forEach(function(n){ io.observe(n); });
+}else{
+  cols.forEach(function(n){ n.classList.add('on'); });
+}
+
+var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ══════════ 1. 数学（移植自内核稿，逐字保留） ══════════ */
+function sstep(e0,e1,t){ t=(t-e0)/(e1-e0); t=t<0?0:(t>1?1:t); return t*t*(3-2*t); }
+function s01(t){ t=t<0?0:(t>1?1:t); return t*t*(3-2*t); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+// 光衰减：物理感的关键是"不是线性"。用 pow 让中心极亮、边缘长尾。
+function falloff(d){ var k=1-d; return k<=0?0:Math.pow(k,3.4); }
+// 确定性哈希噪声。resize 重新烘焙时表面/布局必须复现，不能用 Math.random。
+function hash2(x,y){ var n=Math.sin(x*127.1+y*311.7)*43758.5453123; return n-Math.floor(n); }
+function vnoise(x,y){
+  var xi=Math.floor(x), yi=Math.floor(y), xf=x-xi, yf=y-yi;
+  var u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf);
+  return hash2(xi,yi)*(1-u)*(1-v) + hash2(xi+1,yi)*u*(1-v)
+       + hash2(xi,yi+1)*(1-u)*v   + hash2(xi+1,yi+1)*u*v;
+}
+function fbm(x,y){
+  return vnoise(x,y)*.54 + vnoise(x*2.13+5.2,y*2.13+1.3)*.30 + vnoise(x*4.37+9.1,y*4.37+7.7)*.16;
+}
+
+/* ══════════ 2. 关键帧表 ══════════ */
+var KEYS = ['cx','cy','cr','lum','grav','spin','disk','rs','pl','ring'];
+var KF = [
+  {cx:.50,cy:.58,cr:.30,lum:0,   grav:0,  spin:0,  disk:0,  rs:1.00,pl:0,  ring:0}, // hero
+  {cx:.50,cy:.55,cr:.30,lum:0,   grav:.06,spin:.02,disk:0,  rs:1.00,pl:0,  ring:0}, // scatter
+  {cx:.62,cy:.50,cr:.30,lum:.04, grav:.38,spin:.12,disk:.15,rs:.80, pl:0,  ring:0}, // drop
+  {cx:.60,cy:.50,cr:.32,lum:.10, grav:.72,spin:.55,disk:.80,rs:.55, pl:0,  ring:0}, // gather
+  {cx:.60,cy:.48,cr:.34,lum:.45, grav:.90,spin:.80,disk:.60,rs:.42, pl:0,  ring:0}, // ignite
+  {cx:.64,cy:.50,cr:.40,lum:1.0, grav:1,  spin:1,  disk:.25,rs:.34, pl:0,  ring:0}, // sun
+  {cx:.22,cy:.42,cr:.30,lum:.92, grav:1,  spin:.90,disk:.20,rs:.26, pl:1,  ring:0}, // planets
+  {cx:.50,cy:.44,cr:.24,lum:.78, grav:1,  spin:.70,disk:.15,rs:.30, pl:.35,ring:1}, // sovereign
+  {cx:.50,cy:.30,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0}  // begin
+];
+
+var GHOST = ['算了，没什么','其实我挺累的','这话跟谁说呢','明天再想吧'];
+// 视口分数 [x, y, r×min(W,H)]
+var PLANETS = [[.66,.30,.045],[.82,.52,.062],[.62,.74,.030],[.92,.24,.020]];
+var PLABEL  = ['约会','招聘','陪伴','还没被发明的'];
+
+/* ══════════ 3. sprite 烘焙（一次性；resize 后重烘） ══════════ */
+
+// 光斑：完全移植内核稿的 pure 分支。
+// 烘成"加光值"（premultiplied），主循环用 lighter 合成 —— 光本来就是相加的。
+function bakeGlow(S, tR, tG, tB){
+  var c = document.createElement('canvas'); c.width=c.height=S;
+  var g = c.getContext('2d'); var img = g.createImageData(S,S), d = img.data;
+  var cx=S*0.5, cy=S*0.5, R=S*0.5;
+  for(var y=0;y<S;y++){
+    for(var x=0;x<S;x++){
+      var dx=(x+0.5-cx)/R, dy=(y+0.5-cy)/R;
+      var dist=Math.sqrt(dx*dx+dy*dy);
+      var ang=Math.atan2(dy,dx);
+      // 光晕的外圈不该是完美的圆——完美的圆是 CSS radial-gradient 的签名。
+      // 只在外圈叠低频角向起伏，核心盘保持正圆。
+      var wob = 1 + 0.052*Math.sin(ang*3+0.7) + 0.030*Math.sin(ang*5-1.9) + 0.017*Math.sin(ang*8+3.3);
+      var v = falloff(dist / (1 + (wob-1)*sstep(0.20,0.78,dist)));
+      // 光的色温：最亮处近白，往外走成暖金，再远成暗紫余色
+      var r,gg,b;
+      if(v > 0.62){ var k=(v-0.62)/0.38; r=255; gg=246+9*k; b=228+27*k; }
+      else if(v > 0.18){ var k2=(v-0.18)/0.44; r=201+54*k2; gg=123+123*k2; b=74+154*k2; }
+      else { var k3=v/0.18; r=5+196*k3; gg=4+119*k3; b=9+65*k3; }
+      var a = Math.min(1, v*1.35);
+      var pr=r*a*tR, pg=gg*a*tG, pb=b*a*tB;
+      // 胶片颗粒：真实胶片的颗粒集中在中间调，黑场几乎干净、亮部被光压平。
+      var lum=(pr*0.30+pg*0.59+pb*0.11)/255;
+      var amp=11*(0.22 + 1.55*Math.sqrt(lum)*(1-lum*0.72)) * Math.min(1, v*14);
+      var n=(Math.random()-.5)*amp;
+      var i4=(y*S+x)*4;
+      d[i4]  = clamp(pr+n,0,255);
+      d[i4+1]= clamp(pg+n,0,255);
+      d[i4+2]= clamp(pb+n,0,255);
+      d[i4+3]= 255;
+    }
+  }
+  g.putImageData(img,0,0);
+  return c;
+}
+
+// 星球：完全移植内核稿 system 分支的球体代码。光照方向烘焙时固定。
+function bakePlanet(pr, ldx, ldy, lz, tintR, tintB, lit, idx){
+  pr = Math.max(4, pr);
+  var pad = Math.ceil(pr*0.34)+3;
+  var S = Math.ceil((pr+pad)*2);
+  var c = document.createElement('canvas'); c.width=c.height=S;
+  var g = c.getContext('2d'); var img=g.createImageData(S,S), d=img.data;
+  var px=S/2, py=S/2, lnorm=Math.sqrt(1+lz*lz);
+  for(var y=0;y<S;y++){
+    for(var x=0;x<S;x++){
+      var i4=(y*S+x)*4;
+      var ddx=x+0.5-px, ddy=y+0.5-py;
+      var dd=Math.sqrt(ddx*ddx+ddy*ddy);
+      if(dd>pr){
+        // 球体外一圈极薄的前向散射，让球和背景之间有过渡而不是剪贴边
+        var hal=Math.pow(Math.max(0,1-(dd-pr)/(pr*0.30)),2.6)*lit*0.42;
+        if(hal>0.002){ d[i4]=236; d[i4+1]=204; d[i4+2]=164; d[i4+3]=Math.round(Math.min(1,hal*0.62)*255); }
+        continue;
+      }
+      var nx=ddx/pr, ny=ddy/pr;
+      var nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
+      // 球面投影采样，纹理才是贴在球上而不是贴在圆盘上
+      var ux=(nx/(nz+0.32))*1.85+idx*17.3, uy=(ny/(nz+0.32))*1.85+idx*9.7;
+      var relief=fbm(ux,uy)-0.5;
+      var lamRaw=(nx*ldx+ny*ldy+nz*lz)/lnorm + relief*0.30*(1-nz*0.45);
+      var lam=sstep(-0.05,0.36,lamRaw);      // 终止线是渐变带，不是硬边
+      lam *= 0.60+0.40*Math.pow(nz,0.55);    // 临边昏暗
+      var alb=0.78+0.44*(0.62*fbm(ux*0.55,uy*0.55)+0.38*fbm(ux*2.7+4.1,uy*2.7-2.3));
+      // 暗面临边一线弱边光，把球从黑底里剥出来
+      var rim=Math.pow(1-nz,5.5)*Math.max(0,-(nx*ldx+ny*ldy))*lit*1.1;
+      var s=Math.min(1, lam*alb*lit*4.4 + lam*0.05 + rim);
+      var edge=sstep(0,1.8,pr-dd);
+      // 色温随亮度走：暗面偏冷，亮面偏暖
+      d[i4]  = Math.round(Math.min(255,(12+240*Math.pow(s,0.85))*tintR));
+      d[i4+1]= Math.round(Math.min(255, 13+219*Math.pow(s,1.10)));
+      d[i4+2]= Math.round(Math.min(255,(20+188*Math.pow(s,1.42))*tintB));
+      d[i4+3]= Math.round(edge*255);
+    }
+  }
+  g.putImageData(img,0,0);
+  return c;
+}
+
+function bakeDot(S, r, g0, b){
+  var c=document.createElement('canvas'); c.width=c.height=S;
+  var x=c.getContext('2d'); var img=x.createImageData(S,S), d=img.data;
+  for(var y=0;y<S;y++){
+    for(var i=0;i<S;i++){
+      var dx=(i+0.5-S/2)/(S/2), dy=(y+0.5-S/2)/(S/2);
+      var dd=Math.sqrt(dx*dx+dy*dy);
+      var t=Math.max(0,1-dd);
+      var v=t*t*0.5 + Math.pow(Math.max(0,1-dd*2.4),2)*0.7;
+      var k=(y*S+i)*4;
+      d[k]=r; d[k+1]=g0; d[k+2]=b; d[k+3]=Math.round(Math.min(1,v)*255);
+    }
+  }
+  x.putImageData(img,0,0); return c;
+}
+
+function bakeGrainTile(){
+  var S=96, c=document.createElement('canvas'); c.width=c.height=S;
+  var x=c.getContext('2d'); var img=x.createImageData(S,S), d=img.data;
+  for(var i=0;i<d.length;i+=4){ var n=Math.round(Math.random()*255); d[i]=d[i+1]=d[i+2]=n; d[i+3]=255; }
+  x.putImageData(img,0,0); return c.toDataURL();
+}
+
+/* ══════════ 4. 引擎 ══════════ */
+var cv = document.getElementById('sky');
+var ctx = cv.getContext('2d');
+var W=0,H=0,M=0,dpr=1,narrowW=false,fewP=false;
+var glowSprite=null, emberSprite=null, dotWarm=null, dotCool=null, planetSprites=[], warmGrad=null;
+var P=[], ghostIdx=[], dust=[];
+var secEl=[].slice.call(document.querySelectorAll('section[data-stage]'));
+var railA=[].slice.call(document.querySelectorAll('#rail a'));
+var secTop=[], secH=[];
+var T=0, last=0, rafId=0, running=false;
+var stageIdx=0, litDone=false, bloomT=-1, comets=[], cometNext=2.5;
+var CUR={}, TGT={};
+KEYS.forEach(function(k){ CUR[k]=KF[0][k]; TGT[k]=KF[0][k]; });
+
+function measure(){
+  secTop=[]; secH=[];
+  for(var i=0;i<secEl.length;i++){
+    var r=secEl[i].getBoundingClientRect();
+    secTop.push(r.top + window.pageYOffset);
+    secH.push(r.height);
+  }
+}
+
+function buildParticles(){
+  var n = fewP ? 360 : 700;
+  P=[];
+  for(var i=0;i<n;i++){
+    var h1=hash2(i*1.13+0.7,3.31),  h2=hash2(i*2.71+1.9,7.13),  h3=hash2(i*0.53+4.4,11.7),
+        h4=hash2(i*3.17+2.2,5.09),  h5=hash2(i*1.77+6.1,13.3),  h6=hash2(i*4.31+0.3,2.17),
+        h7=hash2(i*0.91+8.8,17.9);
+    var hx=h1, hy=h2, mx=hx-0.5, my=hy-0.5, mr=Math.sqrt(mx*mx+my*my);
+    if(mr<0.20){ var push=(0.20+h3*0.28)/(mr+0.001); hx=0.5+mx*push; hy=0.5+my*push; }
+    hx=clamp(hx,0.015,0.985); hy=clamp(hy,0.015,0.985);
+    // orbitR：分布偏向 2-3 条环带 + 散尾
+    var band = h4<0.30 ? 0.30 : (h4<0.58 ? 0.47 : (h4<0.79 ? 0.64 : 0.28+h5*1.00));
+    var orb = Math.max(0.10, band + (h5-0.5)*0.055);
+    P.push({
+      hx:hx, hy:hy, r0:orb, rr:orb,
+      a0:h6*Math.PI*2, sp:0.42/Math.sqrt(orb+0.14),
+      sz:1 + h7*1.6, cool:h3>0.62, tw:h5*Math.PI*2,
+      base:0.28 + h3*0.62,
+      x:0, y:0, a:0
+    });
+  }
+  // 4 条幽灵短语挂在 4 颗指定粒子上（挑分散、避开正中的）
+  ghostIdx=[];
+  var want=[[0.30,0.24],[0.74,0.36],[0.24,0.72],[0.70,0.78]];
+  for(var w=0;w<4;w++){
+    var bi=0, bd=1e9;
+    for(var j=0;j<P.length;j++){
+      if(ghostIdx.indexOf(j)>=0) continue;
+      var ddx=P[j].hx-want[w][0], ddy=P[j].hy-want[w][1];
+      var dd2=ddx*ddx+ddy*ddy;
+      if(dd2<bd){ bd=dd2; bi=j; }
+    }
+    ghostIdx.push(bi);
+  }
+  // 星球之间的极暗尘（静态、确定性，跟内核稿一致）
+  dust=[];
+  for(var s=0;s<60;s++){
+    dust.push({x:0.52+hash2(s*1.37,9.13)*0.46, y:0.06+hash2(s*2.11,3.71)*0.88, b:0.16+hash2(s*0.77,6.29)*0.52});
+  }
+}
+
+function narrowCX(v){ return 0.5 + (v-0.5)*0.71; }          // planets .22 → .30
+function narrowCY(v){ return 0.26 + (v-0.5)*0.42; }         // 核抬到上方，下方留给文字
+
+function rebake(){
+  var iw=window.innerWidth, ih=window.innerHeight;
+  narrowW = iw < 800;
+  fewP = Math.max(iw,ih) < 800 || iw < 720;
+  dpr = Math.min(window.devicePixelRatio||1, narrowW ? 1.75 : 2);
+  cv.width  = W = Math.round(iw*dpr);
+  cv.height = H = Math.round(ih*dpr);
+  cv.style.width = iw+'px'; cv.style.height = ih+'px';
+  M = Math.min(W,H);
+
+  var S = narrowW ? 384 : 512;
+  glowSprite  = bakeGlow(S, 1, 1, 1);
+  emberSprite = bakeGlow(S, 1.0, 0.62, 0.42);   // 红温原初核（S3）
+  dotWarm = bakeDot(16, 255, 236, 208);
+  dotCool = bakeDot(16, 216, 210, 234);
+
+  // 星球：光照方向按本节核位烘死
+  var pcx = (narrowW ? narrowCX(KF[6].cx) : KF[6].cx) * W;
+  var pcy = (narrowW ? narrowCY(KF[6].cy) : KF[6].cy) * H;
+  var tintR=[1.00,0.94,1.05,0.90], tintB=[0.92,1.06,0.86,1.10];
+  planetSprites=[];
+  for(var p=0;p<PLANETS.length;p++){
+    var pp = planetPos(p);
+    var lx=pcx-pp.x, ly=pcy-pp.y, lm=Math.sqrt(lx*lx+ly*ly)||1;
+    var lit = 1/(1 + Math.pow(lm/(M*0.46),2)*1.9);
+    // lz 抬到 0.62+：光源带足够 z 分量，相位推到凸月——细弯钩相位是 BRAND.md 明令禁止的形象
+    planetSprites.push({ img:bakePlanet(pp.r, lx/lm, ly/lm, 0.62+p*0.12, tintR[p], tintB[p], lit, p) });
+  }
+
+  warmGrad = ctx.createLinearGradient(0,H*0.52,0,H);
+  warmGrad.addColorStop(0,'rgba(255,190,120,0)');
+  warmGrad.addColorStop(1,'rgba(255,176,108,1)');
+
+  buildParticles();
+  measure();
+}
+
+function planetPos(i){
+  var d=PLANETS[i];
+  var y = narrowW ? (0.14 + (d[1]-0.24)*0.40) : d[1];
+  return { x:d[0]*W, y:y*H, r:d[2]*M*(narrowW?0.92:1) };
+}
+
+/* ── 滚动标量 ── */
+function readScroll(){
+  var sy = window.pageYOffset, vh = window.innerHeight*dpr/dpr; // css px
+  var idx = 0, q = 0;
+  for(var i=0;i<secEl.length;i++){
+    var top = secTop[i]-sy;
+    var qi = clamp((vh*0.5 - top)/secH[i], 0, 1);
+    if(qi>0){ idx=i; q=qi; }
+  }
+  stageIdx = idx;
+  // 本节的关键帧是"走完这一节要到达的样子"：从上一节渐变到本节。
+  var a = KF[Math.max(0,idx-1)], b = KF[idx];
+  // 末节滚到底时 q 封顶 0.5，永远到不了 0.64 的收敛点——给它一条更早收敛的曲线
+  var t = idx===secEl.length-1 ? s01((q-0.06)/0.36) : s01((q-0.08)/0.56);
+  for(var k=0;k<KEYS.length;k++){
+    var key=KEYS[k];
+    TGT[key] = a[key] + (b[key]-a[key])*t;
+  }
+}
+
+/* ── 帧 ── */
+function draw(dt){
+  var S = CUR;
+  var cxf = narrowW ? narrowCX(S.cx) : S.cx;
+  var cyf = narrowW ? narrowCY(S.cy) : S.cy;
+  var cx = cxf*W, cy = cyf*H;
+  var coreR = S.cr * M * (narrowW ? 0.8 : 1);
+
+  // 1) 底
+  ctx.globalCompositeOperation='source-over';
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#050409';
+  ctx.fillRect(0,0,W,H);
+  if(S.lum>0.001){
+    ctx.globalAlpha = S.lum*0.12;
+    ctx.fillStyle = warmGrad;
+    ctx.fillRect(0,H*0.52,W,H*0.48);
+    ctx.globalAlpha = 1;
+  }
+
+  // 2) 粒子
+  var g = s01(S.grav);
+  var flat = 1-0.55*S.disk;
+  var eat = S.grav>0.55 && S.lum>0.04;
+  var infall = (!reduce && S.lum>0.25 && S.grav>0.7) ? dt*0.020*S.lum : 0;
+  for(var i=0;i<P.length;i++){
+    var p=P[i];
+    if(infall>0){
+      p.rr -= infall;
+      if(p.rr*S.rs*M < 0.30*coreR) p.rr = 0.92 + hash2(i*7.3+T,4.1)*0.42;
+    }
+    var rr = p.rr*S.rs*M;
+    var ang = p.a0 + T*p.sp*S.spin;
+    var ox = cx + Math.cos(ang)*rr;
+    var oy = cy + (Math.sin(ang)*rr)*flat;
+    var hxp = p.hx*W, hyp = p.hy*H;
+    var x = hxp + (ox-hxp)*g;
+    var y = hyp + (oy-hyp)*g;
+    var a = p.base;
+    if(!reduce) a *= 0.72 + 0.28*Math.sin(T*1.6 + p.tw);
+    a *= 0.75 + 0.25*S.lum;
+    if(eat){
+      var ddx=x-cx, ddy=y-cy;
+      // 离核太近的被吞：alpha 随半径衰减（coreR 是光晕半径，实体核约在它的 1/3 处）
+      a *= sstep(0.34, 0.80, Math.sqrt(ddx*ddx+ddy*ddy)/coreR);
+    }
+    p.x=x; p.y=y; p.a=a;
+    if(a<=0.004) continue;
+    var sz = p.sz*dpr*3.2;
+    ctx.globalAlpha = Math.min(1,a);
+    ctx.drawImage(p.cool?dotCool:dotWarm, x-sz/2, y-sz/2, sz, sz);
+  }
+
+  // 3) 幽灵短语（挂在 4 颗粒子上，随 grav 上升淡出）
+  var gh = (1-S.grav)*0.55;
+  if(gh>0.02){
+    ctx.font = (12*dpr)+'px "PingFang SC","Hiragino Sans GB",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillStyle='#CBC2D6';
+    for(var q2=0;q2<ghostIdx.length;q2++){
+      var gp=P[ghostIdx[q2]];
+      if(!gp) continue;
+      var ga = gp.a*gh;
+      if(ga<=0.01) continue;
+      ctx.globalAlpha=Math.min(1,ga);
+      ctx.fillText(GHOST[q2], gp.x+11*dpr, gp.y+1*dpr);
+    }
+  }
+
+  // 4) 彗星（S2；reduced-motion 关）
+  if(!reduce){
+    if(stageIdx===2 && T>cometNext){
+      cometNext = T+6;
+      var sd=hash2(Math.floor(T*13)*1.7, 2.9), sd2=hash2(Math.floor(T*13)*3.1, 8.3);
+      var side=Math.floor(sd*4)%4, x0,y0;
+      if(side===0){ x0=sd2*W; y0=-0.07*H; }
+      else if(side===1){ x0=1.07*W; y0=sd2*H; }
+      else if(side===2){ x0=sd2*W; y0=1.07*H; }
+      else { x0=-0.07*W; y0=sd2*H; }
+      comets.push({x0:x0,y0:y0,t0:T,ang:sd2*Math.PI*2,rf:0.5+sd*0.5});
+    }
+    for(var ci=comets.length-1;ci>=0;ci--){
+      var c=comets[ci], u=(T-c.t0)/1.8;
+      if(u>=1 || u<0){ comets.splice(ci,1); continue; }
+      var tr=c.rf*S.rs*M;
+      var tx=cx+Math.cos(c.ang)*tr, ty=cy+Math.sin(c.ang)*tr*flat;
+      var vx=tx-c.x0, vy=ty-c.y0, vl=Math.sqrt(vx*vx+vy*vy)||1;
+      var bend=0.20*vl;
+      var qx=(c.x0+tx)/2 + (-vy/vl)*bend, qy=(c.y0+ty)/2 + (vx/vl)*bend;
+      for(var k2=0;k2<5;k2++){
+        var uu=u-k2*0.035; if(uu<0) continue;
+        var iv=1-uu;
+        var px2=iv*iv*c.x0 + 2*iv*uu*qx + uu*uu*tx;
+        var py2=iv*iv*c.y0 + 2*iv*uu*qy + uu*uu*ty;
+        var ca=(1-k2*0.20)*Math.min(1,u*7)*(1-u*u)*0.95;
+        if(ca<=0.01) continue;
+        var cs=(k2===0?5.6:4.2-k2*0.55)*dpr;
+        ctx.globalAlpha=Math.min(1,ca);
+        ctx.drawImage(dotWarm, px2-cs/2, py2-cs/2, cs, cs);
+      }
+    }
+  }
+
+  // 5) 核：ember（红温原初）→ glow（太阳）。光是相加的，用 lighter。
+  var base = Math.pow(clamp(S.lum,0,1), 0.8);
+  var toGold = sstep(0.08, 0.45, S.lum);
+  var dia = coreR*2*(0.92+0.08*S.lum);
+  if(base>0.001){
+    ctx.globalCompositeOperation='lighter';
+    var ea = base*(1-toGold)*1.6;
+    if(ea>0.003){ ctx.globalAlpha=Math.min(1,ea); ctx.drawImage(emberSprite, cx-dia/2, cy-dia/2, dia, dia); }
+    var ga2 = base*toGold;
+    if(ga2>0.003){ ctx.globalAlpha=Math.min(1,ga2); ctx.drawImage(glowSprite, cx-dia/2, cy-dia/2, dia, dia); }
+    // 点火脉冲
+    if(bloomT>=0){
+      var bu=(T-bloomT)/0.6;
+      if(bu<=1){
+        var bs=dia*(1+0.25*Math.sin(bu*Math.PI));
+        ctx.globalAlpha=0.35*(1-bu);
+        ctx.drawImage(glowSprite, cx-bs/2, cy-bs/2, bs, bs);
+      } else bloomT=-1;
+    }
+    ctx.globalCompositeOperation='source-over';
+    ctx.globalAlpha=1;
+  }
+
+  // 6) 星球 + 标签 + 星球间的尘
+  // 抬一点地板：begin 节里 5% 的残影只是几团脏东西，不如干净地退场
+  var pv = Math.max(0, (S.pl-0.12)/0.88);
+  if(pv>0.004){
+    ctx.globalCompositeOperation='lighter';
+    for(var du=0;du<dust.length;du++){
+      var dd3=dust[du];
+      var da=dd3.b*pv*0.5;
+      var ds=(1.1+dd3.b*1.6)*dpr*1.6;
+      ctx.globalAlpha=Math.min(1,da);
+      ctx.drawImage(dotWarm, dd3.x*W-ds/2, dd3.y*H-ds/2, ds, ds);
+    }
+    ctx.globalCompositeOperation='source-over';
+    for(var pi=0;pi<planetSprites.length;pi++){
+      var sp=planetSprites[pi], pp2=planetPos(pi);
+      var im=sp.img, sw=im.width;
+      ctx.globalAlpha=Math.min(1,pv);
+      ctx.drawImage(im, pp2.x-sw/2, pp2.y-sw/2, sw, sw);
+    }
+    ctx.font=(9.5*dpr)+'px ui-monospace,SFMono-Regular,Menlo,monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillStyle='rgba(255,217,160,1)';
+    for(var li=0;li<PLABEL.length;li++){
+      var lp=planetPos(li);
+      var hw=ctx.measureText(PLABEL[li]).width/2 + 6*dpr;
+      ctx.globalAlpha=Math.min(1,pv*0.4);
+      ctx.fillText(PLABEL[li], clamp(lp.x, hw, W-hw), lp.y+lp.r+10*dpr);
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // 7) 主权环：随本节 q 画出来
+  if(S.ring>0.004){
+    ctx.save();
+    ctx.globalAlpha=Math.min(1,S.ring*1.6);
+    ctx.strokeStyle='rgba(255,217,160,.30)';
+    ctx.lineWidth=Math.max(1,1*dpr);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 0.42*M, -Math.PI/2, -Math.PI/2 + Math.PI*2*Math.min(1,S.ring));
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* ── UI 同步 ── */
+var navEl=document.getElementById('nav'), lastRail=-1, lastScrolled=null;
+function syncUI(){
+  var sc = window.pageYOffset > 46;
+  if(sc!==lastScrolled){ navEl.classList.toggle('scrolled', sc); lastScrolled=sc; }
+  if(stageIdx!==lastRail){
+    for(var i=0;i<railA.length;i++) railA[i].classList.toggle('act', i===stageIdx);
+    lastRail=stageIdx;
+  }
+}
+
+function frame(now){
+  rafId = requestAnimationFrame(frame);
+  var dt = Math.min(0.05, (now-last)/1000); last = now;
+  if(!reduce) T += dt;
+  readScroll();
+  // 惯性平滑（收敛后直接吸附：不然浮点尾数会让"静止"的画面每帧都有亚像素抖动）
+  for(var k=0;k<KEYS.length;k++){
+    var key=KEYS[k], d0=TGT[key]-CUR[key];
+    CUR[key] = (d0<0.00002 && d0>-0.00002) ? TGT[key] : CUR[key] + d0*0.08;
+  }
+  if(!litDone && CUR.lum>0.30){
+    litDone=true;
+    document.body.classList.add('lit');
+    if(!reduce) bloomT=T;
+  }
+  syncUI();
+  draw(dt);
+}
+
+function start(){ if(running) return; running=true; last=performance.now(); rafId=requestAnimationFrame(frame); }
+function stop(){ running=false; cancelAnimationFrame(rafId); }
+document.addEventListener('visibilitychange', function(){ document.hidden ? stop() : start(); });
+
+var rt=0;
+window.addEventListener('resize', function(){
+  clearTimeout(rt);
+  rt=setTimeout(function(){ rebake(); }, 200);
+});
+window.addEventListener('load', measure);
+
+try{
+  rebake();
+  document.getElementById('grain').style.backgroundImage = 'url(' + bakeGrainTile() + ')';
+  document.getElementById('fog').style.background =
+    'linear-gradient(180deg,rgba(5,4,9,0) 0%,rgba(5,4,9,.30) 30%,rgba(5,4,9,.66) 50%,rgba(5,4,9,.80) 100%)';
+  // 开场先把状态摆到 hero，避免第一帧从 0 弹进来
+  readScroll();
+  for(var kk=0;kk<KEYS.length;kk++) CUR[KEYS[kk]]=TGT[KEYS[kk]];
+  if(!document.hidden) start();
+}catch(err){
+  cols.forEach(function(n){ n.classList.add('on'); });
+}
+})();
+</script>
+</body>
+</html>
