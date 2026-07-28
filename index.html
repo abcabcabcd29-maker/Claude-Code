@@ -90,7 +90,8 @@ section::before{
   content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(58% 70% at 27% 50%,rgba(5,4,9,.88),rgba(5,4,9,.52) 44%,rgba(5,4,9,0) 76%);
 }
-#planets::before{background:radial-gradient(58% 70% at 27% 50%,rgba(5,4,9,.92),rgba(5,4,9,.60) 44%,rgba(5,4,9,0) 76%)}
+/* 照亮页的暗化区要压在文字上，不能盖住左上那个核——这一页的论点就是那个核 */
+#planets::before{background:radial-gradient(52% 46% at 26% 74%,rgba(5,4,9,.94),rgba(5,4,9,.62) 46%,rgba(5,4,9,0) 78%)}
 
 .col{
   position:relative;width:100%;max-width:560px;
@@ -294,7 +295,15 @@ h1,h2{
   .footbar{right:46px}
   section:not(#begin){align-items:flex-end}
   .col{padding:0 0 11%;max-width:none}
-  #hero .col{padding-bottom:16%}
+  /* 首屏天上本来就没有核，正文再贴底就会在导航和标题之间空掉半屏。
+     让它居中：上方留给幽灵短语，又不至于把字甩到浏览器工具栏边上。
+     ⚠️ 必须写成 section#hero：上面那条 `section:not(#begin)` 里的 :not() 取参数的
+     特异性，#begin 是 ID，所以那条是 ID 级的，单写 #hero 会被它压掉。 */
+  section#hero{align-items:center}
+  /* ⚠️ 百分比内边距按**宽度**算不是高度，这里要的是垂直留白，只能写死 px */
+  #hero .col{padding:28px 0 22px}
+  /* 提示竖线在手机上正好卡在浏览器工具栏边上，像个杂物；分页和拉条已经说明了"还有" */
+  .hint{display:none}
   section::before{background:none}
   #fog{display:block}
   #begin{justify-content:flex-end}
@@ -547,21 +556,21 @@ function fbm(x,y){
      0.5  光球层开始从雾里凝出来，边缘半透
      1.0  完全的实体：有临边昏暗、有米粒组织、有色球边，外面才是日冕
    虚 → 实，跟"说的话攒成内核"是同一件事。                         */
-var KEYS = ['cx','cy','cr','lum','grav','spin','disk','rs','pl','ring','solid'];
+var KEYS = ['cx','cy','cr','lum','grav','spin','disk','rs','pl','ring','solid','halo'];
 var KF = [
-  {cx:.50,cy:.58,cr:.30,lum:0,   grav:0,  spin:0,  disk:0,  rs:1.00,pl:0,  ring:0, solid:0   }, // 序幕
-  {cx:.50,cy:.55,cr:.30,lum:0,   grav:.06,spin:.02,disk:0,  rs:1.00,pl:0,  ring:0, solid:0   }, // 虚无
-  {cx:.62,cy:.50,cr:.30,lum:.05, grav:.38,spin:.12,disk:.15,rs:.80, pl:0,  ring:0, solid:0   }, // 落下
-  {cx:.60,cy:.50,cr:.32,lum:.12, grav:.72,spin:.55,disk:.80,rs:.55, pl:0,  ring:0, solid:.10 }, // 聚拢
-  {cx:.60,cy:.48,cr:.34,lum:.46, grav:.90,spin:.80,disk:.60,rs:.42, pl:0,  ring:0, solid:.58 }, // 点亮
-  {cx:.64,cy:.50,cr:.40,lum:1.0, grav:1,  spin:1,  disk:.25,rs:.34, pl:0,  ring:0, solid:1.0 }, // 成形
-  {cx:.22,cy:.42,cr:.30,lum:.92, grav:1,  spin:.90,disk:.20,rs:.26, pl:1,  ring:0, solid:1.0 }, // 照亮
-  {cx:.50,cy:.44,cr:.24,lum:.78, grav:1,  spin:.70,disk:.15,rs:.30, pl:.35,ring:1, solid:.92 }, // 主权
-  {cx:.50,cy:.30,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0, solid:.74 }  // 开始
+  {cx:.50,cy:.58,cr:.30,lum:.012,grav:.02,spin:0,  disk:0,  rs:1.12,pl:0,  ring:0, solid:0,   halo:.18}, // 序幕：最虚无，只有一丝在酝酿
+  {cx:.50,cy:.55,cr:.30,lum:.045,grav:.14,spin:.03,disk:0,  rs:.94, pl:0,  ring:0, solid:0,   halo:.66}, // 虚无：核附近开始聚星辰
+  {cx:.62,cy:.50,cr:.30,lum:.085,grav:.38,spin:.12,disk:.15,rs:.80, pl:0,  ring:0, solid:0,   halo:.42}, // 落下
+  {cx:.60,cy:.50,cr:.32,lum:.14, grav:.72,spin:.55,disk:.80,rs:.55, pl:0,  ring:0, solid:.10, halo:.16}, // 聚拢
+  {cx:.60,cy:.48,cr:.34,lum:.46, grav:.90,spin:.80,disk:.60,rs:.42, pl:0,  ring:0, solid:.58, halo:0}, // 点亮
+  {cx:.64,cy:.50,cr:.40,lum:1.0, grav:1,  spin:1,  disk:.25,rs:.34, pl:0,  ring:0, solid:1.0, halo:0}, // 成形
+  {cx:.34,cy:.21,cr:.26,lum:.92, grav:1,  spin:.90,disk:.22,rs:.26, pl:1,  ring:0, solid:1.0, halo:0}, // 照亮：核抬到左上，让它照得到右下那几颗
+  {cx:.50,cy:.44,cr:.24,lum:.78, grav:1,  spin:.70,disk:.15,rs:.30, pl:.35,ring:1, solid:.92, halo:0}, // 主权
+  {cx:.50,cy:.30,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0, solid:.74, halo:0}  // 开始
 ];
 
 var GHOST  = ['算了，没什么','其实我挺累的','这话跟谁说呢','明天再想吧'];
-var PLANETS= [[.66,.30,.045],[.82,.52,.062],[.62,.74,.030],[.92,.24,.020]];
+var PLANETS= [[.70,.34,.038],[.84,.58,.052],[.60,.76,.026],[.93,.28,.017]];
 var PLABEL = ['约会','招聘','陪伴','还没被发明的'];
 
 /* ══════════ 3. sprite 烘焙（一次性；resize 后重烘） ══════════ */
@@ -621,24 +630,25 @@ function bakePhotosphere(R){
         var gran=(0.62*fbm(ux,uy)+0.38*fbm(ux*2.6+7.1,uy*2.6-3.3))-0.5;
         // 临边昏暗：I(μ)=I0(1-u(1-μ))，恒星的标志性特征，u≈0.7
         var limb=0.30+0.70*Math.pow(nz,0.52);
-        var v=clamp(limb*(1+gran*0.42),0,1);
+        var v=clamp(limb*(1+gran*0.50),0,1);
         var edge=sstep(0,1.7,R-dd);
         // 色温必须跟着亮度大幅摆：中心近白、临边烧成琥珀金。
         // 上一版三个通道一起线性抬，得到的只能是一块灰盘。
-        var pr0=Math.min(255,214+41*v);
-        var pg0=Math.min(255,138+112*Math.pow(v,0.90));
-        var pb0=Math.min(255, 68+168*Math.pow(v,1.70));
+        var pr0=Math.min(255,226+29*v);
+        var pg0=Math.min(255,150+ 88*Math.pow(v,0.85));
+        var pb0=Math.min(255, 72+133*Math.pow(v,1.90));
         // 盘缘的抗锯齿不能淡成透明：外面紧挨着色球，淡成透明会在交界处留一条 1px 暗线。
-        // 让它淡向色球的颜色和它 0.62 的起始不透明度，两边就接得上。
+        // 让它淡向色球的颜色和它 0.36 的起始不透明度，两边就接得上。
         var w=1-edge;
         d[i4]  =Math.round(pr0*(1-w)+255*w);
         d[i4+1]=Math.round(pg0*(1-w)+212*w);
         d[i4+2]=Math.round(pb0*(1-w)+152*w);
-        d[i4+3]=Math.round(Math.max(edge,0.62*w)*255);
+        d[i4+3]=Math.round(Math.max(edge,0.36*w)*255);
       }else{
         // 色球：紧贴 limb 外的一薄层，把实体的边"焊"进外面的日冕里
-        var t=(nrm-1)/0.30;
-        var cv=Math.pow(1-t,2.5)*0.62;
+        // 色球只是一薄层热边，不能比盘面还亮 —— 那会把临边昏暗整个盖反
+        var t=(nrm-1)/0.24;
+        var cv=Math.pow(1-t,2.4)*0.36;
         d[i4]=255; d[i4+1]=212; d[i4+2]=152; d[i4+3]=Math.round(clamp(cv,0,1)*255);
       }
     }
@@ -668,16 +678,17 @@ function bakePlanet(pr, ldx, ldy, lz, tintR, tintB, lit, idx){
       var nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
       var ux=(nx/(nz+0.32))*1.85+idx*17.3, uy=(ny/(nz+0.32))*1.85+idx*9.7;
       var relief=fbm(ux,uy)-0.5;
-      var lamRaw=(nx*ldx+ny*ldy+nz*lz)/lnorm + relief*0.30*(1-nz*0.45);
-      var lam=sstep(-0.05,0.36,lamRaw);      // 终止线是渐变带，不是硬边
+            // 起伏只能轻扰法线：扰太狠终止线会被搅成锯齿状的怪边，读起来是瑕疵不是地貌
+      var lamRaw=(nx*ldx+ny*ldy+nz*lz)/lnorm + relief*0.15*(1-nz*0.45);
+      var lam=sstep(-0.11,0.44,lamRaw);      // 终止线是一条更宽的渐变带
       lam *= 0.60+0.40*Math.pow(nz,0.55);    // 临边昏暗
-      var alb=0.78+0.44*(0.62*fbm(ux*0.55,uy*0.55)+0.38*fbm(ux*2.7+4.1,uy*2.7-2.3));
+      var alb=0.66+0.68*(0.58*fbm(ux*0.52,uy*0.52)+0.42*fbm(ux*2.7+4.1,uy*2.7-2.3));
       var rim=Math.pow(1-nz,5.5)*Math.max(0,-(nx*ldx+ny*ldy))*lit*1.1;
       var s=Math.min(1, lam*alb*lit*4.4 + lam*0.05 + rim);
       var edge=sstep(0,1.8,pr-dd);
-      d[i4]  =Math.round(Math.min(255,(12+240*Math.pow(s,0.85))*tintR));
-      d[i4+1]=Math.round(Math.min(255, 13+219*Math.pow(s,1.10)));
-      d[i4+2]=Math.round(Math.min(255,(20+188*Math.pow(s,1.42))*tintB));
+      d[i4]  =Math.round(Math.min(255,(12+218*Math.pow(s,0.86))*tintR));
+      d[i4+1]=Math.round(Math.min(255, 13+206*Math.pow(s,0.98)));
+      d[i4+2]=Math.round(Math.min(255,(20+182*Math.pow(s,1.22))*tintB));
       d[i4+3]=Math.round(edge*255);
     }
   }
@@ -717,7 +728,7 @@ var navEl=document.getElementById('nav');
 var W=0,H=0,M=0,dpr=1,narrowW=false,fewP=false;
 var glowHaze=null,glowCorona=null,emberSprite=null,photoSprite=null,photoR=1;
 var dotWarm=null,dotCool=null,planetSprites=[],warmGrad=null;
-var P=[],ghostIdx=[],dust=[];
+var P=[],ghostIdx=[],dust=[],pdrift=[];
 var T=0,last=0,rafId=0,running=false;
 var pageF=0,nearPage=-1,litDone=false,bloomT=-1,comets=[],cometNext=2.5;
 var CUR={},TGT={};
@@ -742,7 +753,9 @@ function buildParticles(){
             sz:1+h7*1.6,cool:h3>0.62,tw:h5*Math.PI*2,base:0.28+h3*0.62,x:0,y:0,a:0});
   }
   ghostIdx=[];
-  var want=[[0.30,0.24],[0.74,0.36],[0.24,0.72],[0.70,0.78]];
+  // 挂靠点：窄屏全部挑在上半屏（下半屏归正文），宽屏才铺满四角
+  var want=narrowW?[[0.22,0.12],[0.62,0.20],[0.30,0.30],[0.58,0.37]]
+                  :[[0.30,0.24],[0.74,0.36],[0.24,0.72],[0.70,0.78]];
   for(var w=0;w<4;w++){
     var bi=0,bd=1e9;
     for(var j=0;j<P.length;j++){
@@ -784,7 +797,7 @@ function rebake(){
 
   var pcx=(narrowW?narrowCX(KF[6].cx):KF[6].cx)*W;
   var pcy=(narrowW?narrowCY(KF[6].cy):KF[6].cy)*H;
-  var tintR=[1.00,0.94,1.05,0.90], tintB=[0.92,1.06,0.86,1.10];
+  var tintR=[1.03,0.92,1.08,0.86], tintB=[0.86,1.12,0.80,1.18];
   planetSprites=[];
   for(var p=0;p<PLANETS.length;p++){
     var pp=planetPos(p);
@@ -875,6 +888,12 @@ function draw(dt){
     var a=p.base;
     if(!reduce) a*=0.72+0.28*Math.sin(T*1.6+p.tw);
     a*=0.75+0.25*S.lum;
+    // 核还没亮的那两页，靠这个把"星辰正在往内核附近聚"画出来：
+    // 离核越近的尘越亮。序幕只有一丝，虚无那页明显得多。
+    if(S.halo>0.004){
+      var hdx=(x-cx)/(M*0.46), hdy=(y-cy)/(M*0.46);
+      a*=1+S.halo*1.9*Math.pow(Math.max(0,1-Math.sqrt(hdx*hdx+hdy*hdy)),2.2);
+    }
     if(eat){
       var ddx=x-cx, ddy=y-cy;
       a*=sstep(0.34,0.80,Math.sqrt(ddx*ddx+ddy*ddy)/coreR);
@@ -887,13 +906,22 @@ function draw(dt){
   }
 
   // 3) 幽灵短语（挂在 4 颗粒子上，随 grav 上升淡出）
-  var gh=(1-S.grav)*0.55;
+  // 手机上这几句是上半屏唯一的内容，太淡就只剩"一片空白"；
+  // 但它们又不能飘到下半屏的正文上，也不能撞右边的拉条。所以：更亮更大 + 划定活动范围。
+  var gh=(1-S.grav)*(narrowW?0.92:0.55);
   if(gh>0.02){
-    ctx.font=(12*dpr)+'px "PingFang SC","Hiragino Sans GB",sans-serif';
+    ctx.font=((narrowW?14.5:12)*dpr)+'px "PingFang SC","Hiragino Sans GB",sans-serif';
     ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillStyle='#CBC2D6';
+    var railGuard=(narrowW?76:0)*dpr;
     for(var q2=0;q2<ghostIdx.length;q2++){
       var gp=P[ghostIdx[q2]]; if(!gp) continue;
-      var ga=gp.a*gh; if(ga<=0.01) continue;
+      var ga=gp.a*gh;
+      if(narrowW){
+        ga*=1-sstep(0.30,0.44,gp.y/H);            // 下半屏是正文的地盘
+        var wid=ctx.measureText(GHOST[q2]).width;
+        if(gp.x+11*dpr+wid > W-railGuard) continue; // 别顶到拉条上
+      }
+      if(ga<=0.01) continue;
       ctx.globalAlpha=Math.min(1,ga);
       ctx.fillText(GHOST[q2], gp.x+11*dpr, gp.y+1*dpr);
     }
@@ -954,7 +982,9 @@ function draw(dt){
       // 凝聚：还"虚"的时候盘子大而淡，随实体度收拢成小而实——收拢本身就是"凝"的动作
       prNow*=0.62+0.38*sol;
       var pd=prNow/photoR*photoSprite.width;
-      ctx.globalAlpha=Math.min(1,Math.pow(sol,1.85)*base);
+      // 不能整体乘 base：lum 一低盘子就淡成中性灰（加法混合下半透明的近白就是灰）。
+      // 恒星的表面不会因为变小变远就变透明，给个 0.68 的下限。
+      ctx.globalAlpha=Math.min(1,Math.pow(sol,1.70)*(0.68+0.32*base));
       ctx.drawImage(photoSprite, cx-pd/2, cy-pd/2, pd, pd);
     }
     // 点火脉冲
@@ -979,30 +1009,64 @@ function draw(dt){
       ctx.drawImage(dotWarm, dd3.x*W-ds/2, dd3.y*H-ds/2, ds, ds);
     }
     ctx.globalCompositeOperation='source-over';
+    // 四颗一样亮、而且完全静止 —— 那就是贴纸。三件事把它拉回"场景"：
+    //   漂移（各自的周期和幅度都不同）、景深（远的更暗）、到场时略微涨大。
+    var PDEPTH=[0.94,1.00,0.84,0.66];
     for(var pi=0;pi<planetSprites.length;pi++){
       var sp=planetSprites[pi], pp2=planetPos(pi), im=sp.img, sw=im.width;
-      ctx.globalAlpha=Math.min(1,pv);
-      ctx.drawImage(im, pp2.x-sw/2, pp2.y-sw/2, sw, sw);
+      var ph=T*(0.048+pi*0.019)+pi*2.1;
+      var ox2=reduce?0:Math.cos(ph)*(2.4+pi*1.1)*dpr;
+      var oy2=reduce?0:Math.sin(ph*0.83+1.3)*(1.7+pi*0.8)*dpr;
+      var sc=(0.90+0.10*Math.min(1,pv*1.35))*sw;
+      ctx.globalAlpha=Math.min(1,pv*PDEPTH[pi]);
+      ctx.drawImage(im, pp2.x+ox2-sc/2, pp2.y+oy2-sc/2, sc, sc);
+      pp2.ox=ox2; pp2.oy=oy2; pdrift[pi]=pp2;
     }
-    ctx.font=(9.5*dpr)+'px ui-monospace,SFMono-Regular,Menlo,monospace';
+    // 标签：上一版是钉在球底下的 mono 小字，读起来像信息图不像场景。
+    // 拉开字距、压暗、离球远一点，让它退回注解的位置。
+    ctx.font=(9*dpr)+'px ui-monospace,SFMono-Regular,Menlo,monospace';
+    if('letterSpacing' in ctx) ctx.letterSpacing=(1.6*dpr)+'px';
     ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='rgba(255,217,160,1)';
     for(var li=0;li<PLABEL.length;li++){
-      var lp=planetPos(li), hw=ctx.measureText(PLABEL[li]).width/2+6*dpr;
-      ctx.globalAlpha=Math.min(1,pv*0.4);
-      ctx.fillText(PLABEL[li], clamp(lp.x,hw,W-hw), lp.y+lp.r+10*dpr);
+      var lp=pdrift[li]||planetPos(li), hw=ctx.measureText(PLABEL[li]).width/2+8*dpr;
+      ctx.globalAlpha=Math.min(1,pv*0.30*PDEPTH[li]);
+      ctx.fillText(PLABEL[li], clamp(lp.x+(lp.ox||0),hw,W-hw), lp.y+(lp.oy||0)+lp.r+15*dpr);
     }
+    if('letterSpacing' in ctx) ctx.letterSpacing='0px';
     ctx.globalAlpha=1;
   }
 
-  // 7) 主权环：随本页进度画出来
+  // 7) 主权环：不能用 ctx.arc 画一个完美正圆再纯色描边 —— 那是最容易露怯的一笔。
+  //    改成带半径起伏的折线路径（跟光晕外圈同一条纪律：完美的圆是程序生成的签名），
+  //    再单独重描最后一小段当"笔尖"，读起来是正在被画出来，而不是贴上去的一个圈。
   if(S.ring>0.004){
+    var prog=Math.min(1,S.ring), R0=0.42*M, TAU=Math.PI*2, steps=170;
+    function ringPt(u){
+      var an=-Math.PI/2+u*TAU;
+      var rr=R0*(1+0.0052*Math.sin(an*3+1.1)+0.0028*Math.sin(an*7-0.4)+0.0015*Math.sin(an*13+2.2));
+      return [cx+Math.cos(an)*rr, cy+Math.sin(an)*rr];
+    }
     ctx.save();
-    ctx.globalAlpha=Math.min(1,S.ring*1.6);
-    ctx.strokeStyle='rgba(255,217,160,.30)';
-    ctx.lineWidth=Math.max(1,1*dpr);
+    ctx.lineCap='round'; ctx.lineJoin='round';
     ctx.beginPath();
-    ctx.arc(cx,cy,0.42*M,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.min(1,S.ring));
-    ctx.stroke();
+    for(var g2=0;g2<=steps;g2++){
+      var q=ringPt(g2/steps*prog);
+      g2?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);
+    }
+    ctx.strokeStyle='rgba(255,217,160,0.19)'; ctx.lineWidth=Math.max(1,1*dpr); ctx.stroke();
+    // 笔尖：最后 16% 更亮、更粗，带一点外发光
+    var h0=Math.max(0,prog-0.16);
+    if(prog-h0>0.004){
+      ctx.beginPath();
+      var hs=Math.max(6,Math.round(steps*(prog-h0)/Math.max(prog,0.001)));
+      for(var g3=0;g3<=hs;g3++){
+        var q2b=ringPt(h0+(prog-h0)*g3/hs);
+        g3?ctx.lineTo(q2b[0],q2b[1]):ctx.moveTo(q2b[0],q2b[1]);
+      }
+      ctx.strokeStyle='rgba(255,229,183,0.60)'; ctx.lineWidth=Math.max(1,1.4*dpr);
+      ctx.shadowColor='rgba(255,209,154,0.55)'; ctx.shadowBlur=9*dpr;
+      ctx.stroke();
+    }
     ctx.restore();
   }
 }
