@@ -312,6 +312,30 @@ h1,h2{
   .footbar{bottom:14px}
 }
 
+/* 极矮视口（手机横屏、或浏览器上下工具栏都展开时）：整体收紧一档。
+   mandatory snap 下装不下的内容是永远看不到的，所以这一档是硬需求不是优化。 */
+@media(max-width:820px) and (max-height:580px){
+  h1,h2{font-size:clamp(21px,min(4.6vw,5.6vh),50px);line-height:1.22}
+  .col{padding-bottom:7%}
+  .eyebrow{margin-bottom:12px}
+  .en{margin-top:11px}
+  .body,.sub{margin-top:13px;line-height:1.66}
+  .card{margin-top:14px;padding:12px 14px}
+  .face{margin-top:8px}.face.sm{line-height:1.6}
+  .foot{margin-top:7px}
+  .dateline{margin-top:8px}
+  .chips{margin-top:14px;gap:5px}
+  .chip{padding:3px 8px}
+  .facts{margin-top:14px;gap:7px}
+  .fact{padding:10px 14px}
+  .fact p{margin-top:4px;line-height:1.55}
+  .bub{padding:7px 11px}
+  .bub.me{margin-top:8px}
+  .bub.ai{margin-top:7px}
+  .qr{width:92px;height:92px}
+  .mailrow{margin-top:14px}
+}
+
 @media(prefers-reduced-motion:reduce){
   #deck{scroll-behavior:auto}
   .ln>i{transform:none;transition:none}
@@ -342,9 +366,10 @@ h1,h2{
     <a href="#gather"    data-i="3"><b></b><span>聚拢</span></a>
     <a href="#ignite"    data-i="4"><b></b><span>点亮</span></a>
     <a href="#sun"       data-i="5"><b></b><span>成形</span></a>
-    <a href="#planets"   data-i="6"><b></b><span>照亮</span></a>
-    <a href="#sovereign" data-i="7"><b></b><span>主权</span></a>
-    <a href="#begin"     data-i="8"><b></b><span>开始</span></a>
+    <a href="#honest"    data-i="6"><b></b><span>诚实</span></a>
+    <a href="#planets"   data-i="7"><b></b><span>照亮</span></a>
+    <a href="#sovereign" data-i="8"><b></b><span>主权</span></a>
+    <a href="#begin"     data-i="9"><b></b><span>开始</span></a>
   </div>
 </nav>
 
@@ -442,28 +467,38 @@ h1,h2{
       <span class="ln"><i class="l2">它才开口说你是谁。</i></span>
     </h2>
     <p class="en fu d1">It speaks only with evidence.</p>
-    <p class="body fu d2">七个品类的人格声音——每一条判断都标着依据，点开就是你的原话。证据不够时它会直说：还不够。判断永远可反驳——镜子不产生你，它只让你看见。</p>
+    <p class="body fu d2">七个品类的人格声音——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。</p>
     <div class="chips fu d3">
       <span class="chip">特质倾向</span><span class="chip">价值观</span><span class="chip">世界观</span><span class="chip">动机</span><span class="chip">习惯</span><span class="chip">表达</span><span class="chip">自我叙事</span>
     </div>
-    <div class="duo fu d4">
-      <div class="card">
-        <div class="lab">人格声音 · 表达风格</div>
-        <p>你在人多的场合，会把话收起来。</p>
-        <div class="foot">依据 4 条原话 ›</div>
-      </div>
-      <div class="card dim">
-        <div class="lab">人格声音 · 世界观与信念</div>
-        <p>3 条还不够下判断。宁可慢。</p>
-        <div class="foot">还在积累中</div>
-      </div>
+    <div class="card fu d4">
+      <div class="lab">人格声音 · 表达风格</div>
+      <p class="face sm">你在人多的场合，会把话收起来。</p>
+      <div class="foot">依据 4 条原话 ›</div>
+    </div>
+  </div>
+</section>
+
+<section id="honest" data-stage="honest">
+  <div class="col">
+    <p class="eyebrow fu">06 · 诚实 / IT SAYS WHEN IT'S UNSURE</p>
+    <h2>
+      <span class="ln"><i class="l1">证据不够的时候，</i></span>
+      <span class="ln"><i class="l2">它会直说还不够。</i></span>
+    </h2>
+    <p class="en fu d1">It tells you when it doesn't know yet.</p>
+    <p class="body fu d2">宁可慢，也不给你一个看起来很懂你、其实没有依据的结论。这是产品的铁律，不是一句文案。</p>
+    <div class="card dim fu d3">
+      <div class="lab">人格声音 · 世界观与信念</div>
+      <p class="face sm">3 条还不够下判断。宁可慢。</p>
+      <div class="foot">还在积累中</div>
     </div>
   </div>
 </section>
 
 <section id="planets" data-stage="planets">
   <div class="col">
-    <p class="eyebrow fu">06 · 照亮 / ONE CORE, EVERY PLANET</p>
+    <p class="eyebrow fu">07 · 照亮 / ONE CORE, EVERY PLANET</p>
     <h2>
       <span class="ln"><i class="l1">一个内核，</i></span>
       <span class="ln"><i class="l2">照亮所有星球。</i></span>
@@ -476,7 +511,7 @@ h1,h2{
 
 <section id="sovereign" data-stage="sovereign">
   <div class="col">
-    <p class="eyebrow fu">07 · 主权 / YOURS ALONE</p>
+    <p class="eyebrow fu">08 · 主权 / YOURS ALONE</p>
     <h2>
       <span class="ln"><i class="l1">这一切，</i></span>
       <span class="ln"><i class="l2">只发生在你的手机里。</i></span>
@@ -503,7 +538,7 @@ h1,h2{
   <div class="col">
     <div class="beginwrap">
       <div class="begintext">
-        <p class="eyebrow fu">08 · 第一句 / BEGIN</p>
+        <p class="eyebrow fu">09 · 第一句 / BEGIN</p>
         <h2><span class="ln"><i class="l1">从你的第一句开始。</i></span></h2>
         <p class="en fu d1">Begin with one sentence.</p>
         <p class="body fu d2">现在是内测阶段——进群领邀请码，装上就能说话。</p>
@@ -564,6 +599,7 @@ var KF = [
   {cx:.60,cy:.50,cr:.32,lum:.14, grav:.72,spin:.55,disk:.80,rs:.55, pl:0,  ring:0, solid:.10, halo:.16}, // 聚拢
   {cx:.60,cy:.48,cr:.34,lum:.46, grav:.90,spin:.80,disk:.60,rs:.42, pl:0,  ring:0, solid:.58, halo:0}, // 点亮
   {cx:.64,cy:.50,cr:.40,lum:1.0, grav:1,  spin:1,  disk:.25,rs:.34, pl:0,  ring:0, solid:1.0, halo:0}, // 成形
+  {cx:.58,cy:.48,cr:.37,lum:.95, grav:1,  spin:.95,disk:.24,rs:.32, pl:0,  ring:0, solid:1.0, halo:0}, // 诚实：核几乎不动，让"它会直说还不够"这句自己站住
   {cx:.34,cy:.21,cr:.26,lum:.92, grav:1,  spin:.90,disk:.22,rs:.26, pl:1,  ring:0, solid:1.0, halo:0}, // 照亮：核抬到左上，让它照得到右下那几颗
   {cx:.50,cy:.44,cr:.24,lum:.78, grav:1,  spin:.70,disk:.15,rs:.30, pl:.35,ring:1, solid:.92, halo:0}, // 主权
   {cx:.50,cy:.30,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0, solid:.74, halo:0}  // 开始
@@ -728,11 +764,12 @@ var navEl=document.getElementById('nav');
 var W=0,H=0,M=0,dpr=1,narrowW=false,fewP=false;
 var glowHaze=null,glowCorona=null,emberSprite=null,photoSprite=null,photoR=1;
 var dotWarm=null,dotCool=null,planetSprites=[],warmGrad=null;
-var P=[],ghostIdx=[],dust=[],pdrift=[];
+var P=[],ghostIdx=[],dust=[],pdrift=[],colTop=[];
 var T=0,last=0,rafId=0,running=false;
 var pageF=0,nearPage=-1,litDone=false,bloomT=-1,comets=[],cometNext=2.5;
 var CUR={},TGT={};
 KEYS.forEach(function(k){ CUR[k]=KF[0][k]; TGT[k]=KF[0][k]; });
+CUR.ct=0.5; TGT.ct=0.5;   // 正文上沿（占页高的比例），窄屏摆核用
 
 function narrowCX(v){ return 0.5+(v-0.5)*0.71; }    // 照亮页 .22 → .30
 function narrowCY(v){ return 0.26+(v-0.5)*0.42; }   // 核抬到上方，下方留给文字
@@ -795,8 +832,11 @@ function rebake(){
   dotWarm=bakeDot(16,255,236,208);
   dotCool=bakeDot(16,216,210,234);
 
-  var pcx=(narrowW?narrowCX(KF[6].cx):KF[6].cx)*W;
-  var pcy=(narrowW?narrowCY(KF[6].cy):KF[6].cy)*H;
+  var pcx=(narrowW?narrowCX(KF[7].cx):KF[7].cx)*W;
+  // 窄屏的核是按正文上沿钉的，星球受光方向要用同一个位置估算，否则光影和画面对不上
+  var pcy=narrowW
+    ? Math.max(-0.30*(KF[7].cr*M*0.8), ((colTop[7]||H*0.5/dpr)/(H/dpr))*H - 18*dpr - KF[7].cr*M*0.8*0.50)
+    : KF[7].cy*H;
   var tintR=[1.03,0.92,1.08,0.86], tintB=[0.86,1.12,0.80,1.18];
   planetSprites=[];
   for(var p=0;p<PLANETS.length;p++){
@@ -812,6 +852,14 @@ function rebake(){
   warmGrad.addColorStop(1,'rgba(255,176,108,1)');
 
   buildParticles();
+  // 量出每页正文的上沿：窄屏要靠它决定核摆在哪，不能用固定比例。
+  // offsetTop 相对 section（section 是 position:relative），不受滚动影响；
+  // 入场动画只动 transform 不动布局，所以这个值是稳定的。
+  colTop=[];
+  for(var ci2=0;ci2<N;ci2++){
+    var c2=secEl[ci2].querySelector('.col');
+    colTop.push(c2?c2.offsetTop:0);
+  }
 }
 
 /* ── 页位：一切稳定性的来源 ──
@@ -828,6 +876,8 @@ function readScroll(){
     var key=KEYS[k];
     TGT[key]=KF[i0][key]+(KF[i1][key]-KF[i0][key])*t;
   }
+  var a0=colTop[i0]||0, a1=colTop[i1]||0;
+  TGT.ct=(a0+(a1-a0)*t)/ph;
   var near=Math.round(p);
   if(near!==nearPage){
     nearPage=near;
@@ -859,9 +909,20 @@ function paintRail(){
 /* ── 帧 ── */
 function draw(dt){
   var S=CUR;
-  var cxf=narrowW?narrowCX(S.cx):S.cx, cyf=narrowW?narrowCY(S.cy):S.cy;
-  var cx=cxf*W, cy=cyf*H;
+  var cxf=narrowW?narrowCX(S.cx):S.cx;
+  var cx=cxf*W;
   var coreR=S.cr*M*(narrowW?0.8:1);
+  var cy;
+  if(narrowW){
+    // 窄屏不能用固定比例摆核：正文一高就会顶上来，太阳会压在标题上。
+    // 真机（浏览器上下工具栏吃掉一截）可用高度更小，这个碰撞只在真机上出得来。
+    // 改成按正文的实际上沿钉：核的主体永远收在文字之上；空间不够就让顶部裁掉一点，
+    // 宁可裁一个大太阳，也不要缩成一个小点——成形那页的主角就是它。
+    cy = S.ct*H - 18*dpr - coreR*0.50;
+    if(cy < -coreR*0.30) cy = -coreR*0.30;
+  } else {
+    cy = S.cy*H;
+  }
 
   // 1) 底
   ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
@@ -1081,6 +1142,8 @@ function frame(now){
     var key=KEYS[k], d0=TGT[key]-CUR[key];
     CUR[key]=(d0<0.00002&&d0>-0.00002)?TGT[key]:CUR[key]+d0*0.15;
   }
+  var dct=TGT.ct-CUR.ct;
+  CUR.ct=(dct<0.00002&&dct>-0.00002)?TGT.ct:CUR.ct+dct*0.15;
   if(!litDone&&CUR.lum>0.30){
     litDone=true;
     document.body.classList.add('lit');
