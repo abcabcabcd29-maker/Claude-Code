@@ -791,7 +791,7 @@ function buildParticles(){
   }
   ghostIdx=[];
   // 挂靠点：窄屏全部挑在上半屏（下半屏归正文），宽屏才铺满四角
-  var want=narrowW?[[0.22,0.12],[0.62,0.20],[0.30,0.30],[0.58,0.37]]
+  var want=narrowW?[[0.19,0.065],[0.64,0.105],[0.33,0.150],[0.70,0.195]]
                   :[[0.30,0.24],[0.74,0.36],[0.24,0.72],[0.70,0.78]];
   for(var w=0;w<4;w++){
     var bi=0,bd=1e9;
@@ -978,7 +978,10 @@ function draw(dt){
       var gp=P[ghostIdx[q2]]; if(!gp) continue;
       var ga=gp.a*gh;
       if(narrowW){
-        ga*=1-sstep(0.30,0.44,gp.y/H);            // 下半屏是正文的地盘
+        // 用正文的实际上沿当基准（跟核同一个 S.ct），不能写死比例——
+        // 正文位置随内容多少和视口高度变，写死的阈值在真机上必然有一档会撞上。
+        var gLim=S.ct;
+        ga*=1-sstep(gLim-0.15,gLim-0.03,gp.y/H);  // 到正文上沿之前就得淡干净
         var wid=ctx.measureText(GHOST[q2]).width;
         if(gp.x+11*dpr+wid > W-railGuard) continue; // 别顶到拉条上
       }
