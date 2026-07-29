@@ -217,15 +217,6 @@ h1,h2{
 /* ── 08 begin ── */
 #begin{flex-direction:column;justify-content:center;align-items:stretch}
 #begin .col{max-width:840px;padding:0}
-.beginwrap{display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap}
-.begintext{flex:1 1 300px;min-width:250px}
-.qr{
-  flex:none;width:112px;height:112px;border:1px dashed rgba(255,217,160,.35);border-radius:10px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:rgba(255,217,160,.5);
-  text-shadow:none;line-height:1.4;
-}
-@media(max-width:640px){.beginwrap{flex-direction:column;gap:22px}.begintext{flex:0 0 auto}}
 .mailrow{margin:20px 0 0;font-family:var(--mono);font-size:12px;color:#8B8395;letter-spacing:.04em}
 .mailrow a{color:var(--core);text-decoration:none;border-bottom:1px solid rgba(255,217,160,.25);padding-bottom:1px;transition:border-color .3s ease}
 .mailrow a:hover{border-bottom-color:var(--core)}
@@ -464,7 +455,6 @@ h1,h2{
   .bub{padding:7px 11px}
   .bub.me{margin-top:8px}
   .bub.ai{margin-top:7px}
-  .qr{width:92px;height:92px}
   .mailrow{margin-top:14px}
 }
 
@@ -675,22 +665,14 @@ h1,h2{
 
 <section id="begin" data-stage="begin">
   <div class="col">
-    <div class="beginwrap">
-      <div class="begintext">
-        <p class="eyebrow fu">09 · 第一句 / BEGIN</p>
-        <h2><span class="ln"><i class="l1">从你的第一句开始。</i></span></h2>
-        <p class="en fu d1">Begin with one sentence.</p>
-        <p class="body fu d2">现在是 iOS 内测阶段——用 TestFlight 装上就能说话。</p>
-        <div class="actions fu d3">
-          <a class="cta" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">用 TestFlight 安装 →</a>
-        </div>
-        <p class="mailrow fu d3">或者写信：<a href="mailto:hello@soulor.id">hello@soulor.id</a></p>
-      </div>
-      <div class="qr fu d3" aria-label="内测群二维码，即将放上">
-        <span>内测群二维码</span>
-        <span>即将放上</span>
-      </div>
+    <p class="eyebrow fu">09 · 第一句 / BEGIN</p>
+    <h2><span class="ln"><i class="l1">从你的第一句开始。</i></span></h2>
+    <p class="en fu d1">Begin with one sentence.</p>
+    <p class="body fu d2">现在是 iOS 内测阶段——用 TestFlight 装上就能说话。</p>
+    <div class="actions fu d3">
+      <a class="cta" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">用 TestFlight 安装 →</a>
     </div>
+    <p class="mailrow fu d3">或者写信：<a href="mailto:hello@soulor.id">hello@soulor.id</a></p>
   </div>
   <div class="footbar">
     <div class="l">Soulor · 灵镜 — 一面灵魂的镜子</div>
