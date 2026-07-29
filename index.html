@@ -435,32 +435,61 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
 @media(max-width:799px){
   /* 右边给拉条让出通道，正文不能跑到点底下 */
   section{padding-right:46px}
+  /* 顶部给导航让出通道。⚠️ 这条必须挂在 section 上、不能挂在 .col 上：
+     居中是在 section 的**内容盒**里居中，padding 撑开的通道才真的排除掉 nav；
+     写在 .col 的 padding 上只是把文字往下推，盒子还是能顶进 nav
+     （2026-07-29 手机改居中后，英文版矮屏的成形页标题就是这样压进导航的——
+      中文版没露出来，因为英文更长、居中后向上溢出得更多）。 */
+  section{padding-top:68px}   /* 实测 nav 底沿 57px，留 11px 呼吸；54px 会压掉 2px */
   .footbar{right:46px}
-  section:not(#begin){align-items:flex-end}
-  .col{padding:0 0 11%;max-width:none}
+  /* 手机：文字全部靠上，下半屏整块留给动图。
+     Trev 2026-07-29 两步定的——先是「字都太下面了放，应该全部放中间才对」，
+     改成居中之后他说「放中间就会挡住那个动态图，直接放上面吧文字」。
+     ⚠️ 这一改必须连着改 canvas：核和幽灵短语原来都是按**正文上沿**避让的
+     （文字在下、天空在上），文字挪到顶上之后按旧逻辑核会被直接挤出屏幕。
+     现在两者都改成按 `S.cb`（正文**下沿**）避让，见 draw() 的 narrowW 分支。 */
+  section:not(#begin){align-items:flex-start}
+  /* ⚠️ 百分比内边距按**宽度**算不是高度，要垂直留白只能写死 px/vh。
+     ⚠️ 底部让位只加在 #begin 上——`.footbar` 全站**只出现在 09 那一页**，
+     加在通用 .col 上等于让另外 9 页各白占 68px 高度（英文版矮屏就是这么被挤爆的）。 */
+  .col{padding:0;max-width:none}
   /* 首屏天上本来就没有核，正文再贴底就会在导航和标题之间空掉半屏。
      让它居中：上方留给幽灵短语，又不至于把字甩到浏览器工具栏边上。
      ⚠️ 必须写成 section#hero：上面那条 `section:not(#begin)` 里的 :not() 取参数的
      特异性，#begin 是 ID，所以那条是 ID 级的，单写 #hero 会被它压掉。 */
-  section#hero{align-items:center}
+  section#hero{align-items:flex-start}
   /* ⚠️ 百分比内边距按**宽度**算不是高度，这里要的是垂直留白，只能写死 px */
+  /* hero 天上本来没有核，不需要给核让位，底部也不用躲 footbar（这页没有） */
   #hero .col{padding:28px 0 22px}
   /* 提示竖线在手机上正好卡在浏览器工具栏边上，像个杂物；分页和拉条已经说明了"还有" */
   .hint{display:none}
   section::before{background:none}
   #fog{display:block}
-  #begin{justify-content:flex-end}
-  #begin .col{padding:0 0 16%}
+  /* 09 也居中，并且必须给 footbar 留够通道 —— 加了 TestFlight 按钮之后
+     内容变高，贴底就会和页脚重叠（Trev 真机截图逮到的）。 */
+  #begin{justify-content:flex-start}
+  /* footbar 是 position:absolute、不占布局，正文能直接长进去 ——
+     2026-07-29 加了 TestFlight 按钮之后就是这么让「或者写信」压在页脚上的。 */
+  #begin .col{padding:0 0 clamp(64px,10vh,96px)}
   .card,.facts{max-width:none}
+  /* 两条轴在窄屏上收一档 —— 英文 chip 比中文宽得多（"Habits & Preferences" vs
+     "习惯与偏好"），在 390px 宽屏上会折成三行，实测让成形页在 390×620 英文版
+     超出 51px。mandatory snap 下超出的内容永远看不到，所以这是硬需求不是优化。 */
+  .chip{font-size:9.5px;padding:3px 8px;letter-spacing:.04em}
+  .ax{gap:5px}
+  .axes{gap:7px;margin-top:15px}
   .footbar{bottom:14px}
 }
 
 /* 矮视口（不分宽窄）：加了「人格声音 × 生活场景」两条轴之后，
    成形页在 1024×620 这种"宽但矮"的窗口下会差几个像素。只按宽度收紧覆盖不到它。 */
 @media(max-height:660px){
-  .axes{margin-top:14px;gap:7px}
-  .card{margin-top:17px}
-  .body,.sub{margin-top:16px}
+  .axes{margin-top:12px;gap:6px}
+  .card{margin-top:13px}
+  /* 行高也收一档：英文正文在 390 宽下是 5 行，1.78 的行高单这一项就吃掉 116px。
+     实测 390×620 英文版只差 3px 就装不下——3px 的余量等于没有余量，
+     随便改一句文案就会再破，所以这里一次留够。 */
+  .body,.sub{margin-top:14px;line-height:1.66}
 }
 
 /* 极矮视口（手机横屏、或浏览器上下工具栏都展开时）：整体收紧一档。
@@ -925,12 +954,15 @@ var navEl=document.getElementById('nav');
 var W=0,H=0,M=0,dpr=1,narrowW=false,fewP=false;
 var glowHaze=null,glowCorona=null,emberSprite=null,photoSprite=null,photoR=1;
 var dotWarm=null,dotCool=null,planetSprites=[],warmGrad=null;
-var P=[],ghostIdx=[],dust=[],pdrift=[],colTop=[];
+var P=[],ghostIdx=[],dust=[],pdrift=[],colTop=[],colBot=[];
 var T=0,last=0,rafId=0,running=false;
 var pageF=0,nearPage=-1,litDone=false,bloomT=-1,comets=[],cometNext=2.5;
 var CUR={},TGT={};
 KEYS.forEach(function(k){ CUR[k]=KF[0][k]; TGT[k]=KF[0][k]; });
-CUR.ct=0.5; TGT.ct=0.5;   // 正文上沿（占页高的比例），窄屏摆核用
+CUR.ct=0.5; TGT.ct=0.5;   // 正文上沿（占页高的比例）
+CUR.cb=0.5; TGT.cb=0.5;   // 正文下沿——窄屏摆核/幽灵短语用的就是这个
+                          // ⚠️ ct/cb 都不在 KEYS 里，所以初始化和平滑都得单独写；
+                          // 漏了平滑那一步 CUR.cb 就是 undefined，cy 会算成 NaN、核直接不画
 
 function narrowCX(v){ return 0.5+(v-0.5)*0.71; }    // 照亮页 .22 → .30
 function narrowCY(v){ return 0.26+(v-0.5)*0.42; }   // 核抬到上方，下方留给文字
@@ -952,7 +984,8 @@ function buildParticles(){
   }
   ghostIdx=[];
   // 挂靠点：窄屏全部挑在上半屏（下半屏归正文），宽屏才铺满四角
-  var want=narrowW?[[0.19,0.065],[0.64,0.105],[0.33,0.150],[0.70,0.195]]
+  // 窄屏的锚点在**下半屏**（文字在上、天空在下）；宽屏仍是四角散布
+  var want=narrowW?[[0.19,0.80],[0.64,0.86],[0.33,0.91],[0.70,0.96]]
                   :[[0.30,0.24],[0.74,0.36],[0.24,0.72],[0.70,0.78]];
   for(var w=0;w<4;w++){
     var bi=0,bd=1e9;
@@ -996,7 +1029,7 @@ function rebake(){
   var pcx=(narrowW?narrowCX(KF[7].cx):KF[7].cxw)*W;
   // 窄屏的核是按正文上沿钉的，星球受光方向要用同一个位置估算，否则光影和画面对不上
   var pcy=narrowW
-    ? Math.max(-0.30*(KF[7].cr*M*0.8), ((colTop[7]||H*0.5/dpr)/(H/dpr))*H - 18*dpr - KF[7].cr*M*0.8*0.50)
+    ? Math.min(H+0.30*(KF[7].cr*M*0.8), ((colBot[7]||H*0.5/dpr)/(H/dpr))*H + 18*dpr + KF[7].cr*M*0.8*0.50)
     : KF[7].cyw*H;
   var tintR=[1.03,0.92,1.08,0.86], tintB=[0.86,1.12,0.80,1.18];
   planetSprites=[];
@@ -1016,10 +1049,17 @@ function rebake(){
   // 量出每页正文的上沿：窄屏要靠它决定核摆在哪，不能用固定比例。
   // offsetTop 相对 section（section 是 position:relative），不受滚动影响；
   // 入场动画只动 transform 不动布局，所以这个值是稳定的。
-  colTop=[];
+  colTop=[]; colBot=[];
   for(var ci2=0;ci2<N;ci2++){
     var c2=secEl[ci2].querySelector('.col');
     colTop.push(c2?c2.offsetTop:0);
+    // 下沿：手机改成「文字在上、动图在下」之后，核和幽灵短语要避让的是**正文下沿**。
+    // ⚠️ 必须减掉 padding-bottom —— offsetHeight 含内边距，而 .col 底部那块是
+    // 给 footbar 让路的空白，算进去会把核推到屏幕外面（核就没了）。
+    if(c2){
+      var pb=parseFloat(getComputedStyle(c2).paddingBottom)||0;
+      colBot.push(c2.offsetTop + c2.offsetHeight - pb);
+    } else colBot.push(0);
   }
 }
 
@@ -1039,6 +1079,8 @@ function readScroll(){
   }
   var a0=colTop[i0]||0, a1=colTop[i1]||0;
   TGT.ct=(a0+(a1-a0)*t)/ph;
+  var b0=colBot[i0]||0, b1=colBot[i1]||0;
+  TGT.cb=(b0+(b1-b0)*t)/ph;
   var near=Math.round(p);
   if(near!==nearPage){
     nearPage=near;
@@ -1075,12 +1117,14 @@ function draw(dt){
   var coreR=S.cr*M*(narrowW?0.8:1);
   var cy;
   if(narrowW){
-    // 窄屏不能用固定比例摆核：正文一高就会顶上来，太阳会压在标题上。
-    // 真机（浏览器上下工具栏吃掉一截）可用高度更小，这个碰撞只在真机上出得来。
-    // 改成按正文的实际上沿钉：核的主体永远收在文字之上；空间不够就让顶部裁掉一点，
-    // 宁可裁一个大太阳，也不要缩成一个小点——成形那页的主角就是它。
-    cy = S.ct*H - 18*dpr - coreR*0.50;
-    if(cy < -coreR*0.30) cy = -coreR*0.30;
+    // 窄屏：文字在上、动图在下（Trev 2026-07-29：「放中间就会挡住那个动态图，
+    // 直接放上面吧文字」）。所以核钉在**正文下沿之下**——以前是钉在上沿之上，
+    // 文字一挪到顶上，按旧逻辑核就被挤出屏幕了。
+    // 仍然不能用固定比例：正文高度随内容和视口变，写死的阈值必然有一档会撞上。
+    // 空间不够就让底部裁掉一点，宁可裁一个大太阳，也不要缩成一个小点——
+    // 成形那页的主角就是它。
+    cy = S.cb*H + 18*dpr + coreR*0.50;
+    if(cy > H + coreR*0.30) cy = H + coreR*0.30;
   } else {
     cy = S.cyw*H;
   }
@@ -1139,10 +1183,11 @@ function draw(dt){
       var gp=P[ghostIdx[q2]]; if(!gp) continue;
       var ga=gp.a*gh;
       if(narrowW){
-        // 用正文的实际上沿当基准（跟核同一个 S.ct），不能写死比例——
+        // 用正文的实际**下沿**当基准（跟核同一个 S.cb），不能写死比例——
         // 正文位置随内容多少和视口高度变，写死的阈值在真机上必然有一档会撞上。
-        var gLim=S.ct;
-        ga*=1-sstep(gLim-0.15,gLim-0.03,gp.y/H);  // 到正文上沿之前就得淡干净
+        // 文字在上、天空在下，所以是"到正文下沿之前必须淡干净"，方向跟以前相反。
+        var gLim=S.cb;
+        ga*=sstep(gLim+0.03,gLim+0.15,gp.y/H);
         var wid=ctx.measureText(GHOST[q2]).width;
         if(gp.x+11*dpr+wid > W-railGuard) continue; // 别顶到拉条上
       }
@@ -1308,6 +1353,8 @@ function frame(now){
   }
   var dct=TGT.ct-CUR.ct;
   CUR.ct=(dct<0.00002&&dct>-0.00002)?TGT.ct:CUR.ct+dct*0.15;
+  var dcb=TGT.cb-CUR.cb;
+  CUR.cb=(dcb<0.00002&&dcb>-0.00002)?TGT.cb:CUR.cb+dcb*0.15;
   if(!litDone&&CUR.lum>0.30){
     litDone=true;
     document.body.classList.add('lit');
@@ -1443,10 +1490,9 @@ try{
   // 首次进站：跟随浏览器语言，中文用户拿中文，其余拿英文
   var saved=null;
   try{ saved=localStorage.getItem(KEY); }catch(e){}
-  if(!saved){
-    var nav=(navigator.language||'').toLowerCase();
-    saved = nav.indexOf('zh')===0 ? 'zh' : 'en';
-  }
+  // 默认中文（Trev 2026-07-29 定）。不跟随 navigator.language ——
+  // 主要用户在国内，英文版是给海外/投资人看的第二档，不该抢默认。
+  if(!saved) saved='zh';
   apply(saved);
 
   btn.addEventListener('click', function(){
