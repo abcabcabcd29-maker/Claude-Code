@@ -179,7 +179,11 @@ h1,h2{
 .dateline{margin-top:11px;font-size:13.6px;color:var(--core2);line-height:1.4}
 .dateline .n{font-family:var(--serif);font-size:19px;letter-spacing:.01em}
 
-/* ── 05 两条轴：五个人格声音 × 六个生活场景 ── */
+/* ── 05 两条轴：六个人格声音 × 四个生活场景 ──
+   🔴 这两个数字和 chip 名字必须跟代码对账，别照抄文档：
+   `mirror/src/services/context.ts` 的 ALL_CATEGORIES / ALL_DOMAINS。
+   2026-07-29 第三轮同时动过两条轴：品类新增「应对风格」（6 个）；
+   场景把 自我/生活/成长 并进「独处」（4 个）。 */
 .axes{margin:18px 0 0;display:flex;flex-direction:column;gap:9px}
 .ax{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .axlab{
@@ -426,7 +430,7 @@ h1,h2{
   .footbar{bottom:14px}
 }
 
-/* 矮视口（不分宽窄）：加了「五个人格声音 × 六个生活场景」两条轴之后，
+/* 矮视口（不分宽窄）：加了「人格声音 × 生活场景」两条轴之后，
    成形页在 1024×620 这种"宽但矮"的窗口下会差几个像素。只按宽度收紧覆盖不到它。 */
 @media(max-height:660px){
   .axes{margin-top:14px;gap:7px}
@@ -589,15 +593,15 @@ h1,h2{
       <span class="ln"><i class="l2">它才开口说你是谁。</i></span>
     </h2>
     <p class="en fu d1">It speaks only with evidence.</p>
-    <p class="body fu d2">五个品类的人格声音 × 六个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。</p>
+    <p class="body fu d2">六个品类的人格声音 × 四个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。</p>
     <div class="axes fu d3">
       <div class="ax">
-        <span class="axlab">人格声音 · 5</span>
-        <span class="chip">特质倾向</span><span class="chip">价值观</span><span class="chip">世界观与信念</span><span class="chip">目标与动机</span><span class="chip">习惯与偏好</span>
+        <span class="axlab">人格声音 · 6</span>
+        <span class="chip">特质倾向</span><span class="chip">应对风格</span><span class="chip">价值观</span><span class="chip">世界观与信念</span><span class="chip">目标与动机</span><span class="chip">习惯与偏好</span>
       </div>
       <div class="ax">
-        <span class="axlab">生活场景 · 6</span>
-        <span class="chip">职场</span><span class="chip">情感</span><span class="chip">家庭</span><span class="chip">自我</span><span class="chip">生活</span><span class="chip">成长</span>
+        <span class="axlab">生活场景 · 4</span>
+        <span class="chip">职场</span><span class="chip">情感</span><span class="chip">家庭</span><span class="chip">独处</span>
       </div>
     </div>
     <div class="card fu d4">
