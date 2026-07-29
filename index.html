@@ -442,13 +442,16 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
       中文版没露出来，因为英文更长、居中后向上溢出得更多）。 */
   section{padding-top:68px}   /* 实测 nav 底沿 57px，留 11px 呼吸；54px 会压掉 2px */
   .footbar{right:46px}
-  /* 手机：文字全部靠上，下半屏整块留给动图。
-     Trev 2026-07-29 两步定的——先是「字都太下面了放，应该全部放中间才对」，
-     改成居中之后他说「放中间就会挡住那个动态图，直接放上面吧文字」。
-     ⚠️ 这一改必须连着改 canvas：核和幽灵短语原来都是按**正文上沿**避让的
-     （文字在下、天空在上），文字挪到顶上之后按旧逻辑核会被直接挤出屏幕。
-     现在两者都改成按 `S.cb`（正文**下沿**）避让，见 draw() 的 narrowW 分支。 */
-  section:not(#begin){align-items:flex-start}
+  /* 手机：正文垂直居中，核在正文**下方**。
+     Trev 2026-07-29 定了三轮：先贴底 →「字都太下面了放，应该全部放中间才对」→
+     居中之后「放中间就会挡住那个动态图，直接放上面吧文字」→ 靠上之后
+     「还是放中间吧」。**以居中为最终**。
+     ⚠️ 「居中」这次不再挡动图，关键不在这条 CSS 而在 canvas：核已经从
+     「钉在正文**上沿**之上」改成「钉在正文**下沿**之下」
+     （`cy = S.cb*H + …`，见 draw() 的 narrowW 分支），幽灵短语也一起翻到了下半屏。
+     所以居中现在是把**顶上**让给星尘，而不是像第一次那样把天空吃掉。
+     结论：这条要是再改回贴上/贴底，canvas 那半边必须跟着一起改。 */
+  section:not(#begin){align-items:center}
   /* ⚠️ 百分比内边距按**宽度**算不是高度，要垂直留白只能写死 px/vh。
      ⚠️ 底部让位只加在 #begin 上——`.footbar` 全站**只出现在 09 那一页**，
      加在通用 .col 上等于让另外 9 页各白占 68px 高度（英文版矮屏就是这么被挤爆的）。 */
@@ -457,7 +460,7 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
      让它居中：上方留给幽灵短语，又不至于把字甩到浏览器工具栏边上。
      ⚠️ 必须写成 section#hero：上面那条 `section:not(#begin)` 里的 :not() 取参数的
      特异性，#begin 是 ID，所以那条是 ID 级的，单写 #hero 会被它压掉。 */
-  section#hero{align-items:flex-start}
+  section#hero{align-items:center}
   /* ⚠️ 百分比内边距按**宽度**算不是高度，这里要的是垂直留白，只能写死 px */
   /* hero 天上本来没有核，不需要给核让位，底部也不用躲 footbar（这页没有） */
   #hero .col{padding:28px 0 22px}
@@ -467,7 +470,7 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   #fog{display:block}
   /* 09 也居中，并且必须给 footbar 留够通道 —— 加了 TestFlight 按钮之后
      内容变高，贴底就会和页脚重叠（Trev 真机截图逮到的）。 */
-  #begin{justify-content:flex-start}
+  #begin{justify-content:center}
   /* footbar 是 position:absolute、不占布局，正文能直接长进去 ——
      2026-07-29 加了 TestFlight 按钮之后就是这么让「或者写信」压在页脚上的。 */
   #begin .col{padding:0 0 clamp(64px,10vh,96px)}
