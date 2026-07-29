@@ -260,6 +260,31 @@ h1,h2{
 #nav .pill:hover{background:rgba(255,217,160,.1);border-color:rgba(255,217,160,.55)}
 @media(max-width:430px){#nav .dom{display:none}#nav .pill{margin-left:auto}}
 
+/* ── 中/EN 切换 ──
+   两种语言都放在同一个文件里（每个文案元素挂 data-en），切换只换 textContent。
+   不做两个 HTML：官网现在是「一个自包含文件、零外部请求」，分家就要维护两份、
+   而且两个对外链接（Pages + Artifact 镜像）的推送流程都要翻倍。 */
+#langbtn{
+  display:inline-flex;align-items:center;gap:5px;background:none;border:0;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:8px 6px;
+  color:var(--mut);transition:color .3s ease;
+}
+#langbtn:hover{color:var(--ink2)}
+#langbtn .sep{opacity:.4}
+#langbtn .on{color:var(--core)}
+#langbtn .off{color:var(--mut)}
+html[data-lang="en"] #langbtn .on{color:var(--mut)}
+html[data-lang="en"] #langbtn .off{color:var(--core)}
+/* 英文版把衬线英文副题藏掉：那一行本来就是中文标题的英文，
+   标题已经翻成英文了再留着就是同一句说两遍。 */
+html[data-lang="en"] .en{display:none}
+/* 🔴 BRAND.md §5：拉丁展示字一律 Instrument Serif 400，字距收到 -.022em。
+   中文标题走 PingFang（Instrument Serif 没有中文字形，套上去会掉字），
+   所以这条只在英文版生效——两种语言的标题本来就该是两种字。 */
+html[data-lang="en"] h1,
+html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:-.022em}
+@media(min-width:800px){#langbtn{font-size:11.5px;padding:9px 8px}}
+
 /* ── 右侧拉条（scrubber）──
    不只是进度指示：点的颜色按那一页的亮度排，从冷灰一路烧到核金，
    所以拉条本身就是这个故事的缩影 —— 一眼看得见"天要亮了"。 */
@@ -479,23 +504,24 @@ h1,h2{
 <header id="nav">
   <a class="brand" href="#hero" aria-label="Soulor 灵镜"><span class="mark" aria-hidden="true"></span><span class="wordmark">Soulor</span></a>
   <span class="dom">SOULOR.ID</span>
-  <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">进内测 →</a>
+  <button id="langbtn" type="button" aria-label="切换语言 / Switch language"><span class="on">中</span><span class="sep">/</span><span class="off">EN</span></button>
+  <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener" data-en="Join the beta →">进内测 →</a>
 </header>
 
 <nav id="rail" aria-label="章节">
   <div class="railtrack">
     <div class="railline" aria-hidden="true"></div>
     <div class="railfill" aria-hidden="true"></div>
-    <a href="#hero"      data-i="0"><b></b><span>序幕</span></a>
-    <a href="#scatter"   data-i="1"><b></b><span>虚无</span></a>
-    <a href="#drop"      data-i="2"><b></b><span>落下</span></a>
-    <a href="#gather"    data-i="3"><b></b><span>聚拢</span></a>
-    <a href="#ignite"    data-i="4"><b></b><span>点亮</span></a>
-    <a href="#sun"       data-i="5"><b></b><span>成形</span></a>
-    <a href="#honest"    data-i="6"><b></b><span>诚实</span></a>
-    <a href="#planets"   data-i="7"><b></b><span>照亮</span></a>
-    <a href="#sovereign" data-i="8"><b></b><span>主权</span></a>
-    <a href="#begin"     data-i="9"><b></b><span>开始</span></a>
+    <a href="#hero"      data-i="0"><b></b><span data-en="Prologue">序幕</span></a>
+    <a href="#scatter"   data-i="1"><b></b><span data-en="Scatter">虚无</span></a>
+    <a href="#drop"      data-i="2"><b></b><span data-en="One Grain">落下</span></a>
+    <a href="#gather"    data-i="3"><b></b><span data-en="Gravity">聚拢</span></a>
+    <a href="#ignite"    data-i="4"><b></b><span data-en="First Light">点亮</span></a>
+    <a href="#sun"       data-i="5"><b></b><span data-en="Takes Shape">成形</span></a>
+    <a href="#honest"    data-i="6"><b></b><span data-en="Honest">诚实</span></a>
+    <a href="#planets"   data-i="7"><b></b><span data-en="Every Planet">照亮</span></a>
+    <a href="#sovereign" data-i="8"><b></b><span data-en="Yours Alone">主权</span></a>
+    <a href="#begin"     data-i="9"><b></b><span data-en="Begin">开始</span></a>
   </div>
 </nav>
 
@@ -503,19 +529,19 @@ h1,h2{
 
 <section id="hero" data-stage="hero">
   <div class="col">
-    <p class="eyebrow fu">SOULOR · 灵镜 · 2026</p>
+    <p class="eyebrow fu" data-en="SOULOR · 2026">SOULOR · 灵镜 · 2026</p>
     <h1>
-      <span class="ln"><i class="l1">你对外的一切，</i></span>
-      <span class="ln"><i class="l2">都源自那个内核。</i></span>
+      <span class="ln"><i class="l1" data-en="Everything you show the world">你对外的一切，</i></span>
+      <span class="ln"><i class="l2" data-en="begins at the core.">都源自那个内核。</i></span>
     </h1>
     <p class="en fu d1">Everything you show the world begins at the core.</p>
     <p class="sub fu d2">
-      <span class="nb">Soulor 接住你随口说的话，替你把内核存下来。</span>
-      <span class="nb"><b>今晚，它会写成日记。</b></span>
+      <span class="nb" data-en="Soulor catches what you say in passing, and keeps your core for you.">Soulor 接住你随口说的话，替你把内核存下来。</span>
+      <span class="nb"><b data-en="Tonight, it becomes a diary.">今晚，它会写成日记。</b></span>
     </p>
     <div class="actions fu d3">
-      <a class="cta" href="#begin">开始说第一句 →</a>
-      <a class="ghost" href="#scatter">往下看它怎么发生 ↓</a>
+      <a class="cta" href="#begin" data-en="Say your first sentence →">开始说第一句 →</a>
+      <a class="ghost" href="#scatter" data-en="See how it happens ↓">往下看它怎么发生 ↓</a>
     </div>
   </div>
   <div class="hint" aria-hidden="true"></div>
@@ -523,145 +549,145 @@ h1,h2{
 
 <section id="scatter" data-stage="scatter">
   <div class="col">
-    <p class="eyebrow fu">01 · 虚无 / THE SCATTER</p>
+    <p class="eyebrow fu" data-en="01 · THE SCATTER">01 · 虚无 / THE SCATTER</p>
     <h2>
-      <span class="ln"><i class="l1">你每天说几千句话，</i></span>
-      <span class="ln"><i class="l2">留下来的是零。</i></span>
+      <span class="ln"><i class="l1" data-en="You say thousands of things a day.">你每天说几千句话，</i></span>
+      <span class="ln"><i class="l2" data-en="None of them are kept.">留下来的是零。</i></span>
     </h2>
     <p class="en fu d1">A galaxy of dust. Everywhere, and nowhere.</p>
-    <p class="body fu d2">深夜的胡思乱想、没发出去的消息、对朋友说过就忘的那句真话——蒸发得比你想的快。你的内心一直在说话，只是从来没有人记下来。</p>
+    <p class="body fu d2" data-en="Late-night spirals, messages you never sent, the honest thing you told a friend and forgot by morning — they evaporate faster than you think. Your inner life never stops talking. No one has ever written it down.">深夜的胡思乱想、没发出去的消息、对朋友说过就忘的那句真话——蒸发得比你想的快。你的内心一直在说话，只是从来没有人记下来。</p>
   </div>
 </section>
 
 <section id="drop" data-stage="drop" class="split">
   <div class="col">
-    <p class="eyebrow fu">02 · 第一句 / ONE GRAIN</p>
+    <p class="eyebrow fu" data-en="02 · ONE GRAIN">02 · 第一句 / ONE GRAIN</p>
     <h2>
-      <span class="ln"><i class="l1">说一句，</i></span>
-      <span class="ln"><i class="l2">就落下一粒。</i></span>
+      <span class="ln"><i class="l1" data-en="Say one sentence.">说一句，</i></span>
+      <span class="ln"><i class="l2" data-en="One grain settles.">就落下一粒。</i></span>
     </h2>
     <p class="en fu d1">One sentence. One grain of matter.</p>
-    <p class="body fu d2">Drop——随口一句就走。AI 接住它、归好类，不评判、不给建议。说完这件事就结束了，剩下的交给引力。</p>
+    <p class="body fu d2" data-en="Drop — say it and go. The AI catches it and files it. No judgment, no advice. That's the end of it; gravity takes the rest.">Drop——随口一句就走。AI 接住它、归好类，不评判、不给建议。说完这件事就结束了，剩下的交给引力。</p>
     <div class="card fu d3">
-      <div class="lab">DROP · 随口一句</div>
-      <div class="bub me">今天开会，话到嘴边又咽回去了。</div>
-      <div class="bub ai">接住了。归进「特质倾向」，场景是「职场」，随时能翻回来。</div>
+      <div class="lab" data-en="DROP · SAY IT AND GO">DROP · 随口一句</div>
+      <div class="bub me" data-en="In the meeting today, I swallowed what I was about to say.">今天开会，话到嘴边又咽回去了。</div>
+      <div class="bub ai" data-en="Caught. Filed under Disposition, in Work. You can go back to it any time.">接住了。归进「特质倾向」，场景是「职场」，随时能翻回来。</div>
     </div>
   </div>
 </section>
 
 <section id="gather" data-stage="gather" class="split">
   <div class="col">
-    <p class="eyebrow fu">03 · 聚拢 / GRAVITY</p>
+    <p class="eyebrow fu" data-en="03 · GRAVITY">03 · 聚拢 / GRAVITY</p>
     <h2>
-      <span class="ln"><i class="l1">想聊透的时候，</i></span>
-      <span class="ln"><i class="l2">引力会变大。</i></span>
+      <span class="ln"><i class="l1" data-en="When you want to talk it through,">想聊透的时候，</i></span>
+      <span class="ln"><i class="l2" data-en="gravity grows.">引力会变大。</i></span>
     </h2>
     <p class="en fu d1">Gravity does the gathering.</p>
-    <p class="body fu d2">Chat——想聊透一件事。它见证式地回应，把你的话一层层拆开听懂，最后问你一句：这样理解，对吗？不知道说什么的时候，抽一张回响牌。</p>
+    <p class="body fu d2" data-en="Chat — for when you want to go all the way into something. It answers as a witness, unfolding what you said layer by layer, then asks: have I got this right? When you don't know what to say, draw an Echo card.">Chat——想聊透一件事。它见证式地回应，把你的话一层层拆开听懂，最后问你一句：这样理解，对吗？不知道说什么的时候，抽一张回响牌。</p>
     <div class="card fu d3">
-      <div class="lab">回响牌 · 不知道说什么的时候</div>
-      <p class="face">「最近有没有一件小事，你嘴上说算了，心里其实没算？」</p>
-      <div class="foot">抽一张 · 答不答都行</div>
+      <div class="lab" data-en="ECHO CARD · WHEN YOU DON'T KNOW WHAT TO SAY">回响牌 · 不知道说什么的时候</div>
+      <p class="face" data-en="“Lately, was there something small you said you'd let go of — but didn't?”">「最近有没有一件小事，你嘴上说算了，心里其实没算？」</p>
+      <div class="foot" data-en="Draw one · answering is optional">抽一张 · 答不答都行</div>
     </div>
   </div>
 </section>
 
 <section id="ignite" data-stage="ignite" class="split">
   <div class="col">
-    <p class="eyebrow fu">04 · 点亮 / FIRST LIGHT</p>
+    <p class="eyebrow fu" data-en="04 · FIRST LIGHT">04 · 点亮 / FIRST LIGHT</p>
     <h2>
-      <span class="ln"><i class="l1">到了晚上，</i></span>
-      <span class="ln"><i class="l2">它亮了。</i></span>
+      <span class="ln"><i class="l1" data-en="At night,">到了晚上，</i></span>
+      <span class="ln"><i class="l2" data-en="it ignites.">它亮了。</i></span>
     </h2>
     <p class="en fu d1">At night, it ignites.</p>
-    <p class="body fu d2">白天随口说过的话，23:59 自动写成一篇日记——用你的原话，不加想象。你不用写日记。你只要说话，日记自己会来。</p>
+    <p class="body fu d2" data-en="Everything you said in passing becomes a diary entry at 23:59 — in your own words, nothing invented. You don't write the diary. You just talk, and the diary comes on its own.">白天随口说过的话，23:59 自动写成一篇日记——用你的原话，不加想象。你不用写日记。你只要说话，日记自己会来。</p>
     <div class="card fu d3">
-      <div class="lab">日记 · 23:59 自动写成</div>
-      <div class="dateline"><span class="n">7.28</span> · 周二</div>
-      <p class="face sm">白天你说，话到嘴边又咽了回去。到了晚上你补了一句：其实也没那么难开口。这两句放在一起，就是今天。</p>
-      <div class="foot">由你今天的 6 句话写成 · 每句都能翻回原文</div>
+      <div class="lab" data-en="DIARY · WRITTEN AT 23:59">日记 · 23:59 自动写成</div>
+      <div class="dateline"><span class="n">7.28</span><span data-en=" · Tue"> · 周二</span></div>
+      <p class="face sm" data-en="In the morning you said you swallowed your words. At night you added: it wasn't that hard to say after all. Put those two together — that was today.">白天你说，话到嘴边又咽了回去。到了晚上你补了一句：其实也没那么难开口。这两句放在一起，就是今天。</p>
+      <div class="foot" data-en="Written from your 6 sentences today · every one traces back">由你今天的 6 句话写成 · 每句都能翻回原文</div>
     </div>
   </div>
 </section>
 
 <section id="sun" data-stage="sun" class="split">
   <div class="col">
-    <p class="eyebrow fu">05 · 成形 / THE SUN TAKES SHAPE</p>
+    <p class="eyebrow fu" data-en="05 · THE SUN TAKES SHAPE">05 · 成形 / THE SUN TAKES SHAPE</p>
     <h2>
-      <span class="ln"><i class="l1">攒够证据，</i></span>
-      <span class="ln"><i class="l2">它才开口说你是谁。</i></span>
+      <span class="ln"><i class="l1" data-en="It speaks only">攒够证据，</i></span>
+      <span class="ln"><i class="l2" data-en="with evidence.">它才开口说你是谁。</i></span>
     </h2>
     <p class="en fu d1">It speaks only with evidence.</p>
-    <p class="body fu d2">六个品类的人格声音 × 四个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。</p>
+    <p class="body fu d2" data-en="Six categories of personality voice × four life settings — every judgment carries its evidence, and one tap takes you back to your own words. A judgment is always refutable: a mirror doesn't create you, it only lets you see.">六个品类的人格声音 × 四个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。</p>
     <div class="axes fu d3">
       <div class="ax">
-        <span class="axlab">人格声音 · 6</span>
-        <span class="chip">特质倾向</span><span class="chip">应对风格</span><span class="chip">价值观</span><span class="chip">世界观与信念</span><span class="chip">目标与动机</span><span class="chip">习惯与偏好</span>
+        <span class="axlab" data-en="PERSONALITY VOICE · 6">人格声音 · 6</span>
+        <span class="chip" data-en="Disposition">特质倾向</span><span class="chip" data-en="Coping Style">应对风格</span><span class="chip" data-en="Values">价值观</span><span class="chip" data-en="Worldview &amp; Beliefs">世界观与信念</span><span class="chip" data-en="Goals &amp; Drives">目标与动机</span><span class="chip" data-en="Habits &amp; Preferences">习惯与偏好</span>
       </div>
       <div class="ax">
-        <span class="axlab">生活场景 · 4</span>
-        <span class="chip">职场</span><span class="chip">情感</span><span class="chip">家庭</span><span class="chip">独处</span>
+        <span class="axlab" data-en="LIFE SETTINGS · 4">生活场景 · 4</span>
+        <span class="chip" data-en="Work">职场</span><span class="chip" data-en="Relationships">情感</span><span class="chip" data-en="Family">家庭</span><span class="chip" data-en="Solitude">独处</span>
       </div>
     </div>
     <div class="card fu d4">
-      <div class="lab">人格声音 · 特质倾向</div>
-      <p class="face sm">你在人多的场合，会把话收起来。</p>
-      <div class="foot">依据 4 条原话 · 多在「职场」被说起 ›</div>
+      <div class="lab" data-en="PERSONALITY VOICE · DISPOSITION">人格声音 · 特质倾向</div>
+      <p class="face sm" data-en="In a crowd, you put your words away.">你在人多的场合，会把话收起来。</p>
+      <div class="foot" data-en="From 4 of your own sentences · mostly in Work ›">依据 4 条原话 · 多在「职场」被说起 ›</div>
     </div>
   </div>
 </section>
 
 <section id="honest" data-stage="honest" class="split">
   <div class="col">
-    <p class="eyebrow fu">06 · 诚实 / IT SAYS WHEN IT'S UNSURE</p>
+    <p class="eyebrow fu" data-en="06 · IT SAYS WHEN IT'S UNSURE">06 · 诚实 / IT SAYS WHEN IT'S UNSURE</p>
     <h2>
-      <span class="ln"><i class="l1">证据不够的时候，</i></span>
-      <span class="ln"><i class="l2">它会直说还不够。</i></span>
+      <span class="ln"><i class="l1" data-en="When the evidence is thin,">证据不够的时候，</i></span>
+      <span class="ln"><i class="l2" data-en="it says so.">它会直说还不够。</i></span>
     </h2>
     <p class="en fu d1">It tells you when it doesn't know yet.</p>
-    <p class="body fu d2">宁可慢，也不给你一个看起来很懂你、其实没有依据的结论。这是产品的铁律，不是一句文案。</p>
+    <p class="body fu d2" data-en="It would rather be slow than hand you a conclusion that looks like it understands you but has nothing behind it. That's a rule of the product, not a line of copy.">宁可慢，也不给你一个看起来很懂你、其实没有依据的结论。这是产品的铁律，不是一句文案。</p>
     <div class="card dim fu d3">
-      <div class="lab">人格声音 · 世界观与信念</div>
-      <p class="face sm">3 条还不够下判断。宁可慢。</p>
-      <div class="foot">还在积累中</div>
+      <div class="lab" data-en="PERSONALITY VOICE · WORLDVIEW &amp; BELIEFS">人格声音 · 世界观与信念</div>
+      <p class="face sm" data-en="3 isn't enough to judge. Slow is fine.">3 条还不够下判断。宁可慢。</p>
+      <div class="foot" data-en="Still gathering">还在积累中</div>
     </div>
   </div>
 </section>
 
 <section id="planets" data-stage="planets">
   <div class="col">
-    <p class="eyebrow fu">07 · 照亮 / ONE CORE, EVERY PLANET</p>
+    <p class="eyebrow fu" data-en="07 · ONE CORE, EVERY PLANET">07 · 照亮 / ONE CORE, EVERY PLANET</p>
     <h2>
-      <span class="ln"><i class="l1">一个内核，</i></span>
-      <span class="ln"><i class="l2">照亮所有星球。</i></span>
+      <span class="ln"><i class="l1" data-en="One core.">一个内核，</i></span>
+      <span class="ln"><i class="l2" data-en="Every planet lit.">照亮所有星球。</i></span>
     </h2>
     <p class="en fu d1">One core. Every planet lit.</p>
-    <p class="body fu d2">现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍，未来的机器人还要重新认识你一次。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。</p>
-    <p class="etym fu d3"><span class="s">Soul</span>（灵魂） + <span class="s">or</span>（镜子） = <span class="s">Soulor</span>（<span class="s">Solar</span>，太阳）</p>
+    <p class="body fu d2" data-en="Right now every app guesses who you are from scratch: dating apps hand you a list of tags, job sites ask for your bio again, and the robots to come will have to meet you all over again. A core should be gathered once — and held by you. That's Soulor ID: your solar system, with you at the centre.">现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍，未来的机器人还要重新认识你一次。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。</p>
+    <p class="etym fu d3"><span class="s">Soul</span><span data-en=" (soul) + ">（灵魂） + </span><span class="s">or</span><span data-en=" (mirror) = ">（镜子） = </span><span class="s">Soulor</span><span data-en=" (">（</span><span class="s">Solar</span><span data-en=", the sun)">，太阳）</span></p>
   </div>
 </section>
 
 <section id="sovereign" data-stage="sovereign" class="split">
   <div class="col">
-    <p class="eyebrow fu">08 · 主权 / YOURS ALONE</p>
+    <p class="eyebrow fu" data-en="08 · YOURS ALONE">08 · 主权 / YOURS ALONE</p>
     <h2>
-      <span class="ln"><i class="l1">这一切，</i></span>
-      <span class="ln"><i class="l2">只发生在你的手机里。</i></span>
+      <span class="ln"><i class="l1" data-en="All of this">这一切，</i></span>
+      <span class="ln"><i class="l2" data-en="never leaves your phone.">只发生在你的手机里。</i></span>
     </h2>
     <p class="en fu d1">It never leaves your hand.</p>
     <div class="facts">
       <div class="fact fu d2">
-        <div class="lab">本地存储</div>
-        <p>数据只在你手机里。不是「承诺不看」，是架构上就没有上传。</p>
+        <div class="lab" data-en="Stored locally">本地存储</div>
+        <p data-en="Your data stays on your phone. Not a promise not to look — there is no upload path at all.">数据只在你手机里。不是「承诺不看」，是架构上就没有上传。</p>
       </div>
       <div class="fact fu d3">
-        <div class="lab">不给建议</div>
-        <p>它接住你，不指导你的人生。</p>
+        <div class="lab" data-en="No advice">不给建议</div>
+        <p data-en="It catches you. It doesn't direct your life.">它接住你，不指导你的人生。</p>
       </div>
       <div class="fact fu d4">
-        <div class="lab">可反驳</div>
-        <p>每条判断都翻得回原话，也都删得掉。</p>
+        <div class="lab" data-en="Refutable">可反驳</div>
+        <p data-en="Every judgment traces back to your own words — and every one can be deleted.">每条判断都翻得回原话，也都删得掉。</p>
       </div>
     </div>
   </div>
@@ -669,17 +695,17 @@ h1,h2{
 
 <section id="begin" data-stage="begin">
   <div class="col">
-    <p class="eyebrow fu">09 · 第一句 / BEGIN</p>
-    <h2><span class="ln"><i class="l1">从你的第一句开始。</i></span></h2>
+    <p class="eyebrow fu" data-en="09 · BEGIN">09 · 第一句 / BEGIN</p>
+    <h2><span class="ln"><i class="l1" data-en="Begin with one sentence.">从你的第一句开始。</i></span></h2>
     <p class="en fu d1">Begin with one sentence.</p>
-    <p class="body fu d2">现在是 iOS 内测阶段——用 TestFlight 装上就能说话。</p>
+    <p class="body fu d2" data-en="The iOS beta is open — install with TestFlight and start talking.">现在是 iOS 内测阶段——用 TestFlight 装上就能说话。</p>
     <div class="actions fu d3">
-      <a class="cta" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">用 TestFlight 安装 →</a>
+      <a class="cta" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener" data-en="Install with TestFlight →">用 TestFlight 安装 →</a>
     </div>
-    <p class="mailrow fu d3">或者写信：<a href="mailto:hello@soulor.id">hello@soulor.id</a></p>
+    <p class="mailrow fu d3"><span data-en="Or write to us: ">或者写信：</span><a href="mailto:hello@soulor.id">hello@soulor.id</a></p>
   </div>
   <div class="footbar">
-    <div class="l">Soulor · 灵镜 — 一面灵魂的镜子</div>
+    <div class="l" data-en="Soulor — a mirror for the soul">Soulor · 灵镜 — 一面灵魂的镜子</div>
     <div class="r">SOULOR.ID · © 2026</div>
   </div>
 </section>
@@ -736,9 +762,13 @@ var KF = [
   {cx:.50,cy:.30,cxw:0.5,cyw:0.26,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0, solid:.74, halo:0}  // 开始
 ];
 
-var GHOST  = ['算了，没什么','其实我挺累的','这话跟谁说呢','明天再想吧'];
+var GHOST_ZH=['算了，没什么','其实我挺累的','这话跟谁说呢','明天再想吧'];
+var GHOST_EN=['Never mind.',"I'm actually exhausted.",'Who would I even tell?',"I'll think about it tomorrow."];
+var GHOST  = GHOST_ZH;
 var PLANETS= [[.70,.34,.038],[.84,.58,.052],[.60,.76,.026],[.93,.28,.017]];
-var PLABEL = ['约会','招聘','陪伴','还没被发明的'];
+var PLABEL_ZH=['约会','招聘','陪伴','还没被发明的'];
+var PLABEL_EN=['Dating','Hiring','Companionship','Not yet invented'];
+var PLABEL = PLABEL_ZH;
 
 /* ══════════ 3. sprite 烘焙（一次性；resize 后重烘） ══════════ */
 
@@ -1366,6 +1396,16 @@ try{
   deck.scrollTop=0;
   readScroll();
   for(var kk=0;kk<KEYS.length;kk++) CUR[KEYS[kk]]=TGT[KEYS[kk]];
+
+  /* 给外面的语言切换用：GHOST / PLABEL / rebake 都是这个 IIFE 的局部变量，
+     切换器在 IIFE 外面，只能靠这个钩子进来。星球标签是**烘进 sprite** 的，
+     换了数组必须重烘一次，否则画面上还是旧语言。 */
+  window.__soulorLang = function(en){
+    GHOST  = en ? GHOST_EN  : GHOST_ZH;
+    PLABEL = en ? PLABEL_EN : PLABEL_ZH;
+    rebake();
+  };
+
   if(!document.hidden) start();
 }catch(err){
   // canvas 挂了也要让文字全部可读
@@ -1373,6 +1413,45 @@ try{
     var c2=secEl[s2].querySelector('.col'); if(c2) c2.classList.add('on');
   }
 }
+})();
+
+/* ══════════ 中 / EN 切换 ══════════
+   两套文案在同一个文件里：每个叶子元素挂 data-en，首次切换时把原中文存进
+   data-zh，之后只换 textContent。选择记进 localStorage，并同步 <html lang>
+   （给屏幕阅读器和搜索引擎用）。canvas 上的中文（幽灵短语 / 星球标签）不参与
+   DOM，单独换数组并强制重烘一次 sprite。 */
+(function(){
+  var KEY='soulor.lang';
+  var btn=document.getElementById('langbtn');
+  if(!btn) return;
+
+  function apply(lang){
+    var en = lang==='en';
+    document.documentElement.setAttribute('data-lang', en?'en':'zh');
+    document.documentElement.lang = en?'en':'zh-CN';
+    var nodes=document.querySelectorAll('[data-en]');
+    for(var i=0;i<nodes.length;i++){
+      var el=nodes[i];
+      if(el.dataset.zh===undefined) el.dataset.zh=el.textContent;
+      el.textContent = en ? el.dataset.en : el.dataset.zh;
+    }
+    // canvas 侧（幽灵短语 / 星球标签不参与 DOM，走主 IIFE 暴露的钩子）
+    try{ if(window.__soulorLang) window.__soulorLang(en); }catch(e){}
+    try{ localStorage.setItem(KEY, en?'en':'zh'); }catch(e){}
+  }
+
+  // 首次进站：跟随浏览器语言，中文用户拿中文，其余拿英文
+  var saved=null;
+  try{ saved=localStorage.getItem(KEY); }catch(e){}
+  if(!saved){
+    var nav=(navigator.language||'').toLowerCase();
+    saved = nav.indexOf('zh')===0 ? 'zh' : 'en';
+  }
+  apply(saved);
+
+  btn.addEventListener('click', function(){
+    apply(document.documentElement.getAttribute('data-lang')==='en' ? 'zh' : 'en');
+  });
 })();
 </script>
 </body>
