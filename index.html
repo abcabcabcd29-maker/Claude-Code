@@ -303,6 +303,96 @@ h1,h2{
 }
 .railtrack a:hover span,.railtrack a:focus-visible span,#rail.drag a.act span{opacity:1;transform:translateY(-50%) translateX(0)}
 
+/* ══════════════════════════════════════════════════════════════════════════
+   桌面层（≥800px）—— 2026-07-29 新增
+
+   在这之前**整份样式表只有 max-width 断点**："桌面"不是一个被设计过的档，
+   只是"没触发手机覆盖"的默认态，而那个默认态每个数值都是照手机一列字校准的：
+   正文列被 max-width:560px 焊死贴在左边，正文上限 14.8px、eyebrow 固定 9.5px
+   （跟手机一模一样）。实测 2560 宽的屏上正文列只占 22%，右边 1920px 全空。
+   Trev 原话：「网页版看着很别扭，他好像就是为手机看而做的一样。字都在左边，
+   而且字都太小了。」这一层专治那个 —— **手机档一个像素都不动**。
+
+   构图分两种（Trev 2026-07-29 拍板「按页分开处理」）：
+   · 叙事页（hero / 虚无 / 照亮 / 开始）：保留大留白和暗场。那是故事的一部分，
+     大屏上反而更有张力，只把尺度做对，不塞东西进去填空。
+   · 功能页（`.split`：第一句/聚拢/点亮/成形/诚实/主权）：打开成**真两栏**，
+     文案在左、演示卡在右，右边不再是空的。两栏顺带把纵向压力卸掉一大半 ——
+     卡片从竖直堆叠里挪出去了，矮窗口反而更安全。
+
+   ⚠️ 两条硬约束，改这一层之前必须知道：
+   1. 整站是 `scroll-snap-type:y mandatory`，**每页必须在一屏内装得下**，
+      装不下的内容永远滚不到、看不见。所以每个字号都同时对 vw 和 vh 做 clamp，
+      vh 那一项是矮窗口的保险丝。改完必须重跑 verify-fit.js（含 1440×720、
+      1024×620 这些"宽但矮"的窗口，那是最容易翻车的一档）。
+   2. 这一块必须放在下面 `max-height:660px` 那些**按高度收紧**的块**之前**，
+      否则宽而矮的窗口会丢掉收紧、直接溢出。间距一律用朴素选择器（`.body`）写，
+      好让后面按高度的规则能压过来。
+   ══════════════════════════════════════════════════════════════════════════ */
+@media(min-width:800px){
+  /* 舞台居中：2560 的屏上构图不再散到左上角，而是一整块居中的版面 */
+  section{padding:0 clamp(40px,4vw,72px)}
+  .col{max-width:none;width:min(1240px,100%);margin-inline:auto}
+
+  /* ── 字级：桌面档重配。原来的上限（正文 14.8 / eyebrow 9.5）是手机数值 ── */
+  .eyebrow{font-size:11px;letter-spacing:.24em;margin-bottom:clamp(16px,2.2vh,26px)}
+  h1,h2{font-size:clamp(38px,min(4.5vw,8vh),74px);line-height:1.15;letter-spacing:-.02em}
+  .en{font-size:clamp(17px,min(1.45vw,2.8vh),25px);margin-top:clamp(13px,2vh,20px)}
+  .body,.sub{font-size:clamp(14px,min(1.15vw,2.05vh),17.5px);line-height:1.82;margin-top:clamp(15px,2.5vh,26px)}
+
+  /* 卡片、气泡、标签也都是手机尺寸，一起抬一档 */
+  .lab,.foot{font-size:10.5px}
+  .card{padding:18px 22px;border-radius:16px}
+  .bub{font-size:15px;padding:11px 15px}
+  .face{font-size:17.5px;line-height:1.7}
+  .face.sm{font-size:15.5px}
+  .dateline{font-size:15px}
+  .dateline .n{font-size:22px}
+  .axlab{font-size:10px}
+  .chip{font-size:11.5px;padding:5px 12px}
+  .fact{padding:15px 20px}
+  .fact p{font-size:15px}
+  .duo .card p{font-size:15px}
+  .etym{font-size:clamp(15px,min(1.3vw,2.2vh),18px)}
+  .cta{font-size:15px;padding:14px 26px}
+  .ghost{font-size:14.5px}
+  .actions{margin-top:clamp(22px,3.4vh,34px);gap:14px 22px}
+
+  /* ── 功能页：真两栏。左文案 / 右演示卡 ──
+     卡片用 grid-row:1/-1 跨满左边所有行再自己垂直居中，
+     这样左右两栏各自的高度互不牵扯，左边加一行字不会把卡片顶歪。 */
+  section.split .col{
+    display:grid;
+    /* 左栏要宽到能让最长的一行标题不折 —— 「它才开口说你是谁。」9 字 ×74px
+       需要约 660px，左栏给到 .62 才稳。右栏放卡片 440px 足够。 */
+    grid-template-columns:minmax(0,1.28fr) minmax(0,.72fr);
+    column-gap:clamp(40px,3.8vw,68px);
+    align-items:center;
+  }
+  section.split .col>.eyebrow,
+  section.split .col>h2,
+  section.split .col>.en,
+  section.split .col>.body,
+  section.split .col>.axes{grid-column:1}
+  section.split .col>.card,
+  section.split .col>.facts{
+    /* ⚠️ 这里**不能**写 grid-row:1/-1。行是隐式生成的，`-1` 指的是**显式**网格的
+       末尾行线，而显式行数是 0 —— 结果 -1 解析成第 1 条线，卡片只占第一行，
+       align-self:center 也就无从居中（表现为卡片吊在右上角）。用 span 跨足够多行。 */
+    grid-column:2;grid-row:1/span 30;align-self:center;
+    margin:0;max-width:none;
+  }
+  /* 主权页三张事实卡在右栏竖排，间距给足 */
+  section.split .col>.facts{gap:14px}
+
+  /* 叙事页：不塞东西，但正文列别拉太宽 —— 中文一行 35~40 字是舒服区间，
+     一行 60 字读起来会丢行。 */
+  section:not(.split) .body,
+  section:not(.split) .sub,
+  section:not(.split) .en{max-width:min(46em,720px)}
+  #hero .actions{max-width:none}
+}
+
 /* ── 窄屏：上方留给天空，下方交给文字 ── */
 @media(max-width:799px){
   /* 右边给拉条让出通道，正文不能跑到点底下 */
@@ -431,7 +521,7 @@ h1,h2{
   </div>
 </section>
 
-<section id="drop" data-stage="drop">
+<section id="drop" data-stage="drop" class="split">
   <div class="col">
     <p class="eyebrow fu">02 · 第一句 / ONE GRAIN</p>
     <h2>
@@ -448,7 +538,7 @@ h1,h2{
   </div>
 </section>
 
-<section id="gather" data-stage="gather">
+<section id="gather" data-stage="gather" class="split">
   <div class="col">
     <p class="eyebrow fu">03 · 聚拢 / GRAVITY</p>
     <h2>
@@ -465,7 +555,7 @@ h1,h2{
   </div>
 </section>
 
-<section id="ignite" data-stage="ignite">
+<section id="ignite" data-stage="ignite" class="split">
   <div class="col">
     <p class="eyebrow fu">04 · 点亮 / FIRST LIGHT</p>
     <h2>
@@ -483,7 +573,7 @@ h1,h2{
   </div>
 </section>
 
-<section id="sun" data-stage="sun">
+<section id="sun" data-stage="sun" class="split">
   <div class="col">
     <p class="eyebrow fu">05 · 成形 / THE SUN TAKES SHAPE</p>
     <h2>
@@ -510,7 +600,7 @@ h1,h2{
   </div>
 </section>
 
-<section id="honest" data-stage="honest">
+<section id="honest" data-stage="honest" class="split">
   <div class="col">
     <p class="eyebrow fu">06 · 诚实 / IT SAYS WHEN IT'S UNSURE</p>
     <h2>
@@ -540,7 +630,7 @@ h1,h2{
   </div>
 </section>
 
-<section id="sovereign" data-stage="sovereign">
+<section id="sovereign" data-stage="sovereign" class="split">
   <div class="col">
     <p class="eyebrow fu">08 · 主权 / YOURS ALONE</p>
     <h2>
@@ -622,18 +712,21 @@ function fbm(x,y){
      0.5  光球层开始从雾里凝出来，边缘半透
      1.0  完全的实体：有临边昏暗、有米粒组织、有色球边，外面才是日冕
    虚 → 实，跟"说的话攒成内核"是同一件事。                         */
-var KEYS = ['cx','cy','cr','lum','grav','spin','disk','rs','pl','ring','solid','halo'];
+// cxw/cyw = 宽屏(≥800)专用的核落位。窄屏走 cx/cy + narrowCX()，两套互不干扰。
+// 加这一组的原因：桌面改成两栏之后，演示卡占住了右栏中部，而 cx 原值(.58~.64)
+// 正好把核摆在卡片正中间——卡片把太阳切成两半，脚注也被亮部冲淡。见 §桌面层注释。
+var KEYS = ['cx','cy','cxw','cyw','cr','lum','grav','spin','disk','rs','pl','ring','solid','halo'];
 var KF = [
-  {cx:.50,cy:.58,cr:.30,lum:.012,grav:.02,spin:0,  disk:0,  rs:1.12,pl:0,  ring:0, solid:0,   halo:.18}, // 序幕：最虚无，只有一丝在酝酿
-  {cx:.50,cy:.55,cr:.30,lum:.045,grav:.14,spin:.03,disk:0,  rs:.94, pl:0,  ring:0, solid:0,   halo:.66}, // 虚无：核附近开始聚星辰
-  {cx:.62,cy:.50,cr:.30,lum:.085,grav:.38,spin:.12,disk:.15,rs:.80, pl:0,  ring:0, solid:0,   halo:.42}, // 落下
-  {cx:.60,cy:.50,cr:.32,lum:.14, grav:.72,spin:.55,disk:.80,rs:.55, pl:0,  ring:0, solid:.10, halo:.16}, // 聚拢
-  {cx:.60,cy:.48,cr:.34,lum:.46, grav:.90,spin:.80,disk:.60,rs:.42, pl:0,  ring:0, solid:.58, halo:0}, // 点亮
-  {cx:.64,cy:.50,cr:.40,lum:1.0, grav:1,  spin:1,  disk:.25,rs:.34, pl:0,  ring:0, solid:1.0, halo:0}, // 成形
-  {cx:.58,cy:.48,cr:.37,lum:.95, grav:1,  spin:.95,disk:.24,rs:.32, pl:0,  ring:0, solid:1.0, halo:0}, // 诚实：核几乎不动，让"它会直说还不够"这句自己站住
-  {cx:.34,cy:.21,cr:.26,lum:.92, grav:1,  spin:.90,disk:.22,rs:.26, pl:1,  ring:0, solid:1.0, halo:0}, // 照亮：核抬到左上，让它照得到右下那几颗
-  {cx:.50,cy:.44,cr:.24,lum:.78, grav:1,  spin:.70,disk:.15,rs:.30, pl:.35,ring:1, solid:.92, halo:0}, // 主权
-  {cx:.50,cy:.30,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0, solid:.74, halo:0}  // 开始
+  {cx:.50,cy:.58,cxw:0.62,cyw:0.52,cr:.30,lum:.012,grav:.02,spin:0,  disk:0,  rs:1.12,pl:0,  ring:0, solid:0,   halo:.18}, // 序幕：最虚无，只有一丝在酝酿
+  {cx:.50,cy:.55,cxw:0.64,cyw:0.5,cr:.30,lum:.045,grav:.14,spin:.03,disk:0,  rs:.94, pl:0,  ring:0, solid:0,   halo:.66}, // 虚无：核附近开始聚星辰
+  {cx:.62,cy:.50,cxw:0.74,cyw:0.26,cr:.30,lum:.085,grav:.38,spin:.12,disk:.15,rs:.80, pl:0,  ring:0, solid:0,   halo:.42}, // 落下
+  {cx:.60,cy:.50,cxw:0.74,cyw:0.26,cr:.32,lum:.14, grav:.72,spin:.55,disk:.80,rs:.55, pl:0,  ring:0, solid:.10, halo:.16}, // 聚拢
+  {cx:.60,cy:.48,cxw:0.74,cyw:0.26,cr:.34,lum:.46, grav:.90,spin:.80,disk:.60,rs:.42, pl:0,  ring:0, solid:.58, halo:0}, // 点亮
+  {cx:.64,cy:.50,cxw:0.755,cyw:0.27,cr:.40,lum:1.0, grav:1,  spin:1,  disk:.25,rs:.34, pl:0,  ring:0, solid:1.0, halo:0}, // 成形
+  {cx:.58,cy:.48,cxw:0.74,cyw:0.26,cr:.37,lum:.95, grav:1,  spin:.95,disk:.24,rs:.32, pl:0,  ring:0, solid:1.0, halo:0}, // 诚实：核几乎不动，让"它会直说还不够"这句自己站住
+  {cx:.34,cy:.21,cxw:0.205,cyw:0.125,cr:.26,lum:.92, grav:1,  spin:.90,disk:.22,rs:.26, pl:1,  ring:0, solid:1.0, halo:0}, // 照亮：核抬到左上，让它照得到右下那几颗
+  {cx:.50,cy:.44,cxw:0.74,cyw:0.27,cr:.24,lum:.78, grav:1,  spin:.70,disk:.15,rs:.30, pl:.35,ring:1, solid:.92, halo:0}, // 主权
+  {cx:.50,cy:.30,cxw:0.5,cyw:0.26,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0, solid:.74, halo:0}  // 开始
 ];
 
 var GHOST  = ['算了，没什么','其实我挺累的','这话跟谁说呢','明天再想吧'];
@@ -863,11 +956,11 @@ function rebake(){
   dotWarm=bakeDot(16,255,236,208);
   dotCool=bakeDot(16,216,210,234);
 
-  var pcx=(narrowW?narrowCX(KF[7].cx):KF[7].cx)*W;
+  var pcx=(narrowW?narrowCX(KF[7].cx):KF[7].cxw)*W;
   // 窄屏的核是按正文上沿钉的，星球受光方向要用同一个位置估算，否则光影和画面对不上
   var pcy=narrowW
     ? Math.max(-0.30*(KF[7].cr*M*0.8), ((colTop[7]||H*0.5/dpr)/(H/dpr))*H - 18*dpr - KF[7].cr*M*0.8*0.50)
-    : KF[7].cy*H;
+    : KF[7].cyw*H;
   var tintR=[1.03,0.92,1.08,0.86], tintB=[0.86,1.12,0.80,1.18];
   planetSprites=[];
   for(var p=0;p<PLANETS.length;p++){
@@ -940,7 +1033,7 @@ function paintRail(){
 /* ── 帧 ── */
 function draw(dt){
   var S=CUR;
-  var cxf=narrowW?narrowCX(S.cx):S.cx;
+  var cxf=narrowW?narrowCX(S.cx):S.cxw;
   var cx=cxf*W;
   var coreR=S.cr*M*(narrowW?0.8:1);
   var cy;
@@ -952,7 +1045,7 @@ function draw(dt){
     cy = S.ct*H - 18*dpr - coreR*0.50;
     if(cy < -coreR*0.30) cy = -coreR*0.30;
   } else {
-    cy = S.cy*H;
+    cy = S.cyw*H;
   }
 
   // 1) 底
