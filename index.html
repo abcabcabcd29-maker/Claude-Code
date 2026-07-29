@@ -332,7 +332,9 @@ h1,h2{
 @media(min-width:800px){
   /* 舞台居中：2560 的屏上构图不再散到左上角，而是一整块居中的版面 */
   section{padding:0 clamp(40px,4vw,72px)}
-  .col{max-width:none;width:min(1240px,100%);margin-inline:auto}
+  /* `100% - 96px` 是给右侧拉条留的通道（拉条是 fixed 的，不参与布局，
+     不主动让路就会压在正文右边缘上）。左右各收 48px，所以仍然对称居中。 */
+  .col{max-width:none;width:min(1240px,100% - 96px);margin-inline:auto}
 
   /* ── 字级：桌面档重配。原来的上限（正文 14.8 / eyebrow 9.5）是手机数值 ── */
   .eyebrow{font-size:11px;letter-spacing:.24em;margin-bottom:clamp(16px,2.2vh,26px)}
@@ -391,6 +393,18 @@ h1,h2{
   section:not(.split) .sub,
   section:not(.split) .en{max-width:min(46em,720px)}
   #hero .actions{max-width:none}
+
+  /* ── 右侧拉条：整轴放大一档 ──
+     原来的 46px 宽 / 5px 圆点 / 9px 标签也是手机尺度，在大屏上小得像个瑕疵。
+     ⚠️ 轴变宽之后正文列必须跟着留出通道：`.col` 用 `100% - 96px` 收一档，
+     这样左右仍然对称居中，同时保证右边缘永远够不到拉条。
+     （窄屏那边是靠 `section{padding-right:46px}` 让路的，两套机制不要混用。） */
+  #rail{width:72px}
+  .railtrack{gap:20px;padding:18px 16px}
+  .railtrack a{width:30px;height:22px}
+  .railtrack a b{width:7px;height:7px;border-radius:4px}
+  .railtrack a.act b{width:2.5px;height:22px}
+  .railtrack a span{right:34px;font-size:12px;letter-spacing:.18em}
 }
 
 /* ── 窄屏：上方留给天空，下方交给文字 ── */
