@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Soulor · 灵镜 — 一夜</title>
+<meta name="description" content="你对外的一切，都源自那个内核。滚动，看一个内核如何在一夜之间点亮。">
+<meta name="theme-color" content="#050409">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="font.css">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   「一夜」—— 滚动即放映的整页电影。
+   十个章节 = 品牌故事十幕（BRAND.md §2，文案逐字原文），
+   每章一段 Seedance 图生视频（首尾同帧无缝循环）。
+   桌面：滚动洗片（scroll 驱动 currentTime），停下来时影片自己活着。
+   手机：影片常放，滚动只负责换幕 —— 触屏上的惯性滚动搓时间轴是灾难。
+   任何视频拿不到的场合（省流/减少动态/解码失败）都回落到海报，页面照常讲完故事。
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#050409;         /* 品牌底：近黑平色，不是紫 */
+  --ink:#F2EDE4;        /* 暖白 */
+  --ink2:#B9AFC4;
+  --mut:#8B8395;
+  --core:#FFD9A0;       /* 唯一强调色 */
+  --core2:#E5B584;
+  --line:#26202E;
+  --serif:"Instrument Serif",Georgia,serif;   /* 🔴 只给拉丁与数字，永不套中文 */
+  --sans:"PingFang SC","Hiragino Sans GB",-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+::selection{background:var(--core);color:var(--bg)}
+
+/* ── 舞台：固定全屏，一切都画在它上面；body 的高度只是时间轴 ── */
+#stage{position:fixed;inset:0;overflow:hidden;background:var(--bg)}
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden}
+.scene.on{opacity:1;visibility:visible}
+.scene .poster,.scene video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;background-size:cover;background-position:center;
+}
+.scene video{opacity:0;transition:opacity .8s ease}
+.scene video.ready{opacity:1}
+/* 视频废了的时候海报自己动一点点——比一张死图强，又不至于假装是影片 */
+.scene.kenburns .poster{animation:kb 46s ease-in-out infinite alternate}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.07)}}
+
+/* 电影黑场：切幕时轻轻沉一下 */
+#dip{position:absolute;inset:0;background:var(--bg);opacity:0;pointer-events:none}
+/* 暗角 + 底部给字的通道。纯黑渐隐，不带色相 */
+#vig{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(140% 110% at 50% 42%, transparent 58%, rgba(5,4,9,.42) 100%),
+    linear-gradient(to top, rgba(5,4,9,.62) 0%, transparent 34%);
+}
+/* 胶片颗粒：只在亮部显影（overlay），黑场几乎干净 —— 品牌渲染纪律 §4.3 */
+#grain{position:absolute;inset:-60px;pointer-events:none;opacity:.05;mix-blend-mode:overlay}
+/* 瓦片由 JS 现场生成（128² 噪声 canvas），不往 HTML 里嵌大图 */
+
+/* ── 字幕层 ── */
+.cap{position:absolute;inset:0;pointer-events:none}
+.cap .block{position:absolute;z-index:1;max-width:min(720px,80vw)}
+.cap .block.bl{left:clamp(24px,7vw,110px);bottom:clamp(84px,16vh,160px)}
+.cap .block.br{right:clamp(24px,7vw,110px);bottom:clamp(84px,16vh,160px);text-align:right}
+.cap .block.ml{left:clamp(24px,7vw,110px);top:50%;transform:translateY(-50%)}
+.cap .block.cc{left:50%;top:50%;transform:translate(-50%,-46%);text-align:center;width:min(1080px,92vw);max-width:none}
+.cc .eyebrow{color:var(--ink2);text-shadow:0 0 16px rgba(5,4,9,.9),0 1px 4px rgba(5,4,9,.85)}
+/* 居中块背后垫一层近黑渐隐（不带色相），字才压得住核的亮部 */
+.block.cc::before{content:'';position:absolute;inset:-6% -10%;z-index:-1;
+  background:radial-gradient(55% 58% at 50% 36%,rgba(5,4,9,.5),transparent 72%)}
+.eyebrow{
+  font-family:var(--mono);font-size:clamp(10px,.8vw,12px);letter-spacing:.34em;
+  color:var(--mut);margin-bottom:clamp(14px,2.2vh,26px);white-space:nowrap;
+}
+.eyebrow b{color:var(--core);font-weight:400}
+h1,h2{
+  font-weight:600;font-size:clamp(34px,4.9vw,72px);line-height:1.18;
+  letter-spacing:.01em;text-wrap:balance;
+}
+/* 断句在数据里手写死了；容器再折一次就会折出「的」字起行的破句 */
+.line>span{white-space:nowrap}
+.cc h1{font-size:clamp(38px,6.4vw,104px)}
+.en{
+  font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:clamp(15px,1.5vw,22px);color:var(--core2);
+  margin-top:clamp(12px,1.8vh,20px);letter-spacing:0;
+}
+.body{
+  font-size:clamp(13.5px,1.05vw,16.5px);line-height:1.9;color:var(--ink2);
+  margin-top:clamp(14px,2.4vh,26px);max-width:36em;
+}
+.br .body{margin-left:auto}
+.cc .body{margin-inline:auto}
+.cc .line>span{margin-inline-end:-.5em}
+.formula{margin-top:clamp(10px,1.6vh,18px);font-size:clamp(12.5px,.95vw,15px);color:var(--mut)}
+.formula i{font-family:var(--serif);font-style:italic;color:var(--core2);font-size:1.15em}
+/* 章节巨号：影子数字，Instrument Serif 只碰数字，合规 */
+.num{
+  position:absolute;font-family:var(--serif);font-weight:400;font-style:italic;
+  font-size:clamp(180px,34vh,380px);line-height:1;color:var(--ink);opacity:.045;
+  pointer-events:none;user-select:none;
+}
+.bl .num,.ml .num{right:-4vw;bottom:-2vh}.br .num{left:-4vw;bottom:-2vh}
+/* 逐行出场：JS 按进度给 .line 加位移/透明度 */
+.line{display:block;overflow:hidden}
+.line>span{display:inline-block;transform:translateY(110%);opacity:0}
+/* 幽灵短语（第 1 章）：没被记下的话，飘着 */
+.ghost{
+  position:absolute;z-index:0;font-size:clamp(12px,1.2vw,17px);color:#CBC2D6;opacity:0;
+  letter-spacing:.06em;white-space:nowrap;filter:blur(.3px);
+}
+
+/* ── 常驻件 ── */
+#nav{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:clamp(16px,2.6vh,26px) clamp(20px,3.4vw,48px);
+  mix-blend-mode:normal;pointer-events:none;
+}
+#nav a{pointer-events:auto}
+.mark{color:var(--ink);text-decoration:none;font-size:15px;letter-spacing:.02em;display:flex;align-items:baseline;gap:9px}
+.mark .lat{font-family:var(--serif);font-size:19px;letter-spacing:-.022em}
+.mark .zh{color:var(--ink2);font-size:12.5px;letter-spacing:.3em}
+.pill{
+  font-size:12.5px;letter-spacing:.14em;color:var(--bg);background:var(--core);
+  text-decoration:none;padding:9px 18px;border-radius:999px;font-weight:600;
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+.pill:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,217,160,.25)}
+/* 进度：左缘一条细线，十个刻度 */
+#rail{position:fixed;left:clamp(14px,2vw,30px);top:50%;transform:translateY(-50%);
+  z-index:40;display:flex;flex-direction:column;align-items:center;gap:0;height:42vh}
+#railline{position:relative;width:1px;flex:1;background:var(--line)}
+#railfill{position:absolute;top:0;left:0;width:1px;height:0%;background:var(--core)}
+.tick{position:absolute;left:-2.5px;width:6px;height:1px;background:var(--mut);opacity:.55}
+#chlabel{
+  position:fixed;left:clamp(14px,2vw,30px);bottom:26px;z-index:40;
+  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--mut);
+  writing-mode:vertical-rl;text-orientation:sideways;opacity:.8;
+}
+#hint{
+  position:fixed;bottom:clamp(18px,4vh,40px);left:50%;transform:translateX(-50%);z-index:40;
+  font-size:12px;letter-spacing:.28em;color:var(--mut);transition:opacity .6s;
+}
+#hint b{color:var(--core);font-weight:400}
+/* 结尾 CTA */
+.finale{pointer-events:auto}
+.finale .cta{
+  display:inline-block;margin-top:clamp(22px,4vh,40px);white-space:nowrap;
+  background:var(--core);color:var(--bg);text-decoration:none;font-weight:700;
+  font-size:clamp(14px,1.2vw,17px);letter-spacing:.06em;
+  padding:clamp(13px,1.6vh,17px) clamp(24px,3vw,44px);border-radius:999px;
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+.finale .cta:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(255,217,160,.3)}
+.finale .alt{margin-top:18px;font-size:13px;color:var(--mut)}
+.finale .alt a{color:var(--ink2);text-decoration:underline;text-underline-offset:3px}
+.finale .foot{margin-top:clamp(30px,7vh,64px);font-family:var(--mono);
+  font-size:10px;letter-spacing:.3em;color:var(--mut)}
+
+/* 滚动长度（时间轴本体） */
+#track{position:relative;width:100%;pointer-events:none}
+
+@media(max-width:820px){
+  .cap .block.bl,.cap .block.br,.cap .block.ml{
+    left:22px;right:22px;bottom:clamp(76px,13vh,120px);top:auto;transform:none;text-align:left;max-width:none}
+  .br .body{margin-left:0}
+  h1,h2{font-size:clamp(30px,8.6vw,44px)}
+  .cc h1{font-size:clamp(34px,9.6vw,50px)}
+  .num{font-size:150px;right:-14px;bottom:-8px;left:auto}
+  #rail,#chlabel{display:none}
+  .eyebrow{letter-spacing:.22em;font-size:10px}
+  .mark .zh{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .scene,.scene video,#dip{transition:none!important}
+  .scene.kenburns .poster{animation:none}
+  .line>span{transform:none!important;opacity:1!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<header id="nav">
+  <a class="mark" href="https://soulor.id/"><span class="lat">Soulor</span><span class="zh">灵 镜</span></a>
+  <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">进内测 →</a>
+</header>
+<div id="rail"><div id="railline"><div id="railfill"></div></div></div>
+<div id="chlabel"></div>
+<div id="hint">往下 · 看这一夜怎么发生 <b>↓</b></div>
+
+<div id="track"></div>
+
+<script>
+/* ══ 数据：品牌故事十幕，文案逐字来自 BRAND.md §2（改动要 Trev 点头） ══ */
+var CH=[
+{vh:190,pos:'cc',num:'',eyebrow:'SOULOR · 灵镜 · 2026',
+ h:['你对外的一切，','都源自那个内核。'],
+ en:'Everything you show the world begins at the core.',
+ body:'Soulor 接住你随口说的话，替你把内核存下来。今晚，它会写成日记。',
+ op:'55% 40%'},
+{vh:150,pos:'bl',num:'01',eyebrow:'01 · 虚无 / <b>THE SCATTER</b>',
+ h:['你每天说几千句话，','留下来的是零。'],
+ en:'A galaxy of dust. Everywhere, and nowhere.',
+ body:'深夜的胡思乱想、没发出去的消息、对朋友说过就忘的那句真话——蒸发得比你想的快。你的内心一直在说话，只是从来没有人记下来。',
+ op:'62% 50%',
+ ghosts:[['算了，没什么','14%','22%'],['其实我挺累的','64%','18%'],['这话跟谁说呢','58%','48%'],['明天再想吧','70%','34%']]},
+{vh:150,pos:'bl',num:'02',eyebrow:'02 · 第一句 / <b>ONE GRAIN</b>',
+ h:['说一句，','就落下一粒。'],
+ en:'One sentence. One grain of matter.',
+ body:'Drop——随口一句就走。AI 接住它、归好类，不评判、不给建议。说完这件事就结束了，剩下的交给引力。',
+ op:'68% 35%'},
+{vh:150,pos:'br',num:'03',eyebrow:'03 · 聚拢 / <b>GRAVITY</b>',
+ h:['想聊透的时候，','引力会变大。'],
+ en:'Gravity does the gathering.',
+ body:'Chat——想聊透一件事。它见证式地回应，把你的话一层层拆开听懂，最后问你一句：这样理解，对吗？不知道说什么的时候，抽一张回响牌。',
+ op:'62% 38%'},
+{vh:150,pos:'bl',num:'04',eyebrow:'04 · 点亮 / <b>FIRST LIGHT</b>',
+ h:['到了晚上，','它亮了。'],
+ en:'At night, it ignites.',
+ body:'白天随口说过的话，23:59 自动写成一篇日记——用你的原话，不加想象。你不用写日记。你只要说话，日记自己会来。',
+ op:'62% 40%'},
+{vh:150,pos:'bl',num:'05',eyebrow:'05 · 成形 / <b>THE SUN TAKES SHAPE</b>',
+ h:['攒够证据，','它才开口说你是谁。'],
+ en:'It speaks only with evidence.',
+ body:'六个品类的人格声音 × 四个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。',
+ op:'70% 35%'},
+{vh:150,pos:'ml',num:'06',eyebrow:'06 · 诚实 / <b>IT SAYS WHEN IT\'S UNSURE</b>',
+ h:['证据不够的时候，','它会直说还不够。'],
+ en:'It tells you when it doesn\'t know yet.',
+ body:'宁可慢，也不给你一个看起来很懂你、其实没有依据的结论。这是产品的铁律，不是一句文案。',
+ op:'66% 36%'},
+{vh:150,pos:'bl',num:'07',eyebrow:'07 · 照亮 / <b>ONE CORE, EVERY PLANET</b>',
+ h:['一个内核，','照亮所有星球。'],
+ en:'One core. Every planet lit.',
+ body:'现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。',
+ formula:true,
+ op:'55% 45%',mop:'30% 28%'},
+{vh:150,pos:'bl',num:'08',eyebrow:'08 · 主权 / <b>YOURS ALONE</b>',
+ h:['这一切，','只发生在你的手机里。'],
+ en:'It never leaves your hand.',
+ body:'数据只在你手机里。不是「承诺不看」，是架构上就没有上传。它接住你，不指导你的人生。每条判断都翻得回原话，也都删得掉。',
+ op:'66% 36%'},
+{vh:240,pos:'cc',num:'09',eyebrow:'09 · 第一句 / <b>BEGIN</b>',
+ h:['从你的第一句开始。'],
+ en:'Begin with one sentence.',
+ body:'现在是 iOS 内测阶段——用 TestFlight 装上就能说话。',
+ op:'50% 32%',finale:true},
+];
+
+/* ══ 环境降级判定 ══ */
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var nc=navigator.connection||{};
+var noVideo=reduce||nc.saveData||/(^|-)2g$/.test(nc.effectiveType||'')||location.protocol==='file:';
+var finePointer=matchMedia('(pointer:fine)').matches;   // 触屏不搓时间轴：惯性滚动搓片是灾难
+var narrowScreen=matchMedia('(max-width:820px)').matches; // 竖屏 cover 只露中间 ~26% 宽，个别章要单独指定看哪儿
+
+/* ══ 搭 DOM ══ */
+var stage=document.getElementById('stage');
+var track=document.getElementById('track');
+var caps=[];
+CH.forEach(function(c,i){
+  var sc=document.createElement('div');sc.className='scene';sc.dataset.i=i;
+  var po=document.createElement('div');po.className='poster';po.setAttribute('aria-hidden','true');
+  po.style.backgroundImage='url(ch'+i+'.jpg)';
+  po.style.backgroundPosition=(narrowScreen&&c.mop)?c.mop:c.op;
+  sc.appendChild(po);
+  if(!noVideo){
+    var v=document.createElement('video');
+    v.muted=true;v.defaultMuted=true;v.loop=true;v.playsInline=true;v.preload='none';
+    v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');
+    v.style.objectPosition=(narrowScreen&&c.mop)?c.mop:c.op;
+    v.addEventListener('canplay',function(){v.classList.add('ready');});
+    v.addEventListener('error',function(){
+      v.classList.remove('ready');
+      // webm 单格式坏了（部署断点/截断都可能）：同名 mp4 就在旁边，先试它
+      if(/\.webm$/.test(v.currentSrc||'')&&!v.dataset.fellBack){
+        v.dataset.fellBack='1';v.src='ch'+i+'.mp4';v.load();return;
+      }
+      sc.classList.add('kenburns');
+    },true);
+    sc.appendChild(v);
+  } else sc.classList.add('kenburns');
+  stage.appendChild(sc);
+
+  var cap=document.createElement('div');cap.className='cap';
+  var bk=document.createElement('div');bk.className='block '+c.pos;
+  var htm='';
+  if(c.num) htm+='<div class="num">'+c.num+'</div>';
+  htm+='<div class="eyebrow">'+c.eyebrow+'</div>';
+  htm+='<h1>'+c.h.map(function(l){return '<span class="line"><span>'+l+'</span></span>';}).join('')+'</h1>';
+  htm+='<p class="en">'+c.en+'</p>';
+  htm+='<p class="body">'+c.body+'</p>';
+  if(c.formula) htm+='<p class="formula"><i>Soul</i>（灵魂） + <i>or</i>（镜子） = <i>Soulor</i>（<i>Solar</i>，太阳）</p>';
+  if(c.finale){
+    bk.classList.add('finale');
+    htm+='<a class="cta" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">用 TestFlight 安装 →</a>'
+       +'<p class="alt">或者写信：<a href="mailto:hello@soulor.id">hello@soulor.id</a></p>'
+       +'<p class="foot">Soulor · 灵镜 — 一面灵魂的镜子<br>SOULOR.ID · © 2026</p>';
+  }
+  bk.innerHTML=htm;
+  cap.appendChild(bk);
+  if(c.ghosts) c.ghosts.forEach(function(g){
+    var s=document.createElement('span');s.className='ghost';s.textContent=g[0];
+    s.style.left=g[1];s.style.top=g[2];cap.appendChild(s);
+  });
+  sc.appendChild(cap);
+  caps.push(cap);
+});
+var dip=document.createElement('div');dip.id='dip';dip.setAttribute('aria-hidden','true');stage.appendChild(dip);
+var vig=document.createElement('div');vig.id='vig';vig.setAttribute('aria-hidden','true');stage.appendChild(vig);
+var scenes=[].slice.call(stage.querySelectorAll('.scene'));
+
+/* 时间轴总长 */
+var totalVH=CH.reduce(function(a,c){return a+c.vh;},0);
+track.style.height=totalVH+'vh';
+
+/* 进度刻度 */
+var railline=document.getElementById('railline');
+var acc=0;
+CH.forEach(function(c){
+  var t=document.createElement('div');t.className='tick';
+  t.style.top=(acc/totalVH*100)+'%';railline.appendChild(t);acc+=c.vh;
+});
+var railfill=document.getElementById('railfill');
+var chlabel=document.getElementById('chlabel');
+var hint=document.getElementById('hint');
+
+/* ══ 胶片颗粒：程序生成一张噪声瓦片，别嵌大图 ══ */
+(function(){
+  var g=document.createElement('div');g.id='grain';g.setAttribute('aria-hidden','true');
+  var c=document.createElement('canvas');c.width=c.height=128;
+  var x=c.getContext('2d'),im=x.createImageData(128,128);
+  for(var i=0;i<im.data.length;i+=4){var n=(Math.random()*255)|0;
+    im.data[i]=im.data[i+1]=im.data[i+2]=n;im.data[i+3]=255;}
+  x.putImageData(im,0,0);
+  g.style.background='url('+c.toDataURL()+')';
+  stage.appendChild(g);
+  if(!reduce){var f=0;setInterval(function(){f=(f+1)%3;
+    g.style.transform='translate('+(f*17)+'px,'+(f*-23)+'px)';},120);}
+})();
+
+/* ══ 视频装载策略：当前章 + 前后各一章 ══ */
+function srcFor(i){
+  var v=scenes[i].querySelector('video');if(!v||v.dataset.src) return v;
+  var webm=v.canPlayType('video/webm; codecs="vp9"');
+  v.src='ch'+i+((webm==='probably'||webm==='maybe')?'.webm':'.mp4');
+  v.dataset.src='1';v.preload='auto';v.load();
+  return v;
+}
+function ensureLoaded(i){
+  for(var k=Math.max(0,i-1);k<=Math.min(CH.length-1,i+1);k++) srcFor(k);
+}
+
+/* ══ 引擎 ══ */
+var starts=[],accv=0;
+CH.forEach(function(c){starts.push(accv);accv+=c.vh;});
+function vh(){return innerHeight/100;}
+// ⚠️ 手机浏览器工具栏收起/展开时 innerHeight 会中途跳 8~10%，绝对 vh 映射会让
+//    进度瞬间跳掉「当前位置 × 差值」——深处就是整整一章。所以全局进度用
+//    **滚动比例**映射：分子分母同源，工具栏怎么动都约掉。
+function gpNow(){
+  var max=document.documentElement.scrollHeight-innerHeight;
+  return max>0 ? scrollY/max*(totalVH-100) : 0;
+}
+function scrollToGp(gp,smooth){
+  var max=document.documentElement.scrollHeight-innerHeight;
+  scrollTo({top:gp/(totalVH-100)*max, behavior:smooth?'smooth':'auto'});
+}
+var cur=-1,lastY=-1,lastMove=0,scrubbing=false;
+var playFail=[],playBlocked=false,gestureArmed=false;
+var seeking=[],pending=[],scrubT=[];   // scrubT：搓片时间的缓动值（评审：恢复滚动不许硬跳）
+
+// 自动播放被拒（iOS 低电量模式等）：别在 rAF 里 60 次/秒地撞墙。
+// 三连拒 = 认定被锁：当前章落到海报动画，挂一次性手势监听等解锁。
+function tryPlay(v,i){
+  if(playBlocked){ scenes[i].classList.add('kenburns'); return; }
+  var now=performance.now();
+  if(v.dataset.lastTry&&now-v.dataset.lastTry<1000) return;
+  v.dataset.lastTry=now;
+  var pr=v.play();
+  if(pr&&pr.catch)pr.catch(function(){
+    playFail[i]=(playFail[i]||0)+1;
+    if(playFail[i]>=3){
+      playBlocked=true;
+      scenes.forEach(function(s){s.classList.add('kenburns');});
+      if(!gestureArmed){
+        gestureArmed=true;
+        var unlock=function(){
+          playBlocked=false;playFail=[];
+          scenes.forEach(function(s){s.classList.remove('kenburns');});
+          var vv=cur>=0&&scenes[cur].querySelector('video');
+          if(vv){delete vv.dataset.lastTry;tryPlay(vv,cur);}
+        };
+        addEventListener('pointerdown',unlock,{once:true});
+        addEventListener('touchend',unlock,{once:true});
+        addEventListener('keydown',unlock,{once:true});
+      }
+    }
+  });
+}
+
+function seekTo(v,i,t){
+  if(!isFinite(v.duration)||v.duration<=0) return;
+  t=Math.min(t,v.duration-0.06);
+  if(seeking[i]){pending[i]=t;return;}
+  seeking[i]=true;
+  try{v.currentTime=t;}catch(e){seeking[i]=false;}
+}
+scenes.forEach(function(sc,i){
+  var v=sc.querySelector('video');if(!v)return;
+  v.addEventListener('seeked',function(){
+    seeking[i]=false;
+    if(pending[i]!=null){var t=pending[i];pending[i]=null;seekTo(v,i,t);}
+  });
+});
+
+function setLine(cap,sel,p0,p1,p){
+  var els=cap.querySelectorAll(sel),n=els.length;
+  for(var i=0;i<n;i++){
+    var a=p0+(p1-p0)*i/Math.max(1,n),b=a+(p1-p0)/Math.max(1,n)*1.6;
+    var t=Math.max(0,Math.min(1,(p-a)/(b-a)));
+    t=t*t*(3-2*t);
+    els[i].style.opacity=t;
+    els[i].style.transform='translateY('+((1-t)*110)+'%)';
+  }
+}
+function fade(el,t){el.style.opacity=t;}
+
+function frame(){
+  requestAnimationFrame(frame);
+  var y=scrollY,now=performance.now();
+  if(y!==lastY){lastMove=now;lastY=y;}
+  var moving=now-lastMove<160;
+
+  var gp=gpNow();                      // 全局进度（vh 单位，滚动比例映射）
+  var i=0;while(i<CH.length-1&&gp>=starts[i+1])i++;
+  var span=CH[i].vh, headroom=Math.max(1,span-100);  // 每章最后一屏高停在完整画面上
+  var p=Math.max(0,Math.min(1,(gp-starts[i])/headroom));
+
+  /* 换幕 */
+  if(i!==cur){
+    scenes.forEach(function(s,k){s.classList.toggle('on',k===i);});
+    var v0=cur>=0&&scenes[cur].querySelector('video');
+    if(v0&&!v0.paused)v0.pause();
+    cur=i;ensureLoaded(i);
+    // 只增不减的话，走完一遍 = 10 条解码管线一起挂着（iOS 有解码器耗尽的真实风险）
+    scenes.forEach(function(s,k){
+      if(Math.abs(k-i)<=1)return;
+      var vv=s.querySelector('video');
+      if(vv&&vv.dataset.src){
+        vv.removeAttribute('src');vv.load();
+        delete vv.dataset.src;vv.classList.remove('ready');
+      }
+    });
+    chlabel.textContent=i?CH[i].eyebrow.replace(/<[^>]*>/g,'').split('/')[0].trim():'';
+  }
+  /* 电影黑场：章节边界前后各 6vh 轻轻沉一下 */
+  var edge=Math.min(gp-starts[i], (starts[i]+span)-gp);
+  dip.style.opacity=i===0&&gp<6?0:Math.max(0,1-edge/6)*0.55;
+
+  /* 洗片 or 放片。
+     ⚠️ 恢复滚动的第一帧不许把 currentTime 硬拉回滚动映射值 —— 停驻期间影片自己
+     往前走了，硬拉就是肉眼可见的倒放一格（评审团逮的）。所以搓片时间 scrubT
+     从「当前画面」出发向映射值缓动，几帧内追上，方向性镜头（坠落/旋转/绕行）
+     也不会倒抽。 */
+  var v=scenes[i].querySelector('video');
+  if(v&&v.dataset.src&&v.readyState>=2){
+    var target=p*(v.duration||10);
+    if(finePointer&&moving){
+      if(!v.paused){v.pause();scrubT[i]=v.currentTime;}   // 从画面此刻出发
+      if(scrubT[i]==null)scrubT[i]=target;
+      scrubbing=true;
+      scrubT[i]+=(target-scrubT[i])*0.22;
+      seekTo(v,i,scrubT[i]);
+    }else{
+      if(scrubbing||v.paused){scrubbing=false;scrubT[i]=null;
+        tryPlay(v,i);}
+    }
+  }
+
+  /* 字幕编舞 */
+  var cap=caps[i],bk=cap.querySelector('.block');
+  setLine(cap,'.line>span',0.10,0.34,p);
+  var enE=cap.querySelector('.en'),bodyE=cap.querySelector('.body'),ebE=cap.querySelector('.eyebrow');
+  var s3=function(a,b){var t=Math.max(0,Math.min(1,(p-a)/(b-a)));return t*t*(3-2*t);};
+  fade(ebE,s3(0.05,0.14));
+  fade(enE,s3(0.30,0.44));
+  fade(bodyE,s3(0.40,0.56));
+  var extra=cap.querySelectorAll('.cta,.alt,.foot');
+  for(var e2=0;e2<extra.length;e2++)fade(extra[e2],s3(0.48+e2*0.06,0.62+e2*0.06));
+  /* 幽灵短语：中段浮现又散 */
+  var gh=cap.querySelectorAll('.ghost');
+  for(var g2=0;g2<gh.length;g2++){
+    var ph=s3(0.24+g2*0.08,0.4+g2*0.08)*(1-s3(0.78,0.95));
+    gh[g2].style.opacity=ph*0.5;
+    gh[g2].style.transform='translateY('+(-14*p-g2*4)+'px)';
+  }
+  /* 出场：章节末尾整块字幕轻轻退掉（终章不退） */
+  bk.style.opacity=CH[i].finale?1:1-s3(0.90,1.0)*0.9;
+
+  railfill.style.height=Math.min(100,gp/(totalVH-100)*100)+'%';
+  hint.style.opacity=y<60?1:0;
+
+  /* 其余章节的视频别空转 */
+  scenes.forEach(function(s,k){
+    if(k===i)return;var vv=s.querySelector('video');
+    if(vv&&!vv.paused)vv.pause();
+  });
+}
+ensureLoaded(0);
+requestAnimationFrame(frame);
+
+/* 键盘换幕 */
+addEventListener('keydown',function(e){
+  if(e.metaKey||e.ctrlKey||e.altKey)return;   // 别劫持浏览器快捷键
+  var k=e.key,d=0;
+  if(k===' ')d=e.shiftKey?-1:1;               // Shift+空格是向上翻页，别当向下
+  else if(k==='ArrowDown'||k==='PageDown')d=1;
+  else if(k==='ArrowUp'||k==='PageUp')d=-1;
+  if(!d)return;e.preventDefault();
+  var gp=gpNow(),i=0;while(i<CH.length-1&&gp>=starts[i+1])i++;
+  var t=i+d;
+  if(t>=CH.length){                            // 终章再按「下」：滚到页底，别往回蹦
+    scrollToGp(totalVH-100,!reduce);return;    // （CTA 正在看，向上跳等于拽走转化）
+  }
+  t=Math.max(0,t);
+  scrollToGp(starts[t]+0.5,!reduce);
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)scenes.forEach(function(s){var v=s.querySelector('video');if(v&&!v.paused)v.pause();});
+});
+</script>
+</body>
+</html>
