@@ -317,6 +317,7 @@ var CH=[
  en:'One core. Every planet lit.',
  body:'现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。',
  formula:true,
+ still:true,   /* 四次生成都在这章翻车（月牙×3、流星线×1）——它的魔法在标签和文案，静帧+缓推最干净 */
  op:'55% 45%',mop:'30% 28%',
  plabs:[['约会',.695,.375],['招聘',.829,.648],['陪伴',.601,.805],['还没被发明的',.934,.316]]},
 {pos:'bl',num:'08',eyebrow:'08 · 主权 / <b>YOURS ALONE</b>',
@@ -347,7 +348,7 @@ CH.forEach(function(c,i){
   po.style.backgroundImage='url(ch'+i+'.jpg)';
   po.style.backgroundPosition=(narrowScreen&&c.mop)?c.mop:c.op;
   sc.appendChild(po);
-  if(!noVideo){
+  if(!noVideo&&!c.still){
     var v=document.createElement('video');
     v.muted=true;v.defaultMuted=true;v.loop=true;v.playsInline=true;v.preload='none';
     v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');
@@ -362,7 +363,7 @@ CH.forEach(function(c,i){
       sc.classList.add('kenburns');
     },true);
     sc.appendChild(v);
-  } else sc.classList.add('kenburns');
+  } else sc.classList.add('kenburns');   // still 章与降级档同路：海报 + 46s 缓推
   stage.appendChild(sc);
 
   var sec=document.createElement('section');sec.className='chapter';sec.dataset.i=i;
