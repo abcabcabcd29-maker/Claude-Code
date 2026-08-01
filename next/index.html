@@ -149,6 +149,10 @@ h1{
 .democard .dateline .n{font-family:var(--serif);font-size:22px;color:var(--core)}
 .democard .dateline span:last-child{font-size:12px;color:var(--mut)}
 .democard .dfoot{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--mut);margin-top:2px}
+.daxlab{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--core2);margin:7px 0 2px}
+.dchip{display:inline-block;font-size:10.5px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;color:var(--ink2);margin:0 4px 4px 0}
+.democard.dim .face{color:var(--ink2)}
+.democard.dim{border-style:dashed;background:rgba(10,8,14,.42)}
 /* 星球标签（第 7 章，桌面）：DOM 画的，字永远是锐的——烤在视频里的那种蒙不再需要 */
 .plab{
   position:absolute;z-index:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
@@ -300,19 +304,21 @@ var CH=[
  h:['攒够证据，','它才开口说你是谁。'],
  en:'It speaks only with evidence.',
  body:'六个品类的人格声音 × 四个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。',
- op:'70% 35%'},
+ op:'70% 35%',
+ demo:{side:'dcr',lab:'人格声音 · 特质倾向',html:'<p class="face">你在人多的场合，会把话收起来。</p><div class="dfoot">依据 4 条原话 · 多在「职场」被说起 ›</div><div class="daxlab">人格声音 · 6</div><div>'+['特质倾向','应对风格','价值观','世界观与信念','目标与动机','习惯与偏好'].map(function(t){return '<span class="dchip">'+t+'</span>';}).join('')+'</div><div class="daxlab">生活场景 · 4</div><div>'+['职场','情感','家庭','独处'].map(function(t){return '<span class="dchip">'+t+'</span>';}).join('')+'</div>'}},
 {pos:'ml',num:'06',eyebrow:'06 · 诚实 / <b>IT SAYS WHEN IT\'S UNSURE</b>',
  h:['证据不够的时候，','它会直说还不够。'],
  en:'It tells you when it doesn\'t know yet.',
  body:'宁可慢，也不给你一个看起来很懂你、其实没有依据的结论。这是产品的铁律，不是一句文案。',
- op:'66% 36%'},
+ op:'66% 36%',
+ demo:{side:'dcr dim',lab:'人格声音 · 世界观与信念',html:'<p class="face">3 条还不够下判断。宁可慢。</p><div class="dfoot">还在积累中</div>'}},
 {pos:'bl',num:'07',eyebrow:'07 · 照亮 / <b>ONE CORE, EVERY PLANET</b>',
  h:['一个内核，','照亮所有星球。'],
  en:'One core. Every planet lit.',
  body:'现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。',
  formula:true,
  op:'55% 45%',mop:'30% 28%',
- plabs:[['约会','69%','44%'],['招聘','83%','67%'],['陪伴','59%','84%'],['还没被发明的','90%','36%']]},
+ plabs:[['约会',.695,.375],['招聘',.829,.648],['陪伴',.601,.805],['还没被发明的',.934,.316]]},
 {pos:'bl',num:'08',eyebrow:'08 · 主权 / <b>YOURS ALONE</b>',
  h:['这一切，','只发生在你的手机里。'],
  en:'It never leaves your hand.',
@@ -387,7 +393,7 @@ CH.forEach(function(c,i){
   }
   if(c.plabs) c.plabs.forEach(function(g){
     var s=document.createElement('span');s.className='plab';s.textContent=g[0];
-    s.style.left=g[1];s.style.top=g[2];s.style.transform='translateX(-50%)';sec.appendChild(s);
+    s.dataset.fx=g[1];s.dataset.fy=g[2];s.style.transform='translateX(-50%)';sec.appendChild(s);
   });
   deck.appendChild(sec);
 });
@@ -587,10 +593,30 @@ addEventListener('keydown',function(e){
   if(t>=N||t<0)return;
   deck.scrollTo({top:t*H,behavior:reduce?'auto':'smooth'});
 });
-/* resize：钉回最近的整章，别停在半路 */
+/* 星球标签：帧坐标 → 视口坐标。视频是 object-fit:cover，视口一变、
+   画面裁切就变——视口百分比钉标签必飘（Trev 方形窗口的截图逮的）。
+   这里按 cover 的数学关系换算：16:9 的帧，按短边放大、按 object-position 偏移。 */
+function placePlabs(){
+  var spans=deck.querySelectorAll('.plab');if(!spans.length)return;
+  var W=innerWidth,H=innerHeight,AR=16/9;
+  var dispW=(W/H>AR)?W:H*AR, dispH=(W/H>AR)?W/AR:H;
+  var c=CH[7],op=((narrowScreen&&c.mop)?c.mop:c.op).split(' ');
+  var px=parseFloat(op[0])/100, py=parseFloat(op[1])/100;
+  var offX=(W-dispW)*px, offY=(H-dispH)*py;
+  spans.forEach(function(sp){
+    var x=offX+parseFloat(sp.dataset.fx)*dispW;
+    var y=offY+parseFloat(sp.dataset.fy)*dispH;
+    var out=x<30||x>W-30||y<30||y>H-50;
+    sp.style.left=x+'px';sp.style.top=y+'px';
+    sp.style.display=out?'none':'';
+  });
+}
+placePlabs();
+/* resize：钉回最近的整章，别停在半路；标签跟着重排 */
 addEventListener('resize',function(){
   var H=deck.clientHeight;
   deck.scrollTop=Math.round(deck.scrollTop/H)*H;
+  placePlabs();
 });
 
 /* ══ 声音：默认关；点按钮=手势，可以直接播 ══ */
