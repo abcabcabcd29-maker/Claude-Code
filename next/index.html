@@ -549,10 +549,15 @@ function frame(){
     }
     if(!br.paused)br.pause();
     seekTo(br,'b'+base,frac*(br.duration||5));
+    /* 尾段淡出：fast 档对尾帧约束服从性差（九条实测只有一条真锁住），
+       桥的最后 ~15% 淡进下一章画面——下一章第一帧就是尾帧目标，偏差全被盖住。
+       这也是真电影的剪法：冲进来，溶到落定。 */
+    br.style.opacity=frac<0.07?Math.max(0,(frac-0.02)/0.05)
+                    :frac>0.80?Math.max(0,1-(frac-0.80)/0.14):1;
     dip.style.opacity=0;
   }else{
     if(activeBridge>=0){
-      if(bridges[activeBridge])bridges[activeBridge].classList.remove('on');
+      if(bridges[activeBridge]){bridges[activeBridge].classList.remove('on');bridges[activeBridge].style.opacity='';}
       activeBridge=-1;
     }
     if(inTransit){
