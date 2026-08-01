@@ -959,6 +959,40 @@ var glowHaze=null,glowCorona=null,emberSprite=null,photoSprite=null,photoR=1;
 var dotWarm=null,dotCool=null,planetSprites=[],warmGrad=null;
 var P=[],ghostIdx=[],dust=[],pdrift=[],colTop=[],colBot=[];
 var T=0,last=0,rafId=0,running=false;
+
+/* ══ 核的表面：一段实拍循环，画进核里 ══════════════════════════════
+   整站到这里为止都是手画的：核是三层 sprite（弥散雾 + 日冕 + 光球）叠出来的。
+   画得再准，光球那一层始终是**一张不动的贴图** —— 恒星表面该有的对流翻涌
+   canvas 给不了，硬写噪声只会更假。
+
+   所以从「点亮」这一页开始，**画的核换成拍的核**：
+   `core.mp4` 是 Seedance 2.0 以我们自己导出的那一帧为首帧生成的（见
+   `export-core-plate.js` / `crop-core-plate.py` / `prompts/core-surface.txt`），
+   首尾同帧所以无缝循环，背景是**纯黑**。
+
+   为什么背景必须纯黑：这段视频是用 `lighter`（相加）画上去的，相加混合里
+   **黑 = 透明**，所以不需要任何遮罩、边缘天然融进画面。素材的黑够不够黑
+   由 `verify-footage.py` 量（实测四角 0.00/255），浏览器解码之后会不会
+   变成 16/255（yuv 有限范围）由 `verify-core-video.js` 在真浏览器里量。
+
+   四条铁律，改这段之前先读：
+   ① **位置和大小永远由关键帧说了算**，视频只负责表面。所以素材里的球不许自己
+      漂、不许自己缩放（`verify-footage.py` 前四项量的就是这个）。
+   ② **它是增强不是依赖**。省流、`prefers-reduced-motion`、解码失败、iOS 低电量
+      模式挡掉 autoplay —— 任何一条命中，`vidMix` 停在 0，画面**逐像素回到**
+      原来那三层 sprite。首屏永远不等它。
+   ③ **不在首屏加载**。等 window load 之后的空闲帧才开始取，186KB 不该跟 HTML 抢。
+   ④ 接管时 sprite 要**同步淡出**，不能两个一起加 —— 相加叠加会把中心烧成一片
+      死白，恰好把想要的米粒组织糊掉。 */
+var coreVid=null, vidMix=0, vidOn=false, vidTried=false;
+// 素材裁切时用的半宽 = 0.70 × 当时的 coreR（crop-core-plate.py --half 700，coreR 1000）。
+// 画的时候必须按同一个比例还原，视频里的球才会和 sprite 的球严丝合缝地重合。
+var VID_SPAN=0.70;
+// 实拍那层的亮度系数，以及视频进来时 sprite 光球让出多少亮度。
+// 两个都**不是拍脑袋的**：`verify-core-video.js` 逐页量「拦掉视频」和「开着视频」
+// 两版的核区平均亮度，`on(G) = 其余层 + G × 视频贡献` 是线性的，测两个 G 就能解出
+// 让比值落在 1.0 附近的那个值。**换素材、改羽化，都必须重解一次。**
+var VID_GAIN=0.34, VID_DIM=0.19;
 var pageF=0,nearPage=-1,litDone=false,bloomT=-1,comets=[],cometNext=2.5;
 var CUR={},TGT={};
 KEYS.forEach(function(k){ CUR[k]=KF[0][k]; TGT[k]=KF[0][k]; });
@@ -1240,6 +1274,11 @@ function draw(dt){
   var toGold=sstep(0.08,0.45,S.lum);
   var sol=clamp(S.solid,0,1);
   var dia=coreR*2*(0.92+0.08*S.lum);
+  // 实拍表面接管的程度。两个因子相乘：
+  //   vidMix —— 素材到位没有（0→1 淡入，见 frame()），任何一条降级路径命中它就永远是 0
+  //   sol    —— 核"实"到什么程度。前几页核还是一团雾，那是画的活，视频不掺和；
+  //             越往后越实，接管越多，「点亮」那一页正好是交接的过程本身。
+  var take=vidMix*sstep(0.15,0.75,sol);
   if(base>0.001){
     ctx.globalCompositeOperation='lighter';
     var ea=base*(1-toGold)*1.6;
@@ -1247,9 +1286,17 @@ function draw(dt){
     var ga2=base*toGold;
     if(ga2>0.003){
       if(sol<0.995){ ctx.globalAlpha=Math.min(1,ga2*(1-sol)); ctx.drawImage(glowHaze,   cx-dia/2, cy-dia/2, dia, dia); }
-      if(sol>0.005){ ctx.globalAlpha=Math.min(1,ga2*sol);     ctx.drawImage(glowCorona, cx-dia/2, cy-dia/2, dia, dia); }
+      // ⚠️ 日冕这一层**不交给视频**，永远画满。
+      //    第一版让视频连日冕一起接管，把暗部提亮之后露出两个硬伤：素材羽化到 0 的
+      //    那个半径变成一道看得见的圆边，日冕带全是被模型放大的抖动颗粒。
+      //    现在分工是：**盘子交给拍的，盘子外面那圈光交给画的** —— sprite 的日冕
+      //    本来就平滑干净可控，而 canvas 真正给不了的只有表面的对流翻涌。
+      //    素材那边对应地收到了 0.40→0.60 羽化（remaster-core.py），收边落在
+      //    日冕最亮的地方，接缝被光盖住。
+      if(sol>0.005){ ctx.globalAlpha=Math.min(1,ga2*sol); ctx.drawImage(glowCorona, cx-dia/2, cy-dia/2, dia, dia); }
     }
     // 光球层：实体的那个面。半径跟着 coreR 走，从烘好的最大尺寸缩下来（缩小不糊）。
+    var photoA=Math.pow(sol,1.70)*(0.68+0.32*base);
     if(sol>0.006){
       var prNow=0.26*coreR;
       // 凝聚：还"虚"的时候盘子大而淡，随实体度收拢成小而实——收拢本身就是"凝"的动作
@@ -1257,8 +1304,26 @@ function draw(dt){
       var pd=prNow/photoR*photoSprite.width;
       // 不能整体乘 base：lum 一低盘子就淡成中性灰（加法混合下半透明的近白就是灰）。
       // 恒星的表面不会因为变小变远就变透明，给个 0.68 的下限。
-      ctx.globalAlpha=Math.min(1,Math.pow(sol,1.70)*(0.68+0.32*base));
+      // 视频进来时只压一点点（VID_DIM），给相加的那层腾出亮度 —— **不能压到 0**，
+      // 盘子的**轮廓和边缘**永远由它说了算，见下面那段。
+      ctx.globalAlpha=Math.min(1,photoA*(1-take*VID_DIM));
       ctx.drawImage(photoSprite, cx-pd/2, cy-pd/2, pd, pd);
+    }
+    // 实拍的那一层：**只补盘子内部的纹理，不碰边缘**。
+    //
+    // 试过让它整个接管光球，两次都更难看：模型输出比我们自己渲染的**软**，
+    // 盘子边缘糊成一圈渐变、球读起来像失焦（`vid/disk2.png` 那组对比）。
+    // 结论写在这里，别再试第三次：
+    //   **画的负责形（轮廓、临边、颜色），拍的负责质（表面的对流翻涌）。**
+    // 所以素材羽化收到 0.20→0.34（盘子半径是 0.371），到边之前就淡干净了，
+    // 最外圈那 8% 纯粹是画的 —— 锐利的那一圈一点没动。
+    //
+    // 尺寸严格按素材的裁切比例还原（VID_SPAN），纹理才会和盘子严丝合缝地重合。
+    if(take>0.002&&coreVid&&coreVid.readyState>=2){
+      var vd=dia*VID_SPAN;
+      ctx.globalAlpha=Math.min(1,take*photoA*VID_GAIN);
+      try{ ctx.drawImage(coreVid, cx-vd/2, cy-vd/2, vd, vd); }
+      catch(e){ vidOn=false; coreVid=null; }   // 解码器抽风也不能让整帧崩掉
     }
     // 点火脉冲
     if(bloomT>=0){
@@ -1358,6 +1423,11 @@ function frame(now){
   CUR.ct=(dct<0.00002&&dct>-0.00002)?TGT.ct:CUR.ct+dct*0.15;
   var dcb=TGT.cb-CUR.cb;
   CUR.cb=(dcb<0.00002&&dcb>-0.00002)?TGT.cb:CUR.cb+dcb*0.15;
+  // 实拍表面：到位之后用 1.4 秒淡进来。不给渐变的话，视频 ready 的那一帧
+  // 核会"啪"地换一次脸——正好是用户还在读首屏的时候，很扎眼。
+  var vidWant=(vidOn&&coreVid&&coreVid.readyState>=2)?1:0;
+  vidMix+=(vidWant-vidMix)*Math.min(1,dt/1.4);
+  if(vidMix<0.0005) vidMix=vidWant?vidMix:0;
   if(!litDone&&CUR.lum>0.30){
     litDone=true;
     document.body.classList.add('lit');
@@ -1365,9 +1435,79 @@ function frame(now){
   }
   draw(dt);
 }
-function start(){ if(running) return; running=true; last=performance.now(); rafId=requestAnimationFrame(frame); }
-function stop(){ running=false; cancelAnimationFrame(rafId); }
+function start(){
+  if(running) return;
+  running=true; last=performance.now(); rafId=requestAnimationFrame(frame);
+  if(coreVid&&vidOn){ var p=coreVid.play(); if(p&&p.catch) p.catch(function(){}); }
+}
+function stop(){ running=false; cancelAnimationFrame(rafId); if(coreVid) coreVid.pause(); }
 document.addEventListener('visibilitychange',function(){ document.hidden?stop():start(); });
+
+/* ── 核视频：取素材 + 四条降级路径 ──────────────────────────────
+   这个函数**任何一步失败都不该有后果** —— 失败＝ vidOn 永远是 false ＝
+   draw() 里那段跳过 ＝ 画面就是原来三层 sprite 的样子。所以这里一个
+   throw 都不能往外冒，也不允许把 canvas 那条主线挡住。 */
+function initCoreVideo(){
+  if(vidTried) return; vidTried=true;
+  // ① 用户明确要求减少动态：这是"动态效果"，不是内容，直接不取
+  if(reduce) return;
+  // ② 省流模式 / 2G：这段素材不值得，画的核已经完整
+  var nc=navigator.connection;
+  if(nc&&(nc.saveData||/(^|-)2g$/.test(nc.effectiveType||''))) return;
+  // ③ 直接从磁盘打开（file://）：**必须跳过**。
+  //    file:// 下每个文件都是各自独立的不透明源，视频一旦画进 canvas 就把 canvas
+  //    "污染"了，之后任何 getImageData 直接抛 SecurityError。
+  //    本仓库一半的验收脚本（verify-core-mobile.js 等）就是 file:// + 读像素，
+  //    2026-08-01 接进来当场全挂。线上是 https 同源、不存在这个问题，
+  //    所以这里只挡 file:// —— 想在真环境里验，用 verify-core-video.js，它起了本地 http。
+  if(location.protocol==='file:') return;
+  var v;
+  try{ v=document.createElement('video'); }catch(e){ return; }
+  // 两个编码，只下一个：
+  //   WebM/VP9  —— 更小（133KB vs 185KB），Chrome / Firefox / Edge / Safari 14+ 都能放
+  //   MP4/H.264 —— iOS Safari 的保底，那边 VP9 支持到今天仍然不稳
+  // ⚠️ 别以为"MP4 到处都能放"就只发一个：**Playwright 自带的 Chromium 是开源构建，
+  //    根本没有 H.264 解码器**（2026-08-01 第一次接进来就栽在这——视频 err=4
+  //    MEDIA_ERR_SRC_NOT_SUPPORTED，看着像素材坏了，其实是测试浏览器放不了）。
+  //    发两个编码之后，验证脚本走 VP9、真机走谁都行，合成那条代码路径是同一条。
+  var canWebm=v.canPlayType&&v.canPlayType('video/webm; codecs="vp9"');
+  v.src=(canWebm==='probably'||canWebm==='maybe')?'core.webm':'core.mp4';
+  v.loop=true; v.muted=true; v.defaultMuted=true; v.preload='auto';
+  v.playsInline=true;
+  v.setAttribute('muted',''); v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline','');
+  // 留在 DOM 里（有些浏览器不给游离元素解码），但一个像素、不可见、不可点
+  v.style.cssText='position:fixed;left:-9px;top:-9px;width:1px;height:1px;opacity:0;pointer-events:none';
+  v.setAttribute('aria-hidden','true');
+  function giveUp(){ vidOn=false; coreVid=null; }
+  v.addEventListener('error',giveUp);
+  v.addEventListener('stalled',function(){ /* 慢就慢，别放弃：ready 之前本来就用 sprite */ });
+  v.addEventListener('playing',function(){ coreVid=v; vidOn=true; });
+  v.addEventListener('canplay',function(){
+    var p=v.play();
+    // ③ iOS 低电量模式会连 muted autoplay 一起挡。挂一次"首次交互再试"，
+    //    再失败就彻底认了 —— 不做第三次，免得每次点击都在重试。
+    if(p&&p.catch) p.catch(function(){
+      var again=function(){
+        document.removeEventListener('touchstart',again);
+        document.removeEventListener('click',again);
+        deck.removeEventListener('scroll',again);
+        var q=v.play(); if(q&&q.catch) q.catch(giveUp);
+      };
+      document.addEventListener('touchstart',again,{once:true,passive:true});
+      document.addEventListener('click',again,{once:true});
+      deck.addEventListener('scroll',again,{once:true,passive:true});
+    });
+  });
+  document.body.appendChild(v);
+}
+// ④ 绝不跟首屏抢带宽：等 load 之后的空闲帧。没有 requestIdleCallback 就退到 setTimeout。
+(function(){
+  var go=function(){
+    (window.requestIdleCallback||function(f){setTimeout(f,600);})(initCoreVideo,{timeout:3000});
+  };
+  if(document.readyState==='complete') go();
+  else window.addEventListener('load',go,{once:true});
+})();
 
 /* ── 翻页 ── */
 function goto(i,smooth){
