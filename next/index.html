@@ -1826,11 +1826,12 @@ window.FILM = true;
   var NB=scenes.length;
   document.getElementById('sky').style.opacity='0';   /* 画的天让位给拍的天 */
 
-  /* 视频：懒建 + 邻页预热 + 远页卸载；autoplay 被拒就断路，等首次手势再试 */
-  var blocked=0, cur=-1;
+  /* 视频：懒建 + 邻页预热 + 远页卸载 */
+  var cur=-1, lastErr='';
+  var GESTURES=['pointerdown','touchstart','touchend','keydown'];
   function mkVideo(k){
     var sc=scenes[k];
-    if(!sc||sc.dataset.v||sc.dataset.dead||blocked>=3) return;
+    if(!sc||sc.dataset.v||sc.dataset.dead) return;
     if(STILL) return;                                   /* reduced-motion：全静态 */
     if(SAVE) return;                                    /* 省流模式：全静态 */
     /* 手机不再拦：十章 webm 全在 122~723KB（当年「卡」是旧架构十段大片+桥接同播），
@@ -1838,40 +1839,65 @@ window.FILM = true;
     sc.dataset.v='1';
     var v=document.createElement('video');
     /* data-once：一次性叙事章（如 ch4 弧的生成）——播一遍停在完成态，不循环 */
-    v.muted=true; v.loop=!sc.dataset.once; v.playsInline=true; v.setAttribute('playsinline','');
+    v.muted=true; v.loop=!sc.dataset.once; v.playsInline=true;
+    /* 🔴 iOS 判自动播放资格看的是**内容属性**，不只是 JS 属性：三个都写成 attribute，
+       WebKit 才会自己把它播起来（不必等我们 play()，也就少一条会失败的路径）。 */
+    v.setAttribute('playsinline',''); v.setAttribute('muted',''); v.setAttribute('autoplay','');
     v.preload='auto';
     ['webm','mp4'].forEach(function(ext){
       var src=document.createElement('source');
       src.src='ch'+k+'.'+ext; src.type='video/'+ext;
       v.appendChild(src);
     });
-    /* 素材缺席=这一章按设计走静帧（如 ch6「一角」——克制到接近静止，海报即成片）。
-       标 dead 别再试：不标的话每次翻到这一章都 404 一轮。 */
-    v.addEventListener('error',function(){ if(v.parentNode===sc){sc.removeChild(v);} sc.dataset.v=''; sc.dataset.dead='1'; },true);
+    /* 🔴 只认 **video 自己的** error，`<source>` 的失败一律放过。
+       `<source>` 报错是**正常流程**：浏览器逐个试候选，播不了就报错换下一个。
+       而「第一个候选用不了」恰恰是 iOS 的常态——**iOS 17.4 之前根本没有 webm**，
+       webm 那个 source 必然报错，mp4 本来稳稳接得上。
+       旧写法（capture=true 且不看 e.target）把 source 的错也算成"这章没素材"，
+       直接删掉 video 并标 dead ⇒ **整章从此再也不会动，且怎么点都救不回来**。
+       实测（film/t-source.html，首源换成本机播不了的格式）：旧写法 100% 失守，
+       新写法回落到次源正常播。⚠️ 本机 Chromium 没有 H.264，验这条必须把 mp4/webm
+       的角色对调，否则"回落成功"根本演不出来——别再拿 mp4 当回落证据。 */
+    v.addEventListener('error',function(e){
+      if(e.target!==v) return;      /* source 级失败：交给资源选择算法去试下一个候选 */
+      if(v.parentNode===sc) sc.removeChild(v);
+      sc.dataset.v=''; sc.dataset.dead='1';
+    },true);
     /* 视频真开播才显形：海报→视频柔和溶解。ch4 尤其需要（海报是满弧、视频首帧是
        空场，硬切会闪跳——手机解禁视频后这个跳在手机上也会出现）。 */
     v.addEventListener('playing',function(){ v.classList.add('vp'); });
     /* 数据就绪即重试：show() 那一下 play() 可能发生在数据到位之前而石沉大海——
-       表现就是「要拉一下页面才动」。策略型拦截（App 内浏览器/低电量模式）另有
-       首触解锁兜底，这里治的是时序型。 */
-    v.addEventListener('canplay',function(){ if(sc.classList.contains('on')) tryPlay(v); });
+       表现就是「要拉一下页面才动」。这里治的是时序型，策略型见 armUnlock。 */
+    var retry=function(){ if(sc.classList.contains('on')) tryPlay(v); };
+    v.addEventListener('canplay',retry);
+    v.addEventListener('loadeddata',retry);
     sc.appendChild(v);
+  }
+  /* 策略型拦截（低电量模式 / App 内置浏览器 / 部分 WebView）**绕不过**，只能等一次真手势。
+     但绝不能用一次性监听：滚动的 touchstart 也会把它吃掉，吃掉之后就再没有第二次机会。
+     bgm 当初「得重新开才有声」就是这个坑（2026-08-02 Trev 实机逮的）——视频这边
+     当年还多一条：play 失败三次就连 video 都不建了，解锁后也只救得回当前这一章。
+     现在改成：常驻监听 + 播成功才摘，且不再因失败停止建 video。 */
+  var armed=false;
+  function armUnlock(){
+    if(armed) return; armed=true;
+    var off=function(){
+      GESTURES.forEach(function(t){ document.removeEventListener(t,h); });
+      armed=false;
+    };
+    var h=function(){
+      var sc=scenes[cur]; if(!sc) return;
+      mkVideo(cur);
+      var v=sc.querySelector('video'); if(!v) return;
+      var p=v.play();
+      if(p&&p.then) p.then(off,function(){}); else off();
+    };
+    GESTURES.forEach(function(t){ document.addEventListener(t,h,{passive:true}); });
   }
   function tryPlay(v){
     if(!v||!v.paused) return;
     var p=v.play();
-    if(p&&p.catch) p.catch(function(){
-      blocked++;
-      if(blocked===1){
-        var un=function(){
-          document.removeEventListener('touchstart',un);
-          document.removeEventListener('click',un);
-          blocked=0; show(cur,true);
-        };
-        document.addEventListener('touchstart',un,{once:true,passive:true});
-        document.addEventListener('click',un,{once:true});
-      }
-    }); else blocked=0;
+    if(p&&p.catch) p.catch(function(e){ lastErr=(e&&e.name)||'?'; armUnlock(); });
   }
   function show(k,force){
     if(k===cur&&!force) return;
@@ -1972,6 +1998,34 @@ window.FILM = true;
     if(v){ if(document.hidden) v.pause(); else tryPlay(v); }
   });
   show(0);
+
+  /* ?diag=1 —— 手机上没有开发者工具，「还是要拉一下才动」这类反馈只能靠猜。
+     这一屏把"到底是谁挡住了"直接印在页面上：能不能解 webm/H.264、真正选中的是哪个
+     文件、readyState 走没走、play() 被拒时的 error.name（NotAllowedError＝策略拦截，
+     多半是低电量模式或 App 内置浏览器，这两个绕不过，只能等手势）。
+     默认不建，只有带 ?diag=1 才出现，线上零成本。 */
+  if(/[?&]diag=1/.test(location.search)){
+    var t=document.createElement('video');
+    var box=document.createElement('pre');
+    box.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:99;margin:0;'
+      +'padding:8px 10px;background:rgba(0,0,0,.82);color:#8FE;font:10px/1.5 ui-monospace,monospace;'
+      +'white-space:pre-wrap;border:1px solid #2c4;border-radius:8px;pointer-events:none';
+    document.body.appendChild(box);
+    setInterval(function(){
+      var sc=scenes[cur], v=sc&&sc.querySelector('video');
+      box.textContent=
+        'webm:'+(t.canPlayType('video/webm; codecs="vp9"')||'✗')
+        +'  H.264:'+(t.canPlayType('video/mp4; codecs="avc1.42E01E"')||'✗')
+        +'\nch'+cur+(sc&&sc.dataset.dead?' [已判定无素材]':'')
+        +'  省流:'+(SAVE?'开':'关')+'  减动效:'+(STILL?'开':'关')
+        +'\n'+(v?('选中:'+(v.currentSrc||'').split('/').pop()
+                 +'  readyState:'+v.readyState+'  '+(v.paused?'⏸ 暂停中':'▶ 在播')
+                 +'  t='+v.currentTime.toFixed(1))
+                :'没有 video 元素')
+        +'\nplay() 最后一次被拒：'+(lastErr||'（没被拒过）')
+        +(armed?'  · 正在等一次手势':'');
+    },400);
+  }
 
   /* 氛围声：默认开（Trev 2026-08-02「音乐默认打开」）。浏览器挡 autoplay 就
      等首个真手势（点按/按键）解锁——见下面 armUnlock 的注释。 */
