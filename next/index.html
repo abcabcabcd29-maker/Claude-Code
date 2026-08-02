@@ -86,7 +86,19 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
 /* ── FILM 镜头层 ── */
 #stage{position:fixed;inset:0;z-index:0;pointer-events:none;background:#050409}
 .scene{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;
-  background-size:cover;background-position:center}
+  background-size:cover;background-position:center;background-repeat:no-repeat}
+/* ch7 的四颗星球标签（约会/招聘/陪伴/还没被发明的）。
+   ⚠️ 这四个词是这一章论点的落点（「每个 app 都在从零猜你是谁」），不是装饰。
+   v2 重建时它们随 canvas 一起消失了——原版是画在 canvas 上的，而 FILM 版把
+   canvas 整个关了（#sky opacity 0），于是桌面手机都只剩四个没名字的球。
+   现在改成 DOM，坐标钉在**画面的归一化坐标**上，由 layoutPlabs() 按
+   object-fit:cover 的真实取景框换算成屏幕坐标（换素材＝重量一次质心）。
+   中英切换白送：挂了 data-en，语言切换器扫的就是这个属性。 */
+.plab{position:absolute;white-space:nowrap;z-index:2;
+  font-family:var(--mono);font-size:clamp(9px,.72vw,11px);letter-spacing:.16em;
+  color:rgba(255,217,160,.72);text-shadow:0 1px 6px rgba(5,4,9,.95);
+  font-style:normal;pointer-events:none;opacity:0;transition:opacity .7s ease .5s}
+.scene.on .plab{opacity:1}
 .scene.on{opacity:1}
 .scene video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 /* ── 氛围声开关（默认开，见 FILM 模块）── */
@@ -119,6 +131,15 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
   .scene[data-i="7"]{--mx:8%}
   .scene[data-i="8"]{--mx:77%}
   .scene[data-i="9"]{--mx:50%}
+  /* ch7 是唯一装不下的一章：核在 x≈.20、四颗星球在 .60~.92，**横跨 0.72 幅宽**，
+     而竖屏可见窗只有 0.29——怎么挪都只能二选一（Trev 截图里就是只剩一个核）。
+     所以这一章不裁：整幅缩到屏宽、摆在正文上方，星球和标签一个不少。
+     背景是近黑的，上下留白看不出接缝，比"裁掉四分之三"诚实得多。 */
+  /* 88% 不是 100%：第四颗星球在 x≈.92，整幅铺满屏宽时它正好落在右侧拉条底下
+     （402 上 x=371，拉条从 356 起），标签怎么摆都会被挤开、和第三颗的标签挤成一团。
+     收到 88% 把它挪进 327，标签夹回来之后星球仍落在标签横跨范围内，读得出归属。 */
+  .scene[data-i="7"]{background-size:88% auto;background-position:left 12%}
+  .plab{font-size:8.5px;letter-spacing:.1em}
   /* 主体回到画面里之后，正文就压在亮部上了——原版手机档把 section::before 关掉
      （`background:none`），是因为那时候核被 canvas 的 narrowW 分支挪到了正文**下方**，
      不需要垫。FILM 版没有那套重排（画面是拍死的），所以这层要以**竖向**重新垫回来：
@@ -618,7 +639,12 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   <div class="scene" data-i="4" data-once="1" style="background-image:url(ch4.jpg)"></div>
   <div class="scene" data-i="5" style="background-image:url(ch5.jpg)"></div>
   <div class="scene" data-i="6" style="background-image:url(ch6.jpg)"></div>
-  <div class="scene" data-i="7" style="background-image:url(ch7.jpg)"></div>
+  <div class="scene" data-i="7" style="background-image:url(ch7.jpg)">
+    <i class="plab" data-px="0.695" data-py="0.375" data-en="Dating">约会</i>
+    <i class="plab" data-px="0.829" data-py="0.648" data-en="Hiring">招聘</i>
+    <i class="plab" data-px="0.601" data-py="0.805" data-en="Companionship">陪伴</i>
+    <i class="plab" data-px="0.934" data-py="0.316" data-en="Not yet invented">还没被发明的</i>
+  </div>
   <div class="scene" data-i="8" style="background-image:url(ch8.jpg)"></div>
   <div class="scene" data-i="9" style="background-image:url(ch9.jpg)"></div>
 </div>
@@ -1807,6 +1833,48 @@ window.FILM = true;
     var p=deck.scrollTop/(deck.clientHeight||1);
     show(Math.max(0,Math.min(NB-1,Math.round(p))));
   }
+  /* 把 ch7 的标签摆到「画面里那颗星球」下面：object-fit:cover / background-size
+     都会把 16:9 的图缩放并裁切，屏幕坐标 ≠ 画面坐标，必须按真实取景框换算。
+     两种取景一套公式：left=(容器宽−图宽)×X%，top=(容器高−图高)×Y%；
+     区别只在图宽高怎么来（cover 取满屏的那一边 / 手机 ch7 是整幅缩到屏宽）。
+     ⚠️ 末尾要把标签夹回画内（右边还要躲开拉条），不然「还没被发明的」会跑出屏。 */
+  function layoutPlabs(){
+    var sc=stage.querySelector('.scene[data-i="7"]');
+    if(!sc) return;
+    var cw=sc.clientWidth, ch=sc.clientHeight, AR=16/9, cs=getComputedStyle(sc);
+    var w,h,bs=cs.backgroundSize;
+    if(bs.indexOf('cover')>=0){
+      if(cw/ch<AR){ h=ch; w=ch*AR; } else { w=cw; h=cw/AR; }
+    } else {
+      /* 非 cover（手机 ch7 的「整幅」档）：真去读 background-size，别假定＝屏宽——
+         写死成 cw 的那版在把 100% 收成 88% 之后就错位了，标签留在原地没跟着挪。
+         计算值可能是 "88% auto" 也可能是 "353.76px auto"，两种都认。 */
+      var t=bs.split(' ')[0];
+      w = t.indexOf('%')>=0 ? cw*parseFloat(t)/100 : parseFloat(t);
+      if(!w||isNaN(w)) w=cw;
+      h = w/AR;
+    }
+    var xp=parseFloat(cs.backgroundPositionX); if(isNaN(xp)) xp=50;
+    var yp=parseFloat(cs.backgroundPositionY); if(isNaN(yp)) yp=50;
+    var left=(cw-w)*xp/100, top=(ch-h)*yp/100;
+    /* 边距只留 10px，不给拉条整条让位：唯一贴右缘的是「还没被发明的」，它的星球在
+       画面顶部（y≈.28），而拉条的点阵是**垂直居中**的一段，两者纵向根本不相交。
+       按 46/56px 让位反而把标签从星球下面拽走（1280 上差了 70px，验收从像素里逮到的）。 */
+    var EDGE=10;
+    [].forEach.call(sc.querySelectorAll('.plab'), function(el){
+      var pxn=parseFloat(el.dataset.px);
+      var x=left+pxn*w, y=top+parseFloat(el.dataset.py)*h, wd=el.offsetWidth;
+      /* 贴右缘那颗（px>.85）标签向**左**伸、右端顶着星球；其余居中。
+         居中的话它必然撞右边界、被夹回来，就和星球脱节了。 */
+      var lx = pxn>0.85 ? (x-6-wd) : (x-wd/2);
+      el.style.left=Math.max(EDGE, Math.min(cw-EDGE-wd, lx))+'px';
+      el.style.top=y+'px';
+    });
+  }
+  window.addEventListener('resize',function(){ setTimeout(layoutPlabs,220); });
+  new MutationObserver(layoutPlabs).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
+  setTimeout(layoutPlabs,60);
+
   deck.addEventListener('scroll',onScroll,{passive:true});
   document.addEventListener('visibilitychange',function(){
     var sc=scenes[cur], v=sc&&sc.querySelector('video');
