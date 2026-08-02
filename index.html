@@ -179,7 +179,7 @@ h1,h2{
 .dateline{margin-top:11px;font-size:13.6px;color:var(--core2);line-height:1.4}
 .dateline .n{font-family:var(--serif);font-size:19px;letter-spacing:.01em}
 
-/* ── 05 两条轴：六个人格声音 × 四个生活场景 ──
+/* ── 05 两条轴：六个人格声音 × 四个生活场景（2026-08-01 随正文一起改的口径） ──
    🔴 这两个数字和 chip 名字必须跟代码对账，别照抄文档：
    `mirror/src/services/context.ts` 的 ALL_CATEGORIES / ALL_DOMAINS。
    2026-07-29 第三轮同时动过两条轴：品类新增「应对风格」（6 个）；
@@ -488,7 +488,7 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   .footbar{bottom:14px}
 }
 
-/* 矮视口（不分宽窄）：加了「人格声音 × 生活场景」两条轴之后，
+/* 矮视口（不分宽窄）：加了「六个人格声音 × 四个生活场景」两条轴之后，
    成形页在 1024×620 这种"宽但矮"的窗口下会差几个像素。只按宽度收紧覆盖不到它。 */
 @media(max-height:660px){
   .axes{margin-top:12px;gap:6px}
@@ -658,6 +658,13 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
       <span class="ln"><i class="l2" data-en="with evidence.">它才开口说你是谁。</i></span>
     </h2>
     <p class="en fu d1">It speaks only with evidence.</p>
+    <!-- 2026-08-01：两条轴的数字和 chip 全部按代码重算过（BOARD.md「交接 官网 agent」那张卡）。
+         2026-07-29 归类引擎第三轮之后：人格声音新增「应对风格」＝6，生活场景从 6 收成 4
+         （成长不是场景是内容属性；生活与自我本来就都是"只有我自己的时候"，那条线连人都分不清。
+         收成四个之后人类一致率 0.768→0.829）。对外一句话：**四个场景是量出来的，不是拍出来的。**
+         出处永远是代码，不是 brain 里的旧文档：mirror/src/services/context.ts 的
+         ALL_CATEGORIES 和 ALL_DOMAINS（见本目录 README 第 12 条——上一次踩这个坑是把
+         已经退役的「表达风格」当卖点写了一整版）。 -->
     <p class="body fu d2" data-en="Say enough, and the fragments gather into a shape: six categories × four settings, every judgment carrying its evidence — one tap back to your own words. A mirror doesn't create you, it only lets you see.">说得够多，碎片自己聚成形状：六个品类 × 四个场景，每一条判断都标着依据，点开就是你的原话。镜子不产生你，它只让你看见。</p>
     <div class="axes fu d3">
       <div class="ax">
@@ -713,13 +720,13 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
     <p class="eyebrow fu" data-en="08 · YOURS ALONE">08 · 主权 / YOURS ALONE</p>
     <h2>
       <span class="ln"><i class="l1" data-en="All of this">这一切，</i></span>
-      <span class="ln"><i class="l2" data-en="never leaves your phone.">只发生在你的手机里。</i></span>
+      <span class="ln"><i class="l2" data-en="is yours alone.">都只属于你一个人。</i></span>
     </h2>
-    <p class="en fu d1">It never leaves your hand.</p>
+    <p class="en fu d1">All of it is yours alone.</p>
     <div class="facts">
       <div class="fact fu d2">
         <div class="lab" data-en="Stored locally">本地存储</div>
-        <p data-en="Your data stays on your phone. Not a promise not to look — there is no upload path at all.">数据只在你手机里。不是「承诺不看」，是架构上就没有上传。</p>
+        <p data-en="Your words are stored on your phone alone. Not a promise not to look — there is no account, so there is no &quot;you&quot; for us to look up.">数据只存在你手机里。不是「承诺不看」，是没有账号——我们这儿没有「你」这一栏。</p>
       </div>
       <div class="fact fu d3">
         <div class="lab" data-en="No advice">不给建议</div>
