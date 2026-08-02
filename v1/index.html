@@ -1,24 +1,9 @@
 <!doctype html>
-<!-- ══════════════════════════════════════════════════════════════════
-  /next/「一夜」二版（2026-08-02 Trev 五条拍板后重造）：
-  **这份文件 = 根站 deploy/index.html 逐字为底 + FILM 层**。
-  Trev 原话：「第一版我更喜欢原版的uiux」「拉条直接用原版的代码」「我喜欢原版显示
-  soulor.id, 然后还有做中英文版本」「手机直接照搬原版」——所以不再往旧 /next/ 里
-  一块块搬原版，而是反过来：原版整个当底（hero/拉条/双语/顶栏/手机档一字不动），
-  只叠两样「一夜」独有的：
-    ① FILM 镜头层：#stage 十章 Seedance 实拍（ch0~ch9.webm/mp4，海报 ch*.jpg），
-       原版 canvas 引擎仍在跑（readScroll 驱动文字/拉条/导航），只是 draw() 被
-       window.FILM 旗子拦下、#sky 透明——画的核让位给拍的核。
-    ② 氛围声 bgm.m4a：默认开（autoplay 被挡就等第一次手势，见 FILM 模块）。
-  手机（≤820px）和 prefers-reduced-motion 走 LITE：只出海报不建 <video>——
-  这就是旧版「演示还是在卡」的修法，也是照搬原版手机档的一部分。
-  改根站文案时记得两边同步（装配记录：brain/LOG.md 2026-08-02）。
-════════════════════════════════════════════════════════════════════ -->
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Soulor·灵镜 — 一夜</title>
+<title>Soulor·灵镜</title>
 <meta name="description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
 <meta property="og:title" content="Soulor·灵镜">
 <meta property="og:description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
@@ -82,104 +67,6 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
 #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
 #fog{position:fixed;inset:0;z-index:1;pointer-events:none;display:none}
 #grain{position:fixed;inset:0;z-index:1;opacity:.05;mix-blend-mode:overlay;pointer-events:none}
-
-/* ── FILM 镜头层 ── */
-#stage{position:fixed;inset:0;z-index:0;pointer-events:none;background:#050409}
-.scene{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;
-  background-size:cover;background-position:center;background-repeat:no-repeat}
-/* ch7 的四颗星球标签（约会/招聘/陪伴/还没被发明的）。
-   ⚠️ 这四个词是这一章论点的落点（「每个 app 都在从零猜你是谁」），不是装饰。
-   v2 重建时它们随 canvas 一起消失了——原版是画在 canvas 上的，而 FILM 版把
-   canvas 整个关了（#sky opacity 0），于是桌面手机都只剩四个没名字的球。
-   现在改成 DOM，坐标钉在**画面的归一化坐标**上，由 layoutPlabs() 按
-   object-fit:cover 的真实取景框换算成屏幕坐标（换素材＝重量一次质心）。
-   中英切换白送：挂了 data-en，语言切换器扫的就是这个属性。 */
-.plab{position:absolute;white-space:nowrap;z-index:2;
-  font-family:var(--mono);font-size:clamp(9px,.72vw,11px);letter-spacing:.16em;
-  color:rgba(255,217,160,.72);text-shadow:0 1px 6px rgba(5,4,9,.95);
-  font-style:normal;pointer-events:none;opacity:0;transition:opacity .7s ease .5s}
-.scene.on .plab{opacity:1}
-.scene.on{opacity:1}
-.scene video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  opacity:0;transition:opacity .6s ease}
-.scene video.vp{opacity:1}
-/* ── 氛围声开关（默认开，见 FILM 模块）── */
-#snd{background:none;border:1px solid var(--line);color:var(--mut);border-radius:999px;
-  font-family:var(--mono);font-size:10px;letter-spacing:.16em;padding:8px 12px;cursor:pointer;
-  transition:color .3s,border-color .3s;white-space:nowrap}
-#snd.on{color:var(--core);border-color:rgba(255,217,160,.4)}
-@media(max-width:560px){#snd{padding:7px 9px;letter-spacing:.1em}}
-/* ch4 是一次性叙事章（弧从左到右生成）：桌面底图用「空场」首帧，避免 满弧海报→空场视频
-   的闪跳；手机 LITE 只看海报，必须是完成态满弧——所以只在桌面覆盖。!important 压 inline。 */
-@media(min-width:821px){.scene[data-i="4"]{background-image:url(ch4-first.jpg)!important}}
-
-/* ══ 手机版式三版：字上·带下（Trev 2026-08-02：「第4页的排版是最好的，其他字放得过低；
-   字在中间是最重要的，阅读体验做好，再根据手机排版调背景位置」）══
-   二版的思路是「按章裁切竖屏画面」——裁就必有取舍（七章主体曾整个被裁在画外，
-   救回来又压了字）。三版换逻辑：**背景不再竖裁**，整幅 16:9 横带摆在字的下方
-   （ch7 羽化带的推广），主体永远完整、字永远从顶上开始（ch4 范式）。
-   带的几何：宽=屏宽，高=vw×9/16（402→226px），钉在纵向 74%（402×774 上带占
-   [52%,82%] 屏高；375×667 上 [51%,82%]——两档几乎一致，一套羽化段通用）。
-   字的对比度仍由 section::before 暗罩层独立保证（后面的块，上暗下透）。 */
-@media(max-width:820px){
-  /* 带**贴屏底**（Trev：字居中优先，背景位置服从排版）：402×774 上带占 [71%,100%]，
-     主体（太阳/星球）落在 ≈85% 屏高——正好在正文块下方那条透出带里。
-     钉 84% 那版被暗罩连带压掉了，ch7 的星球标签几乎看不见（联络表逮的）。 */
-  /* --bandshift：这一章的带要**往下压多少**（由 fitBand() 按"主体不能被字/卡压住"算出来，
-     单位 px，缺省 0）。压下去的代价是裁掉带底那一截，所以 fitBand 有上限。
-     --m0/--m1：羽化段跟着带顶走（带一下压，羽化不跟就会在字底下露出一条硬边）。 */
-  .scene{background-size:100% auto!important;
-    background-position:center calc(100% + var(--bandshift,0px))!important;
-    background-repeat:no-repeat;
-    -webkit-mask-image:linear-gradient(180deg,transparent var(--m0,64%),#000 var(--m1,76%),#000 100%);
-    mask-image:linear-gradient(180deg,transparent var(--m0,64%),#000 var(--m1,76%),#000 100%)}
-  /* 视频同几何：contain 到屏宽、钉同一纵位（含同一份下压）——和海报带严丝合缝，全帧无裁切 */
-  .scene video{object-fit:contain;object-position:center calc(100% + var(--bandshift,0px))}
-  /* 背景层按章提亮（字的对比度靠暗罩层，与此无关）。暗章 1.4~1.5；
-     烬日只 1.12（提多了就"点亮"了）；亮章不提。 */
-  .scene{filter:brightness(var(--mb,1)) saturate(1.05)}
-  .scene[data-i="0"]{--mb:1.75}
-  .scene[data-i="1"]{--mb:1.7}
-  .scene[data-i="2"]{--mb:1.65}
-  .scene[data-i="3"]{--mb:1.65}
-  .scene[data-i="4"]{--mb:1.7}
-  /* ch6 是「已成形但还没点亮」的烬日，本来就该是十章里最暗的一章——但 1.25 档在
-     手机上整屏峰值只有 109，等于没有亮点（一团看不出形状的灰）。提到 1.45 后峰值
-     ≈124，仍不到 ch5 的一半（255），"还没亮"读得出来，形状也终于看得见。 */
-  .scene[data-i="6"]{--mb:1.45}
-  /* ch7 素材本身就是十章里最亮的（峰 251），1.5 档只是把整幅雾一起抬起来、
-     黑场发灰、星球反而糊在背景里。1.2 档黑得下去，四颗星球才立得出来。
-     ⚠️ 核心那团发灰是**素材自带**的（源图核心像素 (255,255,217)，盘内近中性灰），
-     不是这里提亮提出来的——降到 1.0 照样灰。要根治得重生成 ch7，留给下一轮。 */
-  .scene[data-i="7"]{--mb:1.2}
-  .scene[data-i="5"]{--mb:1.15}
-  .scene[data-i="8"]{--mb:1.2}
-  .scene[data-i="9"]{--mb:1.2}
-  /* 🔴 海报自己的推镜——**这是"页面还活着"的下限，不是装饰**。
-     微信/QQ 等 App 内置浏览器对静音视频自动播放是**硬拦截**（平台规则，绕不过，
-     Trev 真机诊断屏实锤 NotAllowedError）。视频播不了的时候，页面全靠这一层还在动；
-     它一停，用户看到的就是一张死图——2026-08-02 Trev 从微信打开：「动画都没了」。
-     原来 26s 走 5% 缩放，算下来每秒变化 0.2%，等于没动。现在 20s 走 8.5%，看得见。
-     ⚠️ **只许纵向推近，不许左右横移**：Trev 早前明令「画面左右乱动」要修掉。
-     ⚠️ 曲线必须是 **linear**：ease-in-out 在一个来回的两端几乎是静止的，用户什么时候
-     看到全凭运气——实测同一条动画，落在慢相位时 5s 只有 3.6% 的像素在变，快相位有 11%。
-     推镜要的是匀速，不是呼吸。
-     transform-origin 钉底边：画面带本来就贴屏底，从中心缩放会把带的下沿顶出画外。
-     ⚠️ 试过把原点钉在"主体所在高度"（让推镜不把主体顶回字底下），**放弃了**：
-     原点上的东西是不动的，而主体恰恰就是最该动的那块——实测动感直接腰斩
-     （ch2 8.7%→3.2%、ch7 10.2%→4.8%）。微信里视频播不了时全靠这层撑着，
-     不能为了省 20px 净空把它冻住。改成**动感优先 + 净空余量加大到 52px**
-     去吸收推镜的上浮（缩放 0.10×主体离底距离 ≈15px，再加 translateY 1% ≈8px）。 */
-  .scene{transform-origin:50% 100%}
-  .scene.on{animation:mbdrift 20s linear infinite alternate}
-  .scene.on:has(video.vp){animation:none}   /* 视频真播起来了就让位给它 */
-  @keyframes mbdrift{
-    from{transform:scale(1.015) translateY(0)}
-    to{transform:scale(1.10) translateY(-1%)}
-  }
-  @media(prefers-reduced-motion:reduce){.scene.on{animation:none}}
-  .plab{font-size:8.5px;letter-spacing:.1em}
-}
 
 /* ── 分页容器 ──
    固定满屏 + 自己滚动：section 用 height:100% 就精确等于视口高，
@@ -293,7 +180,7 @@ h1,h2{
 .dateline{margin-top:11px;font-size:13.6px;color:var(--core2);line-height:1.4}
 .dateline .n{font-family:var(--serif);font-size:19px;letter-spacing:.01em}
 
-/* ── 05 两条轴：六个人格声音 × 四个生活场景 ──
+/* ── 05 两条轴：六个人格声音 × 四个生活场景（2026-08-01 随正文一起改的口径） ──
    🔴 这两个数字和 chip 名字必须跟代码对账，别照抄文档：
    `mirror/src/services/context.ts` 的 ALL_CATEGORIES / ALL_DOMAINS。
    2026-07-29 第三轮同时动过两条轴：品类新增「应对风格」（6 个）；
@@ -356,7 +243,7 @@ h1,h2{
 }
 #nav.scrolled{background:rgba(5,4,9,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom-color:var(--line)}
 #nav .brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto;white-space:nowrap}
-/* 🔴 字标是一个整体，任何情况下都不许折行。375 宽上顶栏四件东西挤在一起，「灵镜」被压成竖排两个字——字标当场裂开。nowrap + 不参与收缩，宁可别的先让。 */
+/* 🔴 字标是一个整体，任何情况下都不许折行（375 宽上「灵镜」曾被压成竖排两字）。 */
 /* 就是 App 里那张 logo-mark.png（一面竖向胶囊镜，内里一道斜切反光）。
    它是 alpha 形状、RN 用 tintColor 上色，所以网页侧也走 mask-image 而不是 <img>，
    这样才能跟 App 一样按主题着色，而不是烙死一个颜色。 */
@@ -602,49 +489,8 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   .axes{gap:7px;margin-top:15px}
   .footbar{bottom:14px}
 }
-/* 手机三版·字居中（放在 799 块之后：媒体查询不加特异性，顺序说了算）。
-   ⚠️ Trev 2026-08-02 连说两遍「不是置上，是置中」——**字在竖直方向居中**是这一版的
-   铁律，别再改回 flex-start。三版第一稿理解成了「靠顶」，被当场驳回。
-   居中之后背景带要给字让路：带从 74% 沉到 84%（见上面 820 块），
-   暗罩也跟着把渐透点下移。 */
-@media(max-width:820px){
-  section:not(#begin){align-items:center}
-  section#hero{align-items:center}
-  /* #begin 是 flex-direction:column：竖轴居中走的是 justify-content（基础规则 301 行），
-     压 align-items 没用——ch9 就是这么漏网的（验收逮的）。 */
-  #begin{justify-content:center}
-  .col{padding-top:0}
-  #hero .col{padding-top:0}
-  /* 🔴 `align-items:center` 居的是**内容盒**的中，不是屏幕的中。上面 532 行给了
-     `section{padding-top:68px}`（躲固定导航栏），下边却是 0 —— 于是十章一律**低 34px**，
-     两档屏幕、每一章都差这个同一个常数（验收量到「上276/下208」，恒差 68）。
-     补一个等量的下内边距，内容盒就重新以视口中线为中心，`center` 才真是屏幕的中。
-     ⚠️ 别改成「上下各 34px」省高度：68 是量出来的（导航底沿 57px + 11px 呼吸），
-     减了长章的标题就会钻到导航底下。 */
-  section{padding-bottom:68px}
-  /* ch9 的 .col 原本自带 clamp(64px,10vh,96px) 下内边距给页脚让路；
-     现在 section 的 68px 已经把页脚（底 14px + 高 ≈40px）让开了，再叠一层
-     会把正文顶到离中线 70px 以上——留一点余量即可。 */
-  #begin .col{padding-bottom:16px}
-  /* 暗罩只护「裸文字」（标题+正文段落，在正文块中上部），下段放开让带透出来。
-     正文块下部是演示卡——`.card/.facts` 自带底色和描边，不靠这层暗罩，
-     所以渐透点可以提到 58%，带的主体（≈85%）才不会被一起压死。 */
-  /* 渐透点**跟着每章裸文字的实际底部走**（由 fitScrim() 写进 --f0/--f1/--f2）：
-     每章正文长短差很多（ch1 三行 vs ch7 五行+公式），写死一套百分比必然有章
-     被压暗、有章被漏保护——ch7 就是这么漏的（裸文字压在亮带上，峰值 246）。
-     缺省值是「正文中等长度」的安全档，JS 没跑起来也不会糊。 */
-  section::before{background:linear-gradient(180deg,
-    rgba(5,4,9,.50) 0%,rgba(5,4,9,.74) 22%,
-    rgba(5,4,9,.74) var(--f0,50%),rgba(5,4,9,.32) var(--f1,63%),
-    rgba(5,4,9,0) var(--f2,74%))!important}
-  /* 🔴 #fog 必须在手机上关掉：它是**原版**为「核在上、正文在下」做的**底部**压暗
-     （底 0.80 黑度，z-index:1 盖在 #stage 之上），而三版把画面带放到了屏底——
-     两层正好打架。实测 ch5 素材峰值 254，到屏幕上只剩 74，就是被它吃掉的。
-     字的保护已经全交给 section::before（上暗下透），这层在三版里只有害处。 */
-  #fog{display:none!important}
-}
 
-/* 矮视口（不分宽窄）：加了「人格声音 × 生活场景」两条轴之后，
+/* 矮视口（不分宽窄）：加了「六个人格声音 × 四个生活场景」两条轴之后，
    成形页在 1024×620 这种"宽但矮"的窗口下会差几个像素。只按宽度收紧覆盖不到它。 */
 @media(max-height:660px){
   .axes{margin-top:12px;gap:6px}
@@ -655,26 +501,9 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   .body,.sub{margin-top:14px;line-height:1.66}
 }
 
-/* ch8「主权」是全站最高的一屏：标题 + 英文回声 + 正文 + **三张事实卡**，
-   而英文版又比中文长一截。在 375×667 / 390×620 / 360×640 这几档上，英文版会把
-   标题顶进固定导航（实测差 8 / 14 / 26px）——正文居中之下，超出是往两头挤的。
-   `.facts` 全站只有这一屏在用，所以单独给它一档收紧最省事、也不会波及别章。
-   阈值取 700 而不是沿用已有的 580：667 这一档（iPhone SE / 8）压根够不着 580。 */
-@media(max-width:820px) and (max-height:700px){
-  .facts{margin-top:14px;gap:7px}
-  .fact{padding:10px 14px}
-  .fact p{margin-top:4px;line-height:1.56}
-}
-
 /* 极矮视口（手机横屏、或浏览器上下工具栏都展开时）：整体收紧一档。
    mandatory snap 下装不下的内容是永远看不到的，所以这一档是硬需求不是优化。 */
 @media(max-width:820px) and (max-height:580px){
-  /* 这一档（横屏 820×580 英文版）正文有 494px 高，比「上下各 68px」留出的 444px 还高，
-     严格居中会让标题往上顶进导航栏 14px。对称内边距改不了这件事——居中点就是视口中线，
-     只有把中线往下挪才躲得开。所以这一档单独把下边距收到 24px：整体下移 22px，
-     580px 高的屏上肉眼看不出偏心，但字不再钻到导航底下。
-     ⚠️ 只在这一档破例，别把它抄回上面的通用块——竖屏各档都是严格居中的。 */
-  section{padding-bottom:24px}
   h1,h2{font-size:clamp(21px,min(4.6vw,5.6vh),50px);line-height:1.22}
   .col{padding-bottom:7%}
   .eyebrow{margin-bottom:12px}
@@ -710,56 +539,9 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
 <div id="fog" aria-hidden="true"></div>
 <div id="grain" aria-hidden="true"></div>
 
-<!-- FILM 镜头层（见文件头注释①）：z 与 #sky 同层、DOM 在后，雾/颗粒照旧压在上面 -->
-<div id="stage" aria-hidden="true">
-  <!-- data-sy = 这一章「画面主体」的归一化纵位。fitBand() 拿它算出每章该把画面带
-       往下压多少，好让主体落在正文底边之下（Trev 2026-08-02：「第 2 页的动画拉低一点，
-       动画被字挡住了，第 5、6 页也是」——手机上正文竖直居中、带贴屏底，正文一长就压住主体）。
-
-       🔴 必须从**视频**量，不能从海报量。ch4 的海报是"满弧"（弧在下部，海报量出来 0.80），
-       而视频演的是弧被引力吸向太阳的过程，亮的那一端在画面**上部**——按海报算，
-       ch4 的下压量会算成 0，等于没修。取值＝整段视频 30 帧亮度重心的 **p25**
-       （主体只有 25% 的时间高于它；取最高帧会被一两帧闪烁带跑，取平均又护不住）。
-
-       ⚠️ ch7 是唯一的人工值（0.536＝四颗星球 data-py 的均值）：这一章亮度重心追的是
-       左上那个核（0.12），但要给人看的是星球。按 0.12 算会把带下压 38px，
-       「陪伴」那颗直接被顶出屏外。**亮度最强 ≠ 内容主体，只有这一章两者分家。**
-
-       ⚠️ ch4 也是特例（用 p50 而不是 p25）：这一章的弧**本来就是从左到右扫过整个画幅**的，
-       早期亮区在上部（p10=0.11）、完成后落在下部（p75=0.66），差了 0.55 个画幅，
-       一个位置不可能同时安置两头。它是 data-once（播一遍停在完成态），所以按
-       **停住之后的常态**定位——完成的弧落在净空区；开头两三秒扫过字区是它本来的运动，
-       不是版式 bug。别再想把整段都压到字底下：压够早期，完成态就被顶出屏外了（实测）。
-
-       data-band-group：**共用同一颗主体的章要绑在一起**。ch5「成形」和 ch6「诚实」
-       是同一颗太阳（ch6 就是 ch5 压暗的版本），但两章正文长短不同，各按各的正文底边
-       让位就会把同一颗太阳推到两个高度——实测两档屏上都差 44px，翻页时太阳"跳"一下。
-       fitBand 对同组取**组内最大下压量**（每章的字都让开，位置又完全一致），
-       sy 也取组内均值（抹掉量出来那零点几个百分点的噪声）。
-       （Trev 2026-08-02：「第 5 和 6 页明明是同一个太阳，位置应该一样才对」）
-
-       重新生成任何一章的视频，就要重新量：film/measure-sy.py <素材目录> -->
-  <div class="scene" data-i="0" data-sy="0.393" style="background-image:url(ch0.jpg)"></div>
-  <div class="scene" data-i="1" data-sy="0.496" style="background-image:url(ch1.jpg)"></div>
-  <div class="scene" data-i="2" data-sy="0.284" style="background-image:url(ch2.jpg)"></div>
-  <div class="scene" data-i="3" data-sy="0.198" style="background-image:url(ch3.jpg)"></div>
-  <div class="scene" data-i="4" data-sy="0.537" data-once="1" data-mv="1" style="background-image:url(ch4.jpg)"></div>
-  <div class="scene" data-i="5" data-sy="0.300" data-band-group="sun" data-mv="1" style="background-image:url(ch5.jpg)"></div>
-  <div class="scene" data-i="6" data-sy="0.298" data-band-group="sun" data-mv="1" style="background-image:url(ch6.jpg)"></div>
-  <div class="scene" data-i="7" data-sy="0.536" style="background-image:url(ch7.jpg)">
-    <i class="plab" data-px="0.695" data-py="0.375" data-en="Dating">约会</i>
-    <i class="plab" data-px="0.829" data-py="0.648" data-en="Hiring">招聘</i>
-    <i class="plab" data-px="0.601" data-py="0.805" data-en="Companionship">陪伴</i>
-    <i class="plab" data-px="0.934" data-py="0.316" data-en="Not yet invented">还没被发明的</i>
-  </div>
-  <div class="scene" data-i="8" data-sy="0.311" style="background-image:url(ch8.jpg)"></div>
-  <div class="scene" data-i="9" data-sy="0.253" style="background-image:url(ch9.jpg)"></div>
-</div>
-
 <header id="nav">
   <a class="brand" href="#hero" aria-label="Soulor·灵镜"><span class="mark" aria-hidden="true"></span><span class="wordmark">Soulor</span><span class="dotmark">·</span><span class="zhmark">灵镜</span></a>
   <span class="dom">SOULOR.ID</span>
-  <button id="snd" type="button" aria-label="环境声开关 / Ambient sound"></button>
   <button id="langbtn" type="button" aria-label="切换语言 / Switch language"><span class="on">中</span><span class="sep">/</span><span class="off">EN</span></button>
   <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener" data-en="Join the beta →">进内测 →</a>
 </header>
@@ -878,6 +660,13 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
       <span class="ln"><i class="l2" data-en="with evidence.">它才开口说你是谁。</i></span>
     </h2>
     <p class="en fu d1">It speaks only with evidence.</p>
+    <!-- 2026-08-01：两条轴的数字和 chip 全部按代码重算过（BOARD.md「交接 官网 agent」那张卡）。
+         2026-07-29 归类引擎第三轮之后：人格声音新增「应对风格」＝6，生活场景从 6 收成 4
+         （成长不是场景是内容属性；生活与自我本来就都是"只有我自己的时候"，那条线连人都分不清。
+         收成四个之后人类一致率 0.768→0.829）。对外一句话：**四个场景是量出来的，不是拍出来的。**
+         出处永远是代码，不是 brain 里的旧文档：mirror/src/services/context.ts 的
+         ALL_CATEGORIES 和 ALL_DOMAINS（见本目录 README 第 12 条——上一次踩这个坑是把
+         已经退役的「表达风格」当卖点写了一整版）。 -->
     <p class="body fu d2" data-en="Say enough, and the fragments gather into a shape: six categories × four settings, every judgment carrying its evidence — one tap back to your own words. A mirror doesn't create you, it only lets you see.">说得够多，碎片自己聚成形状：六个品类 × 四个场景，每一条判断都标着依据，点开就是你的原话。镜子不产生你，它只让你看见。</p>
     <div class="axes fu d3">
       <div class="ax">
@@ -1662,7 +1451,7 @@ function frame(now){
     document.body.classList.add('lit');
     if(!reduce) bloomT=T;
   }
-  if(!window.FILM) draw(dt);   /* FILM 版：画面交给 #stage，引擎只当骨架 */
+  draw(dt);
 }
 function start(){
   if(running) return;
@@ -1677,7 +1466,6 @@ document.addEventListener('visibilitychange',function(){ document.hidden?stop():
    draw() 里那段跳过 ＝ 画面就是原来三层 sprite 的样子。所以这里一个
    throw 都不能往外冒，也不允许把 canvas 那条主线挡住。 */
 function initCoreVideo(){
-  if(window.FILM) return;   /* FILM 版：核由整幅镜头出，不取 core.mp4 */
   if(vidTried) return; vidTried=true;
   // ① 用户明确要求减少动态：这是"动态效果"，不是内容，直接不取
   if(reduce) return;
@@ -1871,399 +1659,6 @@ try{
   btn.addEventListener('click', function(){
     apply(document.documentElement.getAttribute('data-lang')==='en' ? 'zh' : 'en');
   });
-})();
-
-/* ══════════ FILM：十章镜头 + 氛围声（/next/ 独有层，见文件头注释） ══════════ */
-window.FILM = true;
-(function(){
-  var MOBILE = matchMedia('(max-width:820px)').matches;
-  var STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  /* 手机不再一刀切禁视频：当年的卡顿是十段大视频抢解码；现在 4/5/6 只有
-     122~722KB、且同一时刻只播一章。白名单见 markup 的 data-mv。 */
-  var SAVE = !!(navigator.connection&&navigator.connection.saveData);
-  var LITE = MOBILE || STILL;
-  var deck=document.getElementById('deck');
-  var stage=document.getElementById('stage');
-  var scenes=[].slice.call(stage.children);
-  var NB=scenes.length;
-  document.getElementById('sky').style.opacity='0';   /* 画的天让位给拍的天 */
-
-  /* 视频：懒建 + 邻页预热 + 远页卸载 */
-  var cur=-1, lastErr='';
-  var GESTURES=['pointerdown','touchstart','touchend','keydown'];
-  function mkVideo(k){
-    var sc=scenes[k];
-    if(!sc||sc.dataset.v||sc.dataset.dead) return;
-    if(STILL) return;                                   /* reduced-motion：全静态 */
-    if(SAVE) return;                                    /* 省流模式：全静态 */
-    /* 手机不再拦：十章 webm 全在 122~723KB（当年「卡」是旧架构十段大片+桥接同播），
-       一次只播一章 + 邻页预热 + 远页卸载，整趟滑完 ≈4.4MB。 */
-    sc.dataset.v='1';
-    var v=document.createElement('video');
-    /* data-once：一次性叙事章（如 ch4 弧的生成）——播一遍停在完成态，不循环 */
-    v.muted=true; v.loop=!sc.dataset.once; v.playsInline=true;
-    /* iOS 判自动播放资格看的是**内容属性**，不只是 JS 属性，所以 playsinline/muted
-       写成 attribute。
-       🔴 但**绝不能加 `autoplay` 属性**：WebKit 在"自动播放不被允许"的环境里
-       （微信等 App 内置 WebView、低电量模式），对带 autoplay 的媒体会连**资源都不加载**
-       ——2026-08-02 我加过一轮，Trev 真机诊断屏当场逮到：currentSrc 空、readyState 0、
-       画面彻底不动，比不加还糟。播放由我们自己的 play() 驱动，不需要这个属性。 */
-    v.setAttribute('playsinline',''); v.setAttribute('muted','');
-    v.preload='auto';
-    ['webm','mp4'].forEach(function(ext){
-      var src=document.createElement('source');
-      src.src='ch'+k+'.'+ext; src.type='video/'+ext;
-      v.appendChild(src);
-    });
-    /* 🔴 只认 **video 自己的** error，`<source>` 的失败一律放过。
-       `<source>` 报错是**正常流程**：浏览器逐个试候选，播不了就报错换下一个。
-       而「第一个候选用不了」恰恰是 iOS 的常态——**iOS 17.4 之前根本没有 webm**，
-       webm 那个 source 必然报错，mp4 本来稳稳接得上。
-       旧写法（capture=true 且不看 e.target）把 source 的错也算成"这章没素材"，
-       直接删掉 video 并标 dead ⇒ **整章从此再也不会动，且怎么点都救不回来**。
-       实测（film/t-source.html，首源换成本机播不了的格式）：旧写法 100% 失守，
-       新写法回落到次源正常播。⚠️ 本机 Chromium 没有 H.264，验这条必须把 mp4/webm
-       的角色对调，否则"回落成功"根本演不出来——别再拿 mp4 当回落证据。 */
-    v.addEventListener('error',function(e){
-      if(e.target!==v) return;      /* source 级失败：交给资源选择算法去试下一个候选 */
-      if(v.parentNode===sc) sc.removeChild(v);
-      sc.dataset.v=''; sc.dataset.dead='1';
-    },true);
-    /* 视频真开播才显形：海报→视频柔和溶解。ch4 尤其需要（海报是满弧、视频首帧是
-       空场，硬切会闪跳——手机解禁视频后这个跳在手机上也会出现）。 */
-    v.addEventListener('playing',function(){ v.classList.add('vp'); });
-    /* 数据就绪即重试：show() 那一下 play() 可能发生在数据到位之前而石沉大海——
-       表现就是「要拉一下页面才动」。这里治的是时序型，策略型见 armUnlock。 */
-    var retry=function(){ if(sc.classList.contains('on')) tryPlay(v); };
-    v.addEventListener('canplay',retry);
-    v.addEventListener('loadeddata',retry);
-    sc.appendChild(v);
-    /* 显式 load()：把资源选择算法踢起来。有些 WebView 里不主动叫它就一直
-       currentSrc 空 / readyState 0（Trev 真机诊断屏就是这个读数）。 */
-    try{ v.load(); }catch(e){}
-  }
-  /* 策略型拦截（低电量模式 / App 内置浏览器 / 部分 WebView）：拖拽本身就是手势——
-     翻页靠拖，所以**拖动那一下就地激活**，不放任何提示（Trev：「不喜欢轻点一下，
-     UIUX 也不喜欢，拖拽的时候就直接 activate」。2026-08-02 那版「轻点一下」胶囊已删）。
-
-     两条铁律，都是踩过的坑：
-     ① **绝不能用一次性监听**：滚动的 touchstart 会把 once 监听吃掉，之后再无机会
-        （bgm「得重新开才有声」的根因）。改成常驻，播成功也不摘——见②。
-     ② 🔴 **WebKit 的播放授权是按元素发的**：这一次手势里 play 过的那个 video 从此
-        自由，可翻到下一章**新建的 video 又是没授权的**——只解锁当前章的话，
-        每翻一页都得再拖一下才动。所以同一次手势里把**邻章**也各 play 一下"盖章"，
-        非当前章拿到授权立刻 pause（scene 透明，用户看不见）。每次拖动都会重新给
-        新邻居盖章，翻页就永远接得上。监听费用：只在 play 被拒过的环境里才挂。
-
-     🔴 名字必须和下面氛围声那套解锁分开（同一个 IIFE 作用域）：早先这份也叫
-     armUnlock/armed，被音频那份同名声明覆盖（函数声明提升，后声明的赢），
-     视频永远等不到重试。已改名，加同类功能前先 grep 名字。 */
-  var vidArmed=false;
-  function blessAround(){
-    var ks=[cur,cur+1,cur-1];
-    for(var j=0;j<ks.length;j++){
-      var k=ks[j];
-      if(k<0||k>=NB) continue;
-      mkVideo(k);
-      var s2=scenes[k], v=s2&&s2.querySelector('video');
-      if(!v) continue;
-      if(!v.readyState){ try{ v.load(); }catch(e){} }   /* 有些 WebView 连取数据都要等手势 */
-      if(k===cur){ if(v.paused) v.play().catch(function(){}); continue; }
-      if(!v.paused) continue;
-      /* ⚠️ 盖章的 play() 是异步的：promise 落定时用户可能**已经翻到了这一章**——
-         无条件 pause 会把正在看的章按停（验收 A 段连翻两页逮到的竞态）。
-         落定那一刻再看它是不是当前章，是就别停，让它接着播。 */
-      (function(vv,kk){
-        var p=vv.play();
-        if(p&&p.then) p.then(function(){ if(kk!==cur) vv.pause(); },function(){});
-      })(v,k);
-    }
-  }
-  function armVideoUnlock(){
-    if(vidArmed) return; vidArmed=true;
-    GESTURES.forEach(function(t){ document.addEventListener(t,blessAround,{passive:true}); });
-  }
-  function tryPlay(v){
-    if(!v||!v.paused) return;
-    var p=v.play();
-    if(p&&p.catch) p.catch(function(e){ lastErr=(e&&e.name)||'?'; armVideoUnlock(); });
-  }
-  function show(k,force){
-    if(k===cur&&!force) return;
-    cur=k;
-    for(var i=0;i<NB;i++){
-      var sc=scenes[i], on=i===k, v=sc.querySelector('video');
-      sc.classList.toggle('on',on);
-      if(on){
-        mkVideo(i); v=sc.querySelector('video');
-        if(v){ if(sc.dataset.once){ try{ v.currentTime=0; }catch(e){} } tryPlay(v); }
-      }
-      else if(v){
-        v.pause();
-        if(Math.abs(i-k)>2&&sc.dataset.v){ sc.removeChild(v); sc.dataset.v=''; }
-      }
-    }
-    mkVideo(k+1); if(k>0) mkVideo(k-1);
-  }
-  function onScroll(){
-    var p=deck.scrollTop/(deck.clientHeight||1);
-    show(Math.max(0,Math.min(NB-1,Math.round(p))));
-  }
-  /* 把 ch7 的标签摆到「画面里那颗星球」下面：object-fit:cover / background-size
-     都会把 16:9 的图缩放并裁切，屏幕坐标 ≠ 画面坐标，必须按真实取景框换算。
-     两种取景一套公式：left=(容器宽−图宽)×X%，top=(容器高−图高)×Y%；
-     区别只在图宽高怎么来（cover 取满屏的那一边 / 手机 ch7 是整幅缩到屏宽）。
-     ⚠️ 末尾要把标签夹回画内（右边还要躲开拉条），不然「还没被发明的」会跑出屏。 */
-  function layoutPlabs(){
-    var sc=stage.querySelector('.scene[data-i="7"]');
-    if(!sc) return;
-    var cw=sc.clientWidth, ch=sc.clientHeight, AR=16/9, cs=getComputedStyle(sc);
-    var w,h,bs=cs.backgroundSize;
-    if(bs.indexOf('cover')>=0){
-      if(cw/ch<AR){ h=ch; w=ch*AR; } else { w=cw; h=cw/AR; }
-    } else {
-      /* 非 cover（手机 ch7 的「整幅」档）：真去读 background-size，别假定＝屏宽——
-         写死成 cw 的那版在把 100% 收成 88% 之后就错位了，标签留在原地没跟着挪。
-         计算值可能是 "88% auto" 也可能是 "353.76px auto"，两种都认。 */
-      var t=bs.split(' ')[0];
-      w = t.indexOf('%')>=0 ? cw*parseFloat(t)/100 : parseFloat(t);
-      if(!w||isNaN(w)) w=cw;
-      h = w/AR;
-    }
-    var xp=parseFloat(cs.backgroundPositionX); if(isNaN(xp)) xp=50;
-    /* ⚠️ 纵位现在是 `calc(100% + var(--bandshift))`，`parseFloat` 对 "calc(…)" 返回 NaN，
-       会悄悄退回 50% 把四个标签甩到画面中央（改成 calc 那次差点就这么翻车）。
-       所以：能解析出数就用，解析不出就按"贴底 + 下压量"自己算——和 fitBand 同一套几何。 */
-    var yraw=cs.backgroundPositionY, yp=parseFloat(yraw);
-    var shift=parseFloat(cs.getPropertyValue('--bandshift'))||0;
-    var top;
-    if(yraw.indexOf('calc')>=0||isNaN(yp)) top=(ch-h)+shift;   // 手机档：贴底再下压
-    else top=(ch-h)*yp/100+shift;
-    var left=(cw-w)*xp/100;
-    /* 边距只留 10px，不给拉条整条让位：唯一贴右缘的是「还没被发明的」，它的星球在
-       画面顶部（y≈.28），而拉条的点阵是**垂直居中**的一段，两者纵向根本不相交。
-       按 46/56px 让位反而把标签从星球下面拽走（1280 上差了 70px，验收从像素里逮到的）。 */
-    var EDGE=10;
-    [].forEach.call(sc.querySelectorAll('.plab'), function(el){
-      var pxn=parseFloat(el.dataset.px);
-      var x=left+pxn*w, y=top+parseFloat(el.dataset.py)*h, wd=el.offsetWidth;
-      /* 贴右缘那颗（px>.85）标签向**左**伸、右端顶着星球；其余居中。
-         居中的话它必然撞右边界、被夹回来，就和星球脱节了。 */
-      var lx = pxn>0.85 ? (x-6-wd) : (x-wd/2);
-      el.style.left=Math.max(EDGE, Math.min(cw-EDGE-wd, lx))+'px';
-      el.style.top=y+'px';
-    });
-  }
-  /* 暗罩收口跟着裸文字走：量每章最后一个「直接压在背景上」的元素（标题/正文/公式/
-     副标——不含 .card/.facts，它们自带底色），把渐透三点钉在它下面。
-     只在手机档做（桌面是左右分栏构图，那层径向暗罩另有算法）。 */
-  function fitScrim(){
-    if(!matchMedia('(max-width:820px)').matches){
-      [].forEach.call(deck.querySelectorAll('section'),function(sec){
-        sec.style.removeProperty('--f0'); sec.style.removeProperty('--f1'); sec.style.removeProperty('--f2');
-      });
-      return;
-    }
-    var H=deck.clientHeight||1;
-    [].forEach.call(deck.querySelectorAll('section'),function(sec){
-      var bare=sec.querySelectorAll('h1,h2,.en,.sub,.body,.etym,.eyebrow');
-      var bot=0;
-      [].forEach.call(bare,function(e){
-        var r=e.getBoundingClientRect();
-        if(r.height>4) bot=Math.max(bot, r.bottom-sec.getBoundingClientRect().top);
-      });
-      if(!bot) return;
-      var f=Math.min(0.86, bot/H);              // 封顶 86%：再往下就没有带可露了
-      sec.style.setProperty('--f0',(f*100).toFixed(1)+'%');
-      sec.style.setProperty('--f1',((f+0.07)*100).toFixed(1)+'%');
-      sec.style.setProperty('--f2',((f+0.15)*100).toFixed(1)+'%');
-    });
-  }
-  /* 按章把画面带往下压，让「主体」落在正文块底边**之下**。
-     手机上正文竖直居中、带贴屏底，正文一长（ch2/ch4/ch5/ch8）主体就被压在字和演示卡
-     下面——Trev 2026-08-02：「第 2 页的动画拉低一点，动画被字挡住了，第 5、6 页也是」。
-     实测 375×667 上 ch4 差 64px、ch2 差 29px、ch5 差 34px、ch8 差 13px。
-     ⚠️ 微信内置浏览器顶上还有自己一条标题栏，可视高度比 Safari 更矮，挤压比这更狠——
-     所以只能按**实测的正文底边**算，不能写死一套百分比。
-     代价：往下压 = 裁掉带底那一截，所以封顶 34%（再多素材下缘的地平线就没了）。 */
-  function fitBand(){
-    var mob=matchMedia('(max-width:820px)').matches;
-    var H=deck.clientHeight||1;
-    var secs=deck.querySelectorAll('section');
-    var calc={}, groups={};
-    /* 第一遍：各章各算各的「需要下压多少」 */
-    [].forEach.call(scenes,function(sc,i){
-      if(!mob){
-        ['--bandshift','--m0','--m1'].forEach(function(k){ sc.style.removeProperty(k); });
-        return;
-      }
-      var sec=secs[i]; if(!sec) return;
-      var col=sec.querySelector('.col'); if(!col) return;
-      var sr=sec.getBoundingClientRect(), cr=col.getBoundingClientRect();
-      var colBot=cr.bottom-sr.top;                 // 正文块（含演示卡）底边，相对本章顶
-      var h=sc.clientWidth*9/16;                   // 带高＝屏宽×9/16（background-size:100% auto）
-      var sy=parseFloat(sc.dataset.sy); if(isNaN(sy)) sy=0.4;
-      calc[i]={sc:sc,h:h,sy:sy,colBot:colBot};
-      var g=sc.dataset.bandGroup;
-      if(g){ (groups[g]=groups[g]||[]).push(i); }
-    });
-    if(!mob) return;
-    /* 🔴 同组统一 sy：同一颗主体在各章素材里本该同位，量出来的零点几个百分点是噪声，
-       不抹平的话两章之间会差一两个像素——同一颗太阳"抖一下"，比差 40px 更难解释。 */
-    Object.keys(groups).forEach(function(g){
-      var idx=groups[g], sum=0;
-      idx.forEach(function(i){ sum+=calc[i].sy; });
-      var mean=sum/idx.length;
-      idx.forEach(function(i){ calc[i].sy=mean; });
-    });
-    /* 第二遍：把 need 换算成 shift */
-    Object.keys(calc).forEach(function(i){
-      var c=calc[i];
-      var subj=H-c.h+c.sy*c.h;                     // 不压时主体在屏幕上的高度
-      /* 52px 余量不是拍脑袋，三笔加出来的：
-         ① sy 量的是主体**中心**，一团光的上半还要往上占一截；
-         ② 推镜缩放到 1.10 时主体上浮 ≈0.10×(主体离屏底距离) ≈15px；
-         ③ 推镜的 translateY 再带 1% ≈8px。
-         只留十几像素的话，中心是让开了，光晕上半仍压在演示卡底下——
-         Trev 说的「被挡住」就是这个。 */
-      /* 封顶原来是死的 34%，而 34% 是拍脑袋定的——它没考虑「正文特别长的那一章，
-         本来就没多少带可露」。ch8 加了正文之后成了全站最高的一屏（375×667 上正文占
-         81% 屏高），需要压 121px 才让得开，被 34%（71.7px）卡住，主体只能贴着正文底边
-         差 3px，等于没修。
-         改成自适应：**压到主体离屏底还剩 24px 为止**（再压主体自己就出画了），
-         同时不超过带高的 60%（总得给画面留点东西）。
-         窄章用不到这条——只有原来被封顶卡住的那几章会真的多压。 */
-      /* 底部留白不能写死 24px：那只保证"主体中心"在画内，而一团光还有下半个。
-         375×667 上 ch8 就被压成"太阳只剩上半个"，看着像渲染坏了。
-         改成按屏高留 7%（667→47px / 774→54px），够放下常见光晕的下半个。 */
-      var room=Math.max(0, (H-H*0.07)-subj);
-      c.shift=Math.max(0, Math.min((c.colBot+52)-subj, c.h*0.60, room));
-    });
-    /* 🔴 第三遍：**同组取组内最大下压量**。
-       ch5「成形」和 ch6「诚实」是同一颗太阳（ch6 就是 ch5 压暗的版本，2026-08-02 Trev
-       拍板「6 直接改成 5 的没那么亮的版本」），但 ch5 正文长、ch6 正文短，各按各的
-       正文底边让位就把同一颗太阳推到了两个高度——实测两档屏上都差 44px，翻页时
-       太阳会"跳"一下。取最大值：每章各自的字都让开了，而位置完全一致。
-       （Trev 2026-08-02：「第 5 和 6 页明明是同一个太阳，位置应该一样才对」） */
-    Object.keys(groups).forEach(function(g){
-      var idx=groups[g], mx=0;
-      idx.forEach(function(i){ mx=Math.max(mx,calc[i].shift); });
-      idx.forEach(function(i){ calc[i].shift=mx; });
-    });
-    Object.keys(calc).forEach(function(i){
-      var c=calc[i];
-      c.sc.style.setProperty('--bandshift',c.shift.toFixed(1)+'px');
-      var top=(H-c.h+c.shift)/H;                   // 压完之后带顶在屏幕的哪个比例
-      c.sc.style.setProperty('--m0',((top-0.07)*100).toFixed(1)+'%');
-      c.sc.style.setProperty('--m1',((top+0.05)*100).toFixed(1)+'%');
-    });
-  }
-  window.addEventListener('resize',function(){ setTimeout(fitScrim,240); setTimeout(fitBand,260); });
-  setTimeout(function(){ fitScrim(); fitBand(); },80);   // fitBand 依赖 fitScrim 之后的稳定布局
-  new MutationObserver(function(){ setTimeout(fitScrim,60); setTimeout(fitBand,80); })
-    .observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
-
-  /* layoutPlabs 依赖 fitBand 写好的 --bandshift，必须排在它后面跑 */
-  window.addEventListener('resize',function(){ setTimeout(layoutPlabs,300); });
-  new MutationObserver(function(){ setTimeout(layoutPlabs,120); })
-    .observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
-  setTimeout(layoutPlabs,140);
-
-  deck.addEventListener('scroll',onScroll,{passive:true});
-  document.addEventListener('visibilitychange',function(){
-    var sc=scenes[cur], v=sc&&sc.querySelector('video');
-    if(v){ if(document.hidden) v.pause(); else tryPlay(v); }
-  });
-  show(0);
-
-  /* ?diag=1 —— 手机上没有开发者工具，「还是要拉一下才动」这类反馈只能靠猜。
-     这一屏把"到底是谁挡住了"直接印在页面上：能不能解 webm/H.264、真正选中的是哪个
-     文件、readyState 走没走、play() 被拒时的 error.name（NotAllowedError＝策略拦截，
-     多半是低电量模式或 App 内置浏览器，这两个绕不过，只能等手势）。
-     默认不建，只有带 ?diag=1 才出现，线上零成本。 */
-  if(/[?&]diag=1/.test(location.search)){
-    var t=document.createElement('video');
-    var box=document.createElement('pre');
-    box.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:99;margin:0;'
-      +'padding:8px 10px;background:rgba(0,0,0,.82);color:#8FE;font:10px/1.5 ui-monospace,monospace;'
-      +'white-space:pre-wrap;border:1px solid #2c4;border-radius:8px;pointer-events:none';
-    document.body.appendChild(box);
-    setInterval(function(){
-      var sc=scenes[cur], v=sc&&sc.querySelector('video');
-      box.textContent=
-        'webm:'+(t.canPlayType('video/webm; codecs="vp9"')||'✗')
-        +'  H.264:'+(t.canPlayType('video/mp4; codecs="avc1.42E01E"')||'✗')
-        +'\nch'+cur+(sc&&sc.dataset.dead?' [已判定无素材]':'')
-        +'  省流:'+(SAVE?'开':'关')+'  减动效:'+(STILL?'开':'关')
-        +'\n'+(v?('选中:'+((v.currentSrc||'').split('/').pop()||'(空)')
-                 +'  readyState:'+v.readyState+'/net:'+v.networkState
-                 +'  '+(v.paused?'⏸ 暂停中':'▶ 在播')+'  t='+v.currentTime.toFixed(1))
-                :'没有 video 元素')
-        +'\nplay() 最后一次被拒：'+(lastErr||'（没被拒过）')
-        +(vidArmed?'  · 拖一下即激活(邻章一并盖章)':'')
-        +'\n微信桥:'+(window.WeixinJSBridge?'在(进页即播)':'不在(非微信)')
-        /* 视频播不了时，页面还动不动全看这一层——它是下限，必须能一眼确认 */
-        +'\n海报推镜：'+(sc?(getComputedStyle(sc).animationName||'none'):'?')
-        +'  当前 transform='+(sc?getComputedStyle(sc).transform.slice(0,28):'?');
-    },400);
-  }
-
-  /* 氛围声：默认开（Trev 2026-08-02「音乐默认打开」）。浏览器挡 autoplay 就
-     等首个真手势（点按/按键）解锁——见下面 armUnlock 的注释。 */
-  var au=new Audio('bgm.m4a'); au.loop=true; au.volume=0.55;
-  var sndOn=true, btn=document.getElementById('snd');
-  function lab(){
-    var en=document.documentElement.getAttribute('data-lang')==='en';
-    btn.textContent=en?(sndOn?'SOUND · ON':'SOUND · OFF'):(sndOn?'声音 · 开':'声音 · 关');
-    btn.classList.toggle('on',sndOn);
-  }
-  /* autoplay 被拒时的解锁：**滚动不算用户手势**——在 scroll 回调里 play() 照样被拒，
-     而 once 监听已经被那一下滚动吃掉了，音乐就死在"开着却不响"（2026-08-02 Trev 实机
-     逮的「得要重新开才有」，根因就是旧版把 deck scroll 也挂进了一次性解锁）。
-     改成：只挂真手势（pointerdown/keydown），**常驻重试直到 play 成功**才摘监听。 */
-  var armed=false;
-  function armUnlock(){
-    if(armed) return; armed=true;
-    var h=function(){
-      if(!sndOn){ off(); return; }
-      var q=au.play();
-      if(q&&q.then) q.then(off,function(){});
-    };
-    var off=function(){
-      document.removeEventListener('pointerdown',h);
-      document.removeEventListener('keydown',h);
-      armed=false;
-    };
-    document.addEventListener('pointerdown',h);
-    document.addEventListener('keydown',h);
-  }
-  function tryAudio(){
-    if(!sndOn) return;
-    var p=au.play();
-    if(p&&p.catch) p.catch(armUnlock);
-  }
-  btn.addEventListener('click',function(){ sndOn=!sndOn; lab(); if(sndOn) tryAudio(); else au.pause(); });
-  new MutationObserver(lab).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
-  lab(); tryAudio();
-  document.addEventListener('visibilitychange',function(){
-    if(document.hidden) au.pause(); else if(sndOn) tryAudio();
-  });
-
-  /* ── 微信：进页即播，零手势（Trev：「最好预设一进去画面就动了」）──
-     微信 WebView 对静音自动播放是硬拦截，但把自家 **WeixinJSBridge.invoke 的回调**
-     当成"已授权上下文"——在里面 play() 等同用户手势。这是微信 H5 的标准自动播做法
-     （背景音乐页都靠它），此前漏了。桥没就绪就等 WeixinJSBridgeReady；
-     不在微信里则两个都不会发生，零成本。视频和氛围声一起解，各自成败互不拖累。 */
-  function wxKick(){
-    try{
-      window.WeixinJSBridge.invoke('getNetworkType',{},function(){
-        show(cur<0?0:cur,true);            /* force：对当前章重新 mkVideo+tryPlay */
-        if(sndOn) tryAudio();
-      });
-    }catch(e){}
-  }
-  if(window.WeixinJSBridge&&window.WeixinJSBridge.invoke) wxKick();
-  else document.addEventListener('WeixinJSBridgeReady',wxKick,false);
 })();
 </script>
 </body>
