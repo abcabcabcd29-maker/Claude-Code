@@ -1,11 +1,11 @@
 <!doctype html>
 <!-- ══════════════════════════════════════════════════════════════════
-  /next/「一夜」二版（2026-08-02 Trev 五条拍板后重造）：
+  正式站根路径（2026-08-02 Trev 拍板从 /next/ 升上来；旧版归档在 /v1/）：
   **这份文件 = 根站 deploy/index.html 逐字为底 + FILM 层**。
   Trev 原话：「第一版我更喜欢原版的uiux」「拉条直接用原版的代码」「我喜欢原版显示
   soulor.id, 然后还有做中英文版本」「手机直接照搬原版」——所以不再往旧 /next/ 里
   一块块搬原版，而是反过来：原版整个当底（hero/拉条/双语/顶栏/手机档一字不动），
-  只叠两样「一夜」独有的：
+  只叠两样这一版独有的：
     ① FILM 镜头层：#stage 十章 Seedance 实拍（ch0~ch9.webm/mp4，海报 ch*.jpg），
        原版 canvas 引擎仍在跑（readScroll 驱动文字/拉条/导航），只是 draw() 被
        window.FILM 旗子拦下、#sky 透明——画的核让位给拍的核。
@@ -18,7 +18,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Soulor·灵镜 — 一夜</title>
+<!-- 标题就是字标本身，不带任何副标/代号。「一夜」是这部片子的**内部代号**，
+     2026-08-02 它升为正式站根路径之后，代号不该再出现在对外的任何地方
+     （Trev：「把一夜拿走」）。旧官网的 <title> 一直就是 `Soulor·灵镜`，
+     而且本页自己的 og:title 也早就是它——之前 title 挂着代号，本身就自相矛盾。 -->
+<title>Soulor·灵镜</title>
 <meta name="description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
 <meta property="og:title" content="Soulor·灵镜">
 <meta property="og:description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
