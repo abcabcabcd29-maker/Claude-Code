@@ -718,14 +718,21 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
        **停住之后的常态**定位——完成的弧落在净空区；开头两三秒扫过字区是它本来的运动，
        不是版式 bug。别再想把整段都压到字底下：压够早期，完成态就被顶出屏外了（实测）。
 
+       data-band-group：**共用同一颗主体的章要绑在一起**。ch5「成形」和 ch6「诚实」
+       是同一颗太阳（ch6 就是 ch5 压暗的版本），但两章正文长短不同，各按各的正文底边
+       让位就会把同一颗太阳推到两个高度——实测两档屏上都差 44px，翻页时太阳"跳"一下。
+       fitBand 对同组取**组内最大下压量**（每章的字都让开，位置又完全一致），
+       sy 也取组内均值（抹掉量出来那零点几个百分点的噪声）。
+       （Trev 2026-08-02：「第 5 和 6 页明明是同一个太阳，位置应该一样才对」）
+
        重新生成任何一章的视频，就要重新量：film/measure-sy.py <素材目录> -->
   <div class="scene" data-i="0" data-sy="0.393" style="background-image:url(ch0.jpg)"></div>
   <div class="scene" data-i="1" data-sy="0.496" style="background-image:url(ch1.jpg)"></div>
   <div class="scene" data-i="2" data-sy="0.284" style="background-image:url(ch2.jpg)"></div>
   <div class="scene" data-i="3" data-sy="0.198" style="background-image:url(ch3.jpg)"></div>
   <div class="scene" data-i="4" data-sy="0.537" data-once="1" data-mv="1" style="background-image:url(ch4.jpg)"></div>
-  <div class="scene" data-i="5" data-sy="0.300" data-mv="1" style="background-image:url(ch5.jpg)"></div>
-  <div class="scene" data-i="6" data-sy="0.298" data-mv="1" style="background-image:url(ch6.jpg)"></div>
+  <div class="scene" data-i="5" data-sy="0.300" data-band-group="sun" data-mv="1" style="background-image:url(ch5.jpg)"></div>
+  <div class="scene" data-i="6" data-sy="0.298" data-band-group="sun" data-mv="1" style="background-image:url(ch6.jpg)"></div>
   <div class="scene" data-i="7" data-sy="0.536" style="background-image:url(ch7.jpg)">
     <i class="plab" data-px="0.695" data-py="0.375" data-en="Dating">约会</i>
     <i class="plab" data-px="0.829" data-py="0.648" data-en="Hiring">招聘</i>
@@ -2068,30 +2075,62 @@ window.FILM = true;
   function fitBand(){
     var mob=matchMedia('(max-width:820px)').matches;
     var H=deck.clientHeight||1;
+    var secs=deck.querySelectorAll('section');
+    var calc={}, groups={};
+    /* 第一遍：各章各算各的「需要下压多少」 */
     [].forEach.call(scenes,function(sc,i){
       if(!mob){
         ['--bandshift','--m0','--m1'].forEach(function(k){ sc.style.removeProperty(k); });
         return;
       }
-      var sec=deck.querySelectorAll('section')[i]; if(!sec) return;
+      var sec=secs[i]; if(!sec) return;
       var col=sec.querySelector('.col'); if(!col) return;
       var sr=sec.getBoundingClientRect(), cr=col.getBoundingClientRect();
       var colBot=cr.bottom-sr.top;                 // 正文块（含演示卡）底边，相对本章顶
       var h=sc.clientWidth*9/16;                   // 带高＝屏宽×9/16（background-size:100% auto）
       var sy=parseFloat(sc.dataset.sy); if(isNaN(sy)) sy=0.4;
-      var subj=H-h+sy*h;                           // 不压时主体在屏幕上的高度
+      calc[i]={sc:sc,h:h,sy:sy,colBot:colBot};
+      var g=sc.dataset.bandGroup;
+      if(g){ (groups[g]=groups[g]||[]).push(i); }
+    });
+    if(!mob) return;
+    /* 🔴 同组统一 sy：同一颗主体在各章素材里本该同位，量出来的零点几个百分点是噪声，
+       不抹平的话两章之间会差一两个像素——同一颗太阳"抖一下"，比差 40px 更难解释。 */
+    Object.keys(groups).forEach(function(g){
+      var idx=groups[g], sum=0;
+      idx.forEach(function(i){ sum+=calc[i].sy; });
+      var mean=sum/idx.length;
+      idx.forEach(function(i){ calc[i].sy=mean; });
+    });
+    /* 第二遍：把 need 换算成 shift */
+    Object.keys(calc).forEach(function(i){
+      var c=calc[i];
+      var subj=H-c.h+c.sy*c.h;                     // 不压时主体在屏幕上的高度
       /* 52px 余量不是拍脑袋，三笔加出来的：
          ① sy 量的是主体**中心**，一团光的上半还要往上占一截；
          ② 推镜缩放到 1.10 时主体上浮 ≈0.10×(主体离屏底距离) ≈15px；
          ③ 推镜的 translateY 再带 1% ≈8px。
          只留十几像素的话，中心是让开了，光晕上半仍压在演示卡底下——
          Trev 说的「被挡住」就是这个。 */
-      var need=(colBot+52)-subj;
-      var shift=Math.max(0, Math.min(need, h*0.34));
-      sc.style.setProperty('--bandshift',shift.toFixed(1)+'px');
-      var top=(H-h+shift)/H;                       // 压完之后带顶在屏幕的哪个比例
-      sc.style.setProperty('--m0',((top-0.07)*100).toFixed(1)+'%');
-      sc.style.setProperty('--m1',((top+0.05)*100).toFixed(1)+'%');
+      c.shift=Math.max(0, Math.min((c.colBot+52)-subj, c.h*0.34));
+    });
+    /* 🔴 第三遍：**同组取组内最大下压量**。
+       ch5「成形」和 ch6「诚实」是同一颗太阳（ch6 就是 ch5 压暗的版本，2026-08-02 Trev
+       拍板「6 直接改成 5 的没那么亮的版本」），但 ch5 正文长、ch6 正文短，各按各的
+       正文底边让位就把同一颗太阳推到了两个高度——实测两档屏上都差 44px，翻页时
+       太阳会"跳"一下。取最大值：每章各自的字都让开了，而位置完全一致。
+       （Trev 2026-08-02：「第 5 和 6 页明明是同一个太阳，位置应该一样才对」） */
+    Object.keys(groups).forEach(function(g){
+      var idx=groups[g], mx=0;
+      idx.forEach(function(i){ mx=Math.max(mx,calc[i].shift); });
+      idx.forEach(function(i){ calc[i].shift=mx; });
+    });
+    Object.keys(calc).forEach(function(i){
+      var c=calc[i];
+      c.sc.style.setProperty('--bandshift',c.shift.toFixed(1)+'px');
+      var top=(H-c.h+c.shift)/H;                   // 压完之后带顶在屏幕的哪个比例
+      c.sc.style.setProperty('--m0',((top-0.07)*100).toFixed(1)+'%');
+      c.sc.style.setProperty('--m1',((top+0.05)*100).toFixed(1)+'%');
     });
   }
   window.addEventListener('resize',function(){ setTimeout(fitScrim,240); setTimeout(fitBand,260); });
