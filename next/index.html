@@ -125,13 +125,16 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
   /* 带**贴屏底**（Trev：字居中优先，背景位置服从排版）：402×774 上带占 [71%,100%]，
      主体（太阳/星球）落在 ≈85% 屏高——正好在正文块下方那条透出带里。
      钉 84% 那版被暗罩连带压掉了，ch7 的星球标签几乎看不见（联络表逮的）。 */
-  .scene{background-size:100% auto!important;background-position:center 100%!important;
+  /* --bandshift：这一章的带要**往下压多少**（由 fitBand() 按"主体不能被字/卡压住"算出来，
+     单位 px，缺省 0）。压下去的代价是裁掉带底那一截，所以 fitBand 有上限。
+     --m0/--m1：羽化段跟着带顶走（带一下压，羽化不跟就会在字底下露出一条硬边）。 */
+  .scene{background-size:100% auto!important;
+    background-position:center calc(100% + var(--bandshift,0px))!important;
     background-repeat:no-repeat;
-    /* 只羽化带顶（带底贴屏边不用羽）：段位贴着带算，带顶 ≈71% 屏高 */
-    -webkit-mask-image:linear-gradient(180deg,transparent 64%,#000 76%,#000 100%);
-    mask-image:linear-gradient(180deg,transparent 64%,#000 76%,#000 100%)}
-  /* 视频同几何：contain 到屏宽、钉同一纵位——和海报带严丝合缝，全帧无裁切 */
-  .scene video{object-fit:contain;object-position:center 100%}
+    -webkit-mask-image:linear-gradient(180deg,transparent var(--m0,64%),#000 var(--m1,76%),#000 100%);
+    mask-image:linear-gradient(180deg,transparent var(--m0,64%),#000 var(--m1,76%),#000 100%)}
+  /* 视频同几何：contain 到屏宽、钉同一纵位（含同一份下压）——和海报带严丝合缝，全帧无裁切 */
+  .scene video{object-fit:contain;object-position:center calc(100% + var(--bandshift,0px))}
   /* 背景层按章提亮（字的对比度靠暗罩层，与此无关）。暗章 1.4~1.5；
      烬日只 1.12（提多了就"点亮"了）；亮章不提。 */
   .scene{filter:brightness(var(--mb,1)) saturate(1.05)}
@@ -161,17 +164,40 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
      ⚠️ 曲线必须是 **linear**：ease-in-out 在一个来回的两端几乎是静止的，用户什么时候
      看到全凭运气——实测同一条动画，落在慢相位时 5s 只有 3.6% 的像素在变，快相位有 11%。
      推镜要的是匀速，不是呼吸。
-     transform-origin 钉在底边——画面带本来就贴屏底，从中心缩放会把带的下沿顶出画外。 */
+     transform-origin 钉底边：画面带本来就贴屏底，从中心缩放会把带的下沿顶出画外。
+     ⚠️ 试过把原点钉在"主体所在高度"（让推镜不把主体顶回字底下），**放弃了**：
+     原点上的东西是不动的，而主体恰恰就是最该动的那块——实测动感直接腰斩
+     （ch2 8.7%→3.2%、ch7 10.2%→4.8%）。微信里视频播不了时全靠这层撑着，
+     不能为了省 20px 净空把它冻住。改成**动感优先 + 净空余量加大到 52px**
+     去吸收推镜的上浮（缩放 0.10×主体离底距离 ≈15px，再加 translateY 1% ≈8px）。 */
   .scene{transform-origin:50% 100%}
   .scene.on{animation:mbdrift 20s linear infinite alternate}
   .scene.on:has(video.vp){animation:none}   /* 视频真播起来了就让位给它 */
   @keyframes mbdrift{
     from{transform:scale(1.015) translateY(0)}
-    to{transform:scale(1.10) translateY(-2%)}
+    to{transform:scale(1.10) translateY(-1%)}
   }
   @media(prefers-reduced-motion:reduce){.scene.on{animation:none}}
   .plab{font-size:8.5px;letter-spacing:.1em}
 }
+
+/* 「轻点一下」提示：只在播放被平台拦下时出现（见 markup 注释）。
+   钉在**屏幕最底**：正文已经居中占了中段、画面带贴底且主体落在 80~86% 屏高，
+   只有最下面这一条既不压字、也在主体之下。（试过放"正文和带之间"——那里根本没有
+   空档：带顶 71% 比正文底边还高，两者本来就是叠着的。）做成低调胶囊，不抢戏。 */
+#tapplay{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:18px;
+  z-index:12;appearance:none;cursor:pointer;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  color:rgba(255,217,160,.92);background:rgba(12,10,17,.62);
+  border:1px solid rgba(255,217,160,.30);border-radius:999px;
+  padding:9px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  animation:tapin .7s ease both;
+}
+#tapplay[hidden]{display:none}
+@keyframes tapin{from{opacity:0;transform:translate(-50%,6px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){#tapplay{animation:none}}
+@media(min-width:821px){#tapplay{bottom:34px}}
 
 /* ── 分页容器 ──
    固定满屏 + 自己滚动：section 用 height:100% 就精确等于视口高，
@@ -691,21 +717,41 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
 
 <!-- FILM 镜头层（见文件头注释①）：z 与 #sky 同层、DOM 在后，雾/颗粒照旧压在上面 -->
 <div id="stage" aria-hidden="true">
-  <div class="scene" data-i="0" style="background-image:url(ch0.jpg)"></div>
-  <div class="scene" data-i="1" style="background-image:url(ch1.jpg)"></div>
-  <div class="scene" data-i="2" style="background-image:url(ch2.jpg)"></div>
-  <div class="scene" data-i="3" style="background-image:url(ch3.jpg)"></div>
-  <div class="scene" data-i="4" data-once="1" data-mv="1" style="background-image:url(ch4.jpg)"></div>
-  <div class="scene" data-i="5" data-mv="1" style="background-image:url(ch5.jpg)"></div>
-  <div class="scene" data-i="6" data-mv="1" style="background-image:url(ch6.jpg)"></div>
-  <div class="scene" data-i="7" style="background-image:url(ch7.jpg)">
+  <!-- data-sy = 这一章「画面主体」的归一化纵位。fitBand() 拿它算出每章该把画面带
+       往下压多少，好让主体落在正文底边之下（Trev 2026-08-02：「第 2 页的动画拉低一点，
+       动画被字挡住了，第 5、6 页也是」——手机上正文竖直居中、带贴屏底，正文一长就压住主体）。
+
+       🔴 必须从**视频**量，不能从海报量。ch4 的海报是"满弧"（弧在下部，海报量出来 0.80），
+       而视频演的是弧被引力吸向太阳的过程，亮的那一端在画面**上部**——按海报算，
+       ch4 的下压量会算成 0，等于没修。取值＝整段视频 30 帧亮度重心的 **p25**
+       （主体只有 25% 的时间高于它；取最高帧会被一两帧闪烁带跑，取平均又护不住）。
+
+       ⚠️ ch7 是唯一的人工值（0.536＝四颗星球 data-py 的均值）：这一章亮度重心追的是
+       左上那个核（0.12），但要给人看的是星球。按 0.12 算会把带下压 38px，
+       「陪伴」那颗直接被顶出屏外。**亮度最强 ≠ 内容主体，只有这一章两者分家。**
+
+       ⚠️ ch4 也是特例（用 p50 而不是 p25）：这一章的弧**本来就是从左到右扫过整个画幅**的，
+       早期亮区在上部（p10=0.11）、完成后落在下部（p75=0.66），差了 0.55 个画幅，
+       一个位置不可能同时安置两头。它是 data-once（播一遍停在完成态），所以按
+       **停住之后的常态**定位——完成的弧落在净空区；开头两三秒扫过字区是它本来的运动，
+       不是版式 bug。别再想把整段都压到字底下：压够早期，完成态就被顶出屏外了（实测）。
+
+       重新生成任何一章的视频，就要重新量：film/measure-sy.py <素材目录> -->
+  <div class="scene" data-i="0" data-sy="0.393" style="background-image:url(ch0.jpg)"></div>
+  <div class="scene" data-i="1" data-sy="0.496" style="background-image:url(ch1.jpg)"></div>
+  <div class="scene" data-i="2" data-sy="0.284" style="background-image:url(ch2.jpg)"></div>
+  <div class="scene" data-i="3" data-sy="0.198" style="background-image:url(ch3.jpg)"></div>
+  <div class="scene" data-i="4" data-sy="0.537" data-once="1" data-mv="1" style="background-image:url(ch4.jpg)"></div>
+  <div class="scene" data-i="5" data-sy="0.300" data-mv="1" style="background-image:url(ch5.jpg)"></div>
+  <div class="scene" data-i="6" data-sy="0.298" data-mv="1" style="background-image:url(ch6.jpg)"></div>
+  <div class="scene" data-i="7" data-sy="0.536" style="background-image:url(ch7.jpg)">
     <i class="plab" data-px="0.695" data-py="0.375" data-en="Dating">约会</i>
     <i class="plab" data-px="0.829" data-py="0.648" data-en="Hiring">招聘</i>
     <i class="plab" data-px="0.601" data-py="0.805" data-en="Companionship">陪伴</i>
     <i class="plab" data-px="0.934" data-py="0.316" data-en="Not yet invented">还没被发明的</i>
   </div>
-  <div class="scene" data-i="8" style="background-image:url(ch8.jpg)"></div>
-  <div class="scene" data-i="9" style="background-image:url(ch9.jpg)"></div>
+  <div class="scene" data-i="8" data-sy="0.311" style="background-image:url(ch8.jpg)"></div>
+  <div class="scene" data-i="9" data-sy="0.253" style="background-image:url(ch9.jpg)"></div>
 </div>
 
 <header id="nav">
@@ -716,6 +762,11 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener" data-en="Join the beta →">进内测 →</a>
 </header>
 
+<!-- 播放被平台拦下时的提示。微信/QQ 内置浏览器对静音视频自动播放是硬拦截
+     （平台规则，绕不过），而中国用户大多从微信点开链接。与其让人对着一张不动的图
+     猜"是不是坏了"，不如把"点一下就会动"说出来——一次点按就全章解锁。
+     默认 hidden，只有真的被拒（armUnlock armed）才现身，播起来立刻消失。 -->
+<button id="tapplay" type="button" hidden></button>
 <nav id="rail" aria-label="章节">
   <div class="railtrack">
     <div class="railline" aria-hidden="true"></div>
@@ -1882,7 +1933,7 @@ window.FILM = true;
     },true);
     /* 视频真开播才显形：海报→视频柔和溶解。ch4 尤其需要（海报是满弧、视频首帧是
        空场，硬切会闪跳——手机解禁视频后这个跳在手机上也会出现）。 */
-    v.addEventListener('playing',function(){ v.classList.add('vp'); });
+    v.addEventListener('playing',function(){ v.classList.add('vp'); tapShow(false); });
     /* 数据就绪即重试：show() 那一下 play() 可能发生在数据到位之前而石沉大海——
        表现就是「要拉一下页面才动」。这里治的是时序型，策略型见 armUnlock。 */
     var retry=function(){ if(sc.classList.contains('on')) tryPlay(v); };
@@ -1898,12 +1949,30 @@ window.FILM = true;
      bgm 当初「得重新开才有声」就是这个坑（2026-08-02 Trev 实机逮的）——视频这边
      当年还多一条：play 失败三次就连 video 都不建了，解锁后也只救得回当前这一章。
      现在改成：常驻监听 + 播成功才摘，且不再因失败停止建 video。 */
-  var armed=false;
-  function armUnlock(){
-    if(armed) return; armed=true;
+  /* 提示条：被拦下才现身，播起来立刻收。文案跟着中/EN 走。 */
+  var tap=document.getElementById('tapplay');
+  function tapLab(){
+    var en=document.documentElement.getAttribute('data-lang')==='en';
+    tap.textContent=en?'TAP ONCE TO PLAY':'轻点一下 · 让画面动起来';
+  }
+  function tapShow(on){
+    if(!tap) return;
+    if(on===!tap.hidden) return;
+    tap.hidden=!on;
+    if(on) tapLab();
+  }
+  new MutationObserver(tapLab).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
+  /* 🔴 名字必须和下面氛围声那套解锁**分开**：两者在同一个 IIFE 作用域里。
+     早先视频这份也叫 armUnlock/armed，被后面音频那份同名声明整个覆盖掉
+     （函数声明提升，后声明的赢），于是 tryPlay 里调到的是**音频**的解锁——
+     视频永远等不到重试，提示条也永远不出现。验收里"提示条该出现却没出现"逮到的。 */
+  var vidArmed=false;
+  function armVideoUnlock(){
+    if(vidArmed) return; vidArmed=true;
+    tapShow(true);
     var off=function(){
       GESTURES.forEach(function(t){ document.removeEventListener(t,h); });
-      armed=false;
+      vidArmed=false; tapShow(false);
     };
     var h=function(){
       var sc=scenes[cur]; if(!sc) return;
@@ -1920,7 +1989,7 @@ window.FILM = true;
   function tryPlay(v){
     if(!v||!v.paused) return;
     var p=v.play();
-    if(p&&p.catch) p.catch(function(e){ lastErr=(e&&e.name)||'?'; armUnlock(); });
+    if(p&&p.catch) p.catch(function(e){ lastErr=(e&&e.name)||'?'; armVideoUnlock(); });
   }
   function show(k,force){
     if(k===cur&&!force) return;
@@ -1965,8 +2034,15 @@ window.FILM = true;
       h = w/AR;
     }
     var xp=parseFloat(cs.backgroundPositionX); if(isNaN(xp)) xp=50;
-    var yp=parseFloat(cs.backgroundPositionY); if(isNaN(yp)) yp=50;
-    var left=(cw-w)*xp/100, top=(ch-h)*yp/100;
+    /* ⚠️ 纵位现在是 `calc(100% + var(--bandshift))`，`parseFloat` 对 "calc(…)" 返回 NaN，
+       会悄悄退回 50% 把四个标签甩到画面中央（改成 calc 那次差点就这么翻车）。
+       所以：能解析出数就用，解析不出就按"贴底 + 下压量"自己算——和 fitBand 同一套几何。 */
+    var yraw=cs.backgroundPositionY, yp=parseFloat(yraw);
+    var shift=parseFloat(cs.getPropertyValue('--bandshift'))||0;
+    var top;
+    if(yraw.indexOf('calc')>=0||isNaN(yp)) top=(ch-h)+shift;   // 手机档：贴底再下压
+    else top=(ch-h)*yp/100+shift;
+    var left=(cw-w)*xp/100;
     /* 边距只留 10px，不给拉条整条让位：唯一贴右缘的是「还没被发明的」，它的星球在
        画面顶部（y≈.28），而拉条的点阵是**垂直居中**的一段，两者纵向根本不相交。
        按 46/56px 让位反而把标签从星球下面拽走（1280 上差了 70px，验收从像素里逮到的）。 */
@@ -2006,14 +2082,52 @@ window.FILM = true;
       sec.style.setProperty('--f2',((f+0.15)*100).toFixed(1)+'%');
     });
   }
-  window.addEventListener('resize',function(){ setTimeout(fitScrim,240); });
-  setTimeout(fitScrim,80);
-  new MutationObserver(function(){ setTimeout(fitScrim,60); })
+  /* 按章把画面带往下压，让「主体」落在正文块底边**之下**。
+     手机上正文竖直居中、带贴屏底，正文一长（ch2/ch4/ch5/ch8）主体就被压在字和演示卡
+     下面——Trev 2026-08-02：「第 2 页的动画拉低一点，动画被字挡住了，第 5、6 页也是」。
+     实测 375×667 上 ch4 差 64px、ch2 差 29px、ch5 差 34px、ch8 差 13px。
+     ⚠️ 微信内置浏览器顶上还有自己一条标题栏，可视高度比 Safari 更矮，挤压比这更狠——
+     所以只能按**实测的正文底边**算，不能写死一套百分比。
+     代价：往下压 = 裁掉带底那一截，所以封顶 34%（再多素材下缘的地平线就没了）。 */
+  function fitBand(){
+    var mob=matchMedia('(max-width:820px)').matches;
+    var H=deck.clientHeight||1;
+    [].forEach.call(scenes,function(sc,i){
+      if(!mob){
+        ['--bandshift','--m0','--m1'].forEach(function(k){ sc.style.removeProperty(k); });
+        return;
+      }
+      var sec=deck.querySelectorAll('section')[i]; if(!sec) return;
+      var col=sec.querySelector('.col'); if(!col) return;
+      var sr=sec.getBoundingClientRect(), cr=col.getBoundingClientRect();
+      var colBot=cr.bottom-sr.top;                 // 正文块（含演示卡）底边，相对本章顶
+      var h=sc.clientWidth*9/16;                   // 带高＝屏宽×9/16（background-size:100% auto）
+      var sy=parseFloat(sc.dataset.sy); if(isNaN(sy)) sy=0.4;
+      var subj=H-h+sy*h;                           // 不压时主体在屏幕上的高度
+      /* 52px 余量不是拍脑袋，三笔加出来的：
+         ① sy 量的是主体**中心**，一团光的上半还要往上占一截；
+         ② 推镜缩放到 1.10 时主体上浮 ≈0.10×(主体离屏底距离) ≈15px；
+         ③ 推镜的 translateY 再带 1% ≈8px。
+         只留十几像素的话，中心是让开了，光晕上半仍压在演示卡底下——
+         Trev 说的「被挡住」就是这个。 */
+      var need=(colBot+52)-subj;
+      var shift=Math.max(0, Math.min(need, h*0.34));
+      sc.style.setProperty('--bandshift',shift.toFixed(1)+'px');
+      var top=(H-h+shift)/H;                       // 压完之后带顶在屏幕的哪个比例
+      sc.style.setProperty('--m0',((top-0.07)*100).toFixed(1)+'%');
+      sc.style.setProperty('--m1',((top+0.05)*100).toFixed(1)+'%');
+    });
+  }
+  window.addEventListener('resize',function(){ setTimeout(fitScrim,240); setTimeout(fitBand,260); });
+  setTimeout(function(){ fitScrim(); fitBand(); },80);   // fitBand 依赖 fitScrim 之后的稳定布局
+  new MutationObserver(function(){ setTimeout(fitScrim,60); setTimeout(fitBand,80); })
     .observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
 
-  window.addEventListener('resize',function(){ setTimeout(layoutPlabs,220); });
-  new MutationObserver(layoutPlabs).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
-  setTimeout(layoutPlabs,60);
+  /* layoutPlabs 依赖 fitBand 写好的 --bandshift，必须排在它后面跑 */
+  window.addEventListener('resize',function(){ setTimeout(layoutPlabs,300); });
+  new MutationObserver(function(){ setTimeout(layoutPlabs,120); })
+    .observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
+  setTimeout(layoutPlabs,140);
 
   deck.addEventListener('scroll',onScroll,{passive:true});
   document.addEventListener('visibilitychange',function(){
@@ -2046,7 +2160,7 @@ window.FILM = true;
                  +'  '+(v.paused?'⏸ 暂停中':'▶ 在播')+'  t='+v.currentTime.toFixed(1))
                 :'没有 video 元素')
         +'\nplay() 最后一次被拒：'+(lastErr||'（没被拒过）')
-        +(armed?'  · 正在等一次手势':'')
+        +(vidArmed?'  · 正在等一次手势':'')
         /* 视频播不了时，页面还动不动全看这一层——它是下限，必须能一眼确认 */
         +'\n海报推镜：'+(sc?(getComputedStyle(sc).animationName||'none'):'?')
         +'  当前 transform='+(sc?getComputedStyle(sc).transform.slice(0,28):'?');
