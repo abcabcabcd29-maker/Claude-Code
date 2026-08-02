@@ -1,830 +1,1802 @@
 <!doctype html>
+<!-- ══════════════════════════════════════════════════════════════════
+  /next/「一夜」二版（2026-08-02 Trev 五条拍板后重造）：
+  **这份文件 = 根站 deploy/index.html 逐字为底 + FILM 层**。
+  Trev 原话：「第一版我更喜欢原版的uiux」「拉条直接用原版的代码」「我喜欢原版显示
+  soulor.id, 然后还有做中英文版本」「手机直接照搬原版」——所以不再往旧 /next/ 里
+  一块块搬原版，而是反过来：原版整个当底（hero/拉条/双语/顶栏/手机档一字不动），
+  只叠两样「一夜」独有的：
+    ① FILM 镜头层：#stage 十章 Seedance 实拍（ch0~ch9.webm/mp4，海报 ch*.jpg），
+       原版 canvas 引擎仍在跑（readScroll 驱动文字/拉条/导航），只是 draw() 被
+       window.FILM 旗子拦下、#sky 透明——画的核让位给拍的核。
+    ② 氛围声 bgm.m4a：默认开（autoplay 被挡就等第一次手势，见 FILM 模块）。
+  手机（≤820px）和 prefers-reduced-motion 走 LITE：只出海报不建 <video>——
+  这就是旧版「演示还是在卡」的修法，也是照搬原版手机档的一部分。
+  改根站文案时记得两边同步（装配记录：brain/LOG.md 2026-08-02）。
+════════════════════════════════════════════════════════════════════ -->
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Soulor · 灵镜 — 一夜</title>
-<meta name="description" content="你对外的一切，都源自那个内核。翻页，看一个内核如何在一夜之间点亮。">
+<title>Soulor·灵镜 — 一夜</title>
+<meta name="description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
+<meta property="og:title" content="Soulor·灵镜">
+<meta property="og:description" content="你对外的一切，都源自那个内核。Soulor 接住你随口说的话，替你把内核存下来。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://soulor.id/">
 <meta name="theme-color" content="#050409">
-<link rel="icon" type="image/png" href="favicon.png">
+<!-- favicon 用官网 canvas 真渲染器烘的核（05 成形那一帧裁下来）。
+     旧版是 CSS radial-gradient 画的 SVG——正好违反 BRAND.md §4 头两条：
+     「光衰减不能用 radial-gradient」「完美的圆是 radial-gradient 的签名」。
+     重新生成：scratchpad/mkfavicon.js（按亮部质心居中裁切）。 -->
+<link rel="icon" type="image/png" href="data:image/png;base64,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"><defs><radialGradient id=%22g%22><stop offset=%220%25%22 stop-color=%22%23FFF6E4%22/><stop offset=%2245%25%22 stop-color=%22%23FFD09A%22/><stop offset=%22100%25%22 stop-color=%22%23050409%22/></radialGradient></defs><rect width=%22100%22 height=%22100%22 fill=%22%23050409%22/><circle cx=%2250%22 cy=%2250%22 r=%2246%22 fill=%22url(%23g)%22/></svg>">
 <link rel="stylesheet" href="font.css">
+</head>
+<body>
+<!--
+  soulor.id · 一页一格的滚动叙事站
+  ────────────────────────────────────────────────────────────
+  为什么是"分页"而不是连续滚动（2026-07-28 改版的核心）：
+  连续滚动时，画面状态跟着滚动位置连续插值 —— 你停在哪儿它就是哪个中间态，
+  永远到不了设计好的那一帧。改成 scroll-snap 分页之后，每一页都精确落在
+  它的关键帧上（吸附后 scrollTop 是页高的整数倍，插值系数正好是 0 或 1），
+  动图表现才稳定、每一页才是"被设计过的构图"。
+
+  单主题：这是一个刻意的黑夜世界，不做浅色适配。这是**选择**不是遗漏 ——
+  整页讲的是"星尘被引力聚拢、点亮成太阳"，白底会把它讲成另一件事。
+
+  性能：所有逐像素的东西（雾核 / 日冕 / 光球层 / 星球）只在启动和 resize 时
+  烘焙一次，烘成 offscreen sprite。主循环里只有 drawImage / arc / fillText。
+-->
+
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   「一夜」v2 —— 一格一格的整页电影（Trev 2026-08-02：「每拉一下下一格，
-   表现更稳定」+「画面连起来像故事」）。
-   · 翻页：#deck 是 scroll-snap mandatory 的翻页容器，一次手势 = 一章。
-   · 衔接：章与章之间各有一段 5s 的「衔接镜头」（Seedance 首帧=上一章、
-     尾帧=下一章生成），翻页的滚动分数直接搓它的时间轴——慢拖 = 亲手推运镜，
-     快翻 = 一个利落的电影剪辑。素材没到位时回落到交叉溶解+黑场沉降。
-   · 文字：到章即入场（时间驱动的编舞），离章即退场。
-   · 每格的循环视频、降级路径、手势解锁播放，与 v1 相同。
-   ═══════════════════════════════════════════════════════════════ */
+/* Instrument Serif 见 font.css（同域加载，禁第三方字体源——国内访问不到） */
+
 :root{
-  --bg:#050409;--ink:#F2EDE4;--ink2:#B9AFC4;--mut:#8B8395;
-  --core:#FFD9A0;--core2:#E5B584;--line:#26202E;
-  --serif:"Instrument Serif",Georgia,serif;   /* 🔴 只给拉丁与数字，永不套中文 */
+  --bg:#050409;
+  --ink:#F2EDE4;
+  --ink2:#B9AFC4;
+  --mut:#8B8395;
+  --core:#FFD9A0;
+  --core2:#E5B584;
+  --line:#26202E;
+  --serif:"Instrument Serif",Georgia,serif;          /* 只给拉丁 / 数字，永不套中文 */
   --sans:"PingFang SC","Hiragino Sans GB",-apple-system,BlinkMacSystemFont,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{background:var(--bg);overflow:hidden}
-body{color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-::selection{background:var(--core);color:var(--bg)}
 
-/* ── 舞台（z0）：影片层 ── */
-#stage{position:fixed;inset:0;overflow:hidden;background:var(--bg)}
-.scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .45s ease}
-.scene.on{opacity:1;visibility:visible;transition:none}
-.scene.xfade{transition:opacity .1s linear}
-.scene .poster,.scene video{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;background-size:cover;background-position:center;
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg)}
+body{
+  color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.8;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  -webkit-text-size-adjust:100%;
 }
-.scene video{opacity:0;transition:opacity .8s ease}
-.scene video.ready{opacity:1}
-.scene.kenburns .poster{animation:kb 46s ease-in-out infinite alternate}
-@keyframes kb{from{transform:scale(1)}to{transform:scale(1.07)}}
-/* 衔接镜头层：盖在两章之上，只在翻页途中出现 */
-.bridge{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  opacity:0;visibility:hidden}
-.bridge.on{opacity:1;visibility:visible}
-#dip{position:absolute;inset:0;background:var(--bg);opacity:0;pointer-events:none}
-#vig{position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(140% 110% at 50% 42%, transparent 58%, rgba(5,4,9,.42) 100%),
-    linear-gradient(to top, rgba(5,4,9,.62) 0%, transparent 34%);
-}
-#grain{position:absolute;inset:-60px;pointer-events:none;opacity:.05;mix-blend-mode:overlay}
+/* 04 点亮之后：光碰到了字。幅度极小，是"被照到"不是换主题。 */
+body.lit{--ink:#F6EFE2}
 
-/* ── 翻页容器（z10）：章节与字幕都住在这 ── */
-/* ⚠️ overflow-x 必须显式 hidden：只写 overflow-y 时 x 会被计算成 auto，
-   而 .block::before 的渐晕（inset -8%）在 390px 视口上左右各溢出 ~6px——
-   手机上横向就多出几像素可滚，手指一划整页左右橡皮筋（Trev：「画面会左右乱动」）。
-   touch-action:pan-y 把横向手势也一并掐掉。 */
-#deck{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;
-  overscroll-behavior:contain;z-index:10;
-  scroll-snap-type:y mandatory;scrollbar-width:none}
-#deck.scrubbing{scroll-snap-type:none}
+a{color:inherit}
+a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(255,217,160,.55);outline-offset:3px;border-radius:4px}
+
+/* ── 底层：canvas + 雾 + 颗粒 ── */
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+#fog{position:fixed;inset:0;z-index:1;pointer-events:none;display:none}
+#grain{position:fixed;inset:0;z-index:1;opacity:.05;mix-blend-mode:overlay;pointer-events:none}
+
+/* ── FILM 镜头层 ── */
+#stage{position:fixed;inset:0;z-index:0;pointer-events:none;background:#050409}
+.scene{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;
+  background-size:cover;background-position:center}
+.scene.on{opacity:1}
+.scene video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* ── 氛围声开关（默认开，见 FILM 模块）── */
+#snd{background:none;border:1px solid var(--line);color:var(--mut);border-radius:999px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;padding:8px 12px;cursor:pointer;
+  transition:color .3s,border-color .3s;white-space:nowrap}
+#snd.on{color:var(--core);border-color:rgba(255,217,160,.4)}
+@media(max-width:560px){#snd{padding:7px 9px;letter-spacing:.1em}}
+
+/* ── 分页容器 ──
+   固定满屏 + 自己滚动：section 用 height:100% 就精确等于视口高，
+   完全绕开 vh/svh 和移动端地址栏收合带来的高度抖动。 */
+#deck{
+  position:fixed;inset:0;z-index:2;
+  overflow-y:scroll;overflow-x:hidden;
+  scroll-snap-type:y mandatory;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
 #deck::-webkit-scrollbar{display:none}
-.chapter{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always}
+#deck.scrubbing{scroll-snap-type:none}
 
-.block{position:absolute;z-index:1;max-width:min(720px,80vw)}
-.block.bl{left:clamp(24px,7vw,110px);bottom:clamp(84px,16vh,160px)}
-.block.br{right:clamp(24px,7vw,110px);bottom:clamp(84px,16vh,160px);text-align:right}
-.block.ml{left:clamp(24px,7vw,110px);top:50%;transform:translateY(-50%)}
-.block.cc{left:50%;top:50%;transform:translate(-50%,-46%);text-align:center;width:min(1080px,92vw);max-width:none}
+section{
+  position:relative;height:100%;width:100%;
+  scroll-snap-align:start;scroll-snap-stop:always;
+  display:flex;align-items:center;
+  padding:0 clamp(24px,6vw,80px);
 }
-/* 文字后面垫一层近黑渐隐（不带色相）——正文压在动图亮部上会发蒙，这层就是解药 */
-.block::before{content:'';position:absolute;inset:-9% -8%;z-index:-1;
-  background:radial-gradient(62% 72% at 50% 55%,rgba(5,4,9,.52),transparent 76%)}
-.cc .eyebrow{color:var(--ink2);text-shadow:0 0 16px rgba(5,4,9,.9),0 1px 4px rgba(5,4,9,.85)}
+/* 正文列局部径向暗化：让字永远不压在亮部上。
+   贴在 section 上做整幅出血 —— 贴在文字列上会在盒子边缘留一道可见的接缝。 */
+section::before{
+  content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(58% 70% at 27% 50%,rgba(5,4,9,.88),rgba(5,4,9,.52) 44%,rgba(5,4,9,0) 76%);
+}
+/* 照亮页的暗化区要压在文字上，不能盖住左上那个核——这一页的论点就是那个核 */
+#planets::before{background:radial-gradient(52% 46% at 26% 74%,rgba(5,4,9,.94),rgba(5,4,9,.62) 46%,rgba(5,4,9,0) 78%)}
+
+.col{
+  position:relative;width:100%;max-width:560px;
+  padding:76px 0 64px;
+  text-shadow:0 1px 24px rgba(5,4,9,.9);
+}
+
+/* ── 入场：行升起 ── */
+.ln{display:block;overflow:hidden;padding-bottom:.09em;margin-bottom:-.09em}
+.ln>i{display:block;font-style:normal;transform:translateY(110%);transition:transform .78s cubic-bezier(.16,.8,.24,1)}
+.on .ln>i{transform:none}
+.on .ln:nth-child(1)>i{transition-delay:.04s}
+.on .ln:nth-child(2)>i{transition-delay:.14s}
+.fu{opacity:0;transform:translateY(9px);transition:opacity .7s ease,transform .7s ease}
+.on .fu{opacity:1;transform:none}
+.on .fu.d1{transition-delay:.24s}
+.on .fu.d2{transition-delay:.36s}
+.on .fu.d3{transition-delay:.50s}
+.on .fu.d4{transition-delay:.62s}
+
+/* ── 字级：同时对宽度和高度做 clamp，矮屏自动收，保证一页装得下 ── */
 .eyebrow{
-  font-family:var(--mono);font-size:clamp(10.5px,.85vw,12.5px);letter-spacing:.34em;
-  color:var(--mut);margin-bottom:clamp(14px,2.2vh,26px);white-space:nowrap;
-  opacity:0;transition:opacity .7s ease .05s;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;
+  color:rgba(255,217,160,.55);margin:0 0 18px;line-height:1.6;
 }
-.eyebrow b{color:var(--core);font-weight:400}
-h1{
-  /* 上限 70px 不是随手定的：正文盒最宽 720px，全章最长一行 10 个字
-     （ch8「只发生在你的手机里。」），10em ≤ 720px ⇒ 字号 ≤ 72px。
-     以前写 84px，1556px 以上的屏上 ch5「它才开口说你是谁。」溢出 44px、ch8 溢出 120px，
-     被 .line 的 overflow:hidden 直接裁掉末字（1920 实测逮到）。加宽演示卡时才顺带测出来的老账。 */
-  font-weight:600;font-size:clamp(38px,5.4vw,70px);line-height:1.15;
-  letter-spacing:.01em;text-wrap:balance;
-  text-shadow:0 1px 3px rgba(5,4,9,.65),0 0 22px rgba(5,4,9,.5);
+h1,h2{
+  margin:0;font-family:var(--sans);font-weight:500;
+  font-size:clamp(24px,min(4.6vw,5.3vh),50px);
+  line-height:1.25;letter-spacing:-.01em;
 }
-.cc h1{font-size:clamp(42px,6.9vw,112px)}
-.line{display:block;overflow:hidden}
-.line>span{display:inline-block;white-space:nowrap;transform:translateY(112%);opacity:0;
-  transition:transform .85s cubic-bezier(.22,1,.36,1),opacity .85s ease}
-.line:nth-child(2)>span{transition-delay:.12s}
-.cc .line>span{margin-inline-end:-.5em}
+.l1{color:var(--ink);transition:color .8s ease}
+.l2{color:var(--ink2);transition:color .8s ease}
 .en{
-  font-family:var(--serif);font-style:italic;font-weight:400;
-  font-size:clamp(16px,1.6vw,23px);color:var(--core2);
-  margin-top:clamp(12px,1.8vh,20px);letter-spacing:0;
-  opacity:0;transition:opacity .8s ease .38s;
-  text-shadow:0 1px 3px rgba(5,4,9,.7);
+  margin:15px 0 0;font-family:var(--serif);font-weight:400;
+  font-size:clamp(14px,min(1.6vw,2.1vh),19px);line-height:1.42;color:rgba(255,217,160,.6);
 }
-.body{
-  font-size:clamp(14px,1.15vw,17.5px);line-height:1.82;color:var(--ink2);
-  margin-top:clamp(14px,2.4vh,26px);max-width:34em;
-  opacity:0;transition:opacity .8s ease .5s;
-  text-shadow:0 1px 3px rgba(5,4,9,.8);
-}
-.br .body{margin-left:auto}
-.cc .body{margin-inline:auto}
-.formula{margin-top:clamp(10px,1.6vh,18px);font-size:clamp(12.5px,.95vw,15px);color:var(--mut);
-  opacity:0;transition:opacity .8s ease .62s}
-.formula i{font-family:var(--serif);font-style:italic;color:var(--core2);font-size:1.15em}
-.num{
-  position:absolute;font-family:var(--serif);font-weight:400;font-style:italic;
-  font-size:clamp(180px,34vh,380px);line-height:1;color:var(--ink);opacity:0;
-  pointer-events:none;user-select:none;transition:opacity 1.2s ease .15s;
-}
-.bl .num,.ml .num{right:-4vw;bottom:-2vh}.br .num{left:-4vw;bottom:-2vh}
-/* 入场态：到章加 .in，一切各就各位 */
-.chapter.in .eyebrow,.chapter.in .en,.chapter.in .body,.chapter.in .formula{opacity:1}
-.chapter.in .num{opacity:.05}
-.chapter.in .line>span{transform:none;opacity:1}
-/* 幽灵短语（第 1 章） */
-.ghost{
-  position:absolute;z-index:0;font-size:clamp(12px,1.2vw,17px);color:#CBC2D6;opacity:0;
-  letter-spacing:.06em;white-space:nowrap;filter:blur(.3px);
-  transition:opacity 1.4s ease;
-}
-.chapter.in .ghost{opacity:.42;animation:drift 14s ease-in-out infinite alternate}
-.chapter.in .ghost:nth-of-type(2){transition-delay:.5s;animation-delay:-4s}
-.chapter.in .ghost:nth-of-type(3){transition-delay:1s;animation-delay:-8s}
-.chapter.in .ghost:nth-of-type(4){transition-delay:1.5s;animation-delay:-11s}
-@keyframes drift{from{transform:translateY(0)}to{transform:translateY(-18px)}}
-/* App 回应演示卡：产品的"回话"要看得见（Trev：演示怎么不见了）。
-   玻璃暗卡 + 对话气泡，文案与旧站一字不差（品牌口径）。 */
-.democard{
-  /* 宽度/字号随视口走：固定 400px 在 1440+ 的屏上像张邮票（Trev：「网页版的演示框也太小了」）。
-     二轮再抬一档（Trev 2026-08-02「网页版的演示图可以再大一点」）：
-     31vw→36vw、上限 600→720，1440 → 518px、1920 → 691px；字号同步。
-     下限 430px 是给 ≤1200 的窄桌面兜底，别让它掉回邮票。 */
-  position:absolute;z-index:1;width:min(86vw,clamp(430px,36vw,720px));
-  background:rgba(10,8,14,.55);border:1px solid var(--line);border-radius:clamp(16px,1.3vw,20px);
-  padding:clamp(14px,1.9vw,26px);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  display:flex;flex-direction:column;gap:clamp(9px,.8vw,13px);
-  opacity:0;transform:translateY(14px);
-  transition:opacity .8s ease .55s,transform .8s cubic-bezier(.22,1,.36,1) .55s;
-}
-.chapter.in .democard{opacity:1;transform:none}
-.democard.dcr{right:clamp(24px,6vw,90px);bottom:clamp(120px,20vh,220px)}
-.democard.dcl{left:clamp(24px,6vw,90px);bottom:clamp(120px,20vh,220px)}
-.democard .lab{font-family:var(--mono);font-size:clamp(9.5px,.92vw,13.5px);letter-spacing:.26em;color:var(--core2);margin-bottom:3px}
-.bub{padding:clamp(10px,1.05vw,16px) clamp(14px,1.4vw,22px);border-radius:clamp(13px,1.25vw,18px);font-size:clamp(13px,1.2vw,18px);line-height:1.75;max-width:92%}
-.bub.me{background:rgba(255,217,160,.13);border:1px solid rgba(255,217,160,.22);color:var(--ink);align-self:flex-end;border-bottom-right-radius:4px}
-.bub.ai{background:rgba(255,255,255,.045);border:1px solid var(--line);color:var(--ink2);align-self:flex-start;border-bottom-left-radius:4px}
-.democard .face{font-size:clamp(14.5px,1.38vw,20px);line-height:1.85;color:var(--ink)}
-.democard .dateline{display:flex;align-items:baseline;gap:6px}
-.democard .dateline .n{font-family:var(--serif);font-size:clamp(22px,2.2vw,34px);color:var(--core)}
-.democard .dateline span:last-child{font-size:clamp(12px,1.15vw,16px);color:var(--mut)}
-.democard .dfoot{font-family:var(--mono);font-size:clamp(9px,.9vw,12.5px);letter-spacing:.14em;color:var(--mut);margin-top:2px}
-.daxlab{font-family:var(--mono);font-size:clamp(9px,.9vw,12.5px);letter-spacing:.2em;color:var(--core2);margin:7px 0 2px}
-.dchip{display:inline-block;font-size:clamp(10.5px,1.03vw,14.5px);padding:clamp(3px,.35vw,5px) clamp(10px,.98vw,15px);border:1px solid var(--line);border-radius:999px;color:var(--ink2);margin:0 4px 4px 0}
-.democard.dim .face{color:var(--ink2)}
-.democard.dim{border-style:dashed;background:rgba(10,8,14,.42)}
-/* 星球标签（第 7 章，桌面）：DOM 画的，字永远是锐的——烤在视频里的那种蒙不再需要 */
-.plab{
-  position:absolute;z-index:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
-  color:var(--core2);opacity:0;transition:opacity .9s ease;pointer-events:none;
-  text-shadow:0 1px 3px rgba(5,4,9,.9);padding-top:10px;
-}
-.plab::before{content:'';position:absolute;left:50%;top:-6px;width:1px;height:12px;background:var(--core2);opacity:.55}
-.chapter.in .plab{opacity:.8}
-.chapter.in .plab:nth-of-type(2){transition-delay:.15s}
-.chapter.in .plab:nth-of-type(3){transition-delay:.3s}
-.chapter.in .plab:nth-of-type(4){transition-delay:.45s}
+.body{margin:19px 0 0;font-size:clamp(13px,min(1.16vw,1.72vh),14.8px);line-height:1.78;color:#98909F}
+.sub{margin:19px 0 0;font-size:clamp(13px,min(1.16vw,1.72vh),14.8px);line-height:1.76;color:#98909F}
+.sub b{color:#E8E2D6;font-weight:600}
+.sub .nb{display:block;white-space:nowrap}
+@media(max-width:640px){.sub .nb{white-space:normal}}
 
-/* ── 常驻件（z40）── */
+/* ── hero ── */
+.actions{margin-top:26px;display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.cta{
+  display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:999px;
+  text-decoration:none;font-size:13.5px;font-weight:600;text-shadow:none;
+  color:#241A0C;background:linear-gradient(100deg,#FFE7BE,#FFD09A);
+  box-shadow:0 0 0 0 rgba(255,209,154,.4);transition:box-shadow .4s ease,transform .25s ease;
+}
+.cta:hover{box-shadow:0 0 32px 0 rgba(255,209,154,.28);transform:translateY(-1px)}
+.ghost{font-size:13px;color:#8B8395;text-decoration:none;border-bottom:1px solid #2A2632;padding-bottom:2px}
+.ghost:hover{color:#C9C1D4}
+.hint{
+  position:absolute;left:50%;bottom:22px;width:1px;height:26px;
+  background:rgba(255,217,160,.35);transform-origin:top center;
+  transform:translateX(-50%);animation:breathe 3s ease-in-out infinite;
+}
+@keyframes breathe{
+  0%,100%{transform:translateX(-50%) scaleY(.34);opacity:.5}
+  50%    {transform:translateX(-50%) scaleY(1);opacity:1}
+}
+
+/* ── 通用 vignette 卡 ── */
+.card{
+  margin:22px 0 0;max-width:420px;padding:15px 18px;border-radius:14px;
+  background:rgba(20,16,25,.78);border:1px solid #2E2A3A;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);text-shadow:none;
+}
+.lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:rgba(255,217,160,.55);line-height:1.6}
+.foot{margin-top:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:#7C7488;line-height:1.6}
+.bub{max-width:92%;padding:9px 13px;border-radius:14px;font-size:13.4px;line-height:1.6;width:fit-content}
+.bub.me{
+  margin:11px 0 0 auto;border-bottom-right-radius:5px;color:#EFE7DA;
+  background:linear-gradient(100deg,rgba(255,222,180,.17),rgba(255,205,150,.10));
+  border:1px solid rgba(255,217,160,.22);
+}
+.bub.ai{margin:9px auto 0 0;border-bottom-left-radius:5px;color:#B4ABBE;background:transparent;border:1px solid #302B3C}
+.face{margin:11px 0 0;font-size:15.4px;line-height:1.68;color:#E4DCEB}
+.face.sm{font-size:13.6px;line-height:1.72;color:#C6BDD2}
+.dateline{margin-top:11px;font-size:13.6px;color:var(--core2);line-height:1.4}
+.dateline .n{font-family:var(--serif);font-size:19px;letter-spacing:.01em}
+
+/* ── 05 两条轴：六个人格声音 × 四个生活场景 ──
+   🔴 这两个数字和 chip 名字必须跟代码对账，别照抄文档：
+   `mirror/src/services/context.ts` 的 ALL_CATEGORIES / ALL_DOMAINS。
+   2026-07-29 第三轮同时动过两条轴：品类新增「应对风格」（6 个）；
+   场景把 自我/生活/成长 并进「独处」（4 个）。 */
+.axes{margin:18px 0 0;display:flex;flex-direction:column;gap:9px}
+.ax{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.axlab{
+  font-family:var(--mono);font-size:9px;letter-spacing:.18em;line-height:1.5;
+  color:rgba(255,217,160,.5);margin-right:1px;white-space:nowrap;
+}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:20px 0 0}
+.chip{
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;line-height:1.5;
+  border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:#9C93A8;
+  background:rgba(12,10,17,.5);text-shadow:none;
+}
+.duo{display:grid;gap:10px;grid-template-columns:1fr;margin-top:18px}
+@media(min-width:641px){.duo{grid-template-columns:1fr 1fr}}
+.duo .card{margin:0;max-width:none;padding:14px 15px}
+.duo .card p{margin:8px 0 0;font-size:13.4px;line-height:1.62;color:#DCD4E4}
+.duo .card.dim{background:rgba(13,11,18,.72);border-color:#241F2E}
+.duo .card.dim p{color:#948BA1}
+.duo .card.dim .lab{color:rgba(255,217,160,.32)}
+.duo .card.dim .foot{color:#5F5870}
+
+/* ── 06 词源行 ── */
+.etym{margin:24px 0 0;font-size:clamp(13px,min(1.2vw,1.8vh),15px);line-height:1.8;color:var(--ink2)}
+.etym .s{font-family:var(--serif);font-size:1.18em;letter-spacing:.01em;color:#DCCDB6}
+
+/* ── 07 三张事实卡 ── */
+.facts{display:flex;flex-direction:column;gap:10px;margin-top:20px;max-width:460px}
+.fact{
+  padding:13px 17px;border-radius:14px;text-shadow:none;
+  background:rgba(20,16,25,.78);border:1px solid #2E2A3A;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.fact p{margin:6px 0 0;font-size:13.4px;line-height:1.64;color:#ADA4B8}
+
+/* ── 08 begin ── */
+#begin{flex-direction:column;justify-content:center;align-items:stretch}
+#begin .col{max-width:840px;padding:0}
+.mailrow{margin:20px 0 0;font-family:var(--mono);font-size:12px;color:#8B8395;letter-spacing:.04em}
+.mailrow a{color:var(--core);text-decoration:none;border-bottom:1px solid rgba(255,217,160,.25);padding-bottom:1px;transition:border-color .3s ease}
+.mailrow a:hover{border-bottom-color:var(--core)}
+.footbar{
+  position:absolute;left:clamp(24px,6vw,80px);right:clamp(24px,6vw,80px);bottom:20px;
+  padding-top:14px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:10px 20px;flex-wrap:wrap;
+}
+.footbar .l{font-size:12px;color:var(--mut)}
+.footbar .r{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:rgba(255,217,160,.45)}
+
+/* ── Nav ── */
 #nav{
-  position:fixed;top:0;left:0;right:0;z-index:40;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:clamp(16px,2.6vh,26px) clamp(20px,3.4vw,48px);pointer-events:none;
+  position:fixed;top:0;left:0;right:0;z-index:30;
+  display:flex;align-items:center;gap:14px;
+  padding:13px clamp(18px,4vw,34px);
+  border-bottom:1px solid transparent;
+  transition:background .45s ease,backdrop-filter .45s ease,border-color .45s ease;
 }
-#nav a,#nav button{pointer-events:auto}
-.mark{color:var(--ink);text-decoration:none;font-size:15px;display:flex;align-items:center;gap:10px}
-.logoglyph{width:14px;height:21.2px;flex:none;background:#F4EFE6;
+#nav.scrolled{background:rgba(5,4,9,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom-color:var(--line)}
+#nav .brand{display:flex;align-items:center;gap:9px;text-decoration:none}
+/* 就是 App 里那张 logo-mark.png（一面竖向胶囊镜，内里一道斜切反光）。
+   它是 alpha 形状、RN 用 tintColor 上色，所以网页侧也走 mask-image 而不是 <img>，
+   这样才能跟 App 一样按主题着色，而不是烙死一个颜色。 */
+#nav .mark{
+  width:14px;height:21.2px;flex:none;background:#F4EFE6;
   -webkit-mask:url(data:image/png;base64,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) center/contain no-repeat;
-          mask:url(data:image/png;base64,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) center/contain no-repeat}
-.mark .lat{font-family:var(--serif);font-size:19px;letter-spacing:-.022em}
-.mark .zh{color:var(--ink2);font-size:12.5px;letter-spacing:.3em}
-.navr{display:flex;align-items:center;gap:14px}
-#snd{
-  background:none;border:1px solid var(--line);color:var(--mut);border-radius:999px;
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;padding:8px 14px;cursor:pointer;
-  transition:color .3s,border-color .3s;
+          mask:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaUAAAJ9CAYAAACVV21xAAA0x0lEQVR4nO3dd5xfVZ3/8VcooQRCKFFRQXqTFaJmQwdBXVxEEEGwYtf96drWdWV3LSs/29rQ1VXXXew0FXXtKBKpoghIlRaKBSGIIRAChITfH5+ZH5Nhyrfcc8+5976ej8c8JpnM3PNhmO99zzn3lBkL5u+GJEklWCN3AZIkjTKUJEnFMJQkScVYK3cB6ry5wDbAJsAsYIMJ3q8PbDjy99GPjf33jWuvumx/Ae4Blo28H/3zMuBu4N6Rj43+eezH7wBuAhbXXbQEhpLq8WhgW2A7YPsxf96OCBtVa2OGD+q7geuB64AbRt5fP/JmYCkZQ0lVeQzR49lx5P12Y942yFiXBrMhMG/kbbx7eDikbhh5u3bk/W11Fah2MpQ0iBnAU4G9gf1G3m+StSLVaQMmD6w7gPOAc4BzgYuBh+orTU03w3VK6sFMInj2HXm/J7Be1orUFMuAXxABdS5wPvBA1opUNHtKmshGwP7APiNv8/BnRYOZBRw08gbwINF7Ohc4e+T9XXlKU4nsKQlgCyJ8Rofids5bjjrmCmLI71xgIfCnrNUoK0Opu7YAXggcA+yauRZprMuBk4BTgd9lrkU1M5S6ZTPg+UQYLchci9SLC4CvAacR66/UcoZS+80CjiCC6GnAmnnLkQayEvgpcApwOrHQVy1kKLXTTODZwNHAIcA6ecuRKnUf8D0ioH4ArMhbjqpkKLXHDODpRBA9F5idtxypFkuJntNJwFmZa1EFDKXmeyzw98DLiGdGUlfdBnwJ+DTwx8y1aEDuEt5cBxK/Id4IvA0DSXo08HZgEfB14ICs1WgghlKzrAv8HTFl9sfAofj/UBpvTeBw4CfApcBriNeOGsAbWjNsC5xADEl8EtgpazVSczyRGM77A/ARYKus1WhahlLZnkgMQ/wWeD0e8yANajbwJmJ381Nx15JiGUpl2g34FjH0cHjWSqT2OQK4DPgG8YufCmIolWUesf7iImKdkaR0DiN+8fs2Ex/DoQwMpTLMB34E/BL4m8y1SF1zCPHa+z7xWlRGhlJeOwLfJc6YOWiaz5WU1jOJ1+K3iclFysBQymNTYkbQb4CDM9ciaXWHAFcC/wHMyVtK9xhK9ZoJHAdcT6ydcHNUqUxrAq8DbiAWp8/MW053GEr1eQkxtfu9wAaZa5HUm9nAB4CribPHlJihlN7OwIXAicTBepKaZ0vgK8TpuE4jT8hQSmcd4EPAxcCTM9ciqRoLiCUbx+OQXhKGUhrPAK4F3gqslbkWSdVaC3gHcBXOmq2coVStxxDHNv+AOFJCUns9gVhfeBKxQ7kqYChV5/XEb07PzV2IpFodRbz2X5u7kDYwlIa3FbHg7gTcMFXqqtnAp4CzcULTUAyl4bwCuAS3JpEU9iQWxb8kdyFNZSgNZg5x6uvncM2RpNVtSCwBOZ3oQakPhlL/nkFsQXJo7kIkFe1Q4Ao8lr0vTlfu3Uzg34kJDareNcQ0+quBJcDykbd7J3k/9s9L6y+3aLOB9YD1R97WHXk/9mPrjXnbmDjNeAdik2BVZ3PiWPZPA28HHshbTvkMpd5sSZxz5GmVw7md2Grpt0QAXUeE0SLgoYx1tc1SBg/qGcA2RDiNhtTo26Mqqa6bXg/sTxwweGPmWoo2Y8H83XLXULpnE9uL+OyoPxcA5/BwCF0FLMtakYY1C9iF6FXtBOxLPNhX7+4GXgT8MHchpTKUpnY8sXJbU7ubCKFziSC6EFiRtSLVZW1i6519gX2IkHJpxPSOJzZn1jiG0sTmAN8E9stcR6lu5+EAOo+YFi9BDP/tDuzNw0HlsN/Efgy8EJ+JrsZQeqTdgO8Aj8tdSEEW8XAAnUs8C5J6tS3xPGVvIqS2yVtOUW4mnjNdlruQUhhKqzsMOJkYkui6PxDP0r5AhJJUlW2BVxLPVtwjEu4DXkz8Mtx5htLDjsMx3uXEgr+vAGdmrkXd8Axi94PDienpXfYO4KO5i8jNUIoFxF8Gjs5dSEZnE0F0GrH2R6rb+sTJri8lhvm66svAq+jwEomuh9IGxPqjLr4IFhFBdCLwx8y1SGNtAbycGN7r4vOnhcRpA/dkriOLLofSVkQgdW0F+w+B/yBWmUulOwh4E/Cs3IXU7BrgYOD3uQupW1f3vnsq8Eu6E0hLiSDaHngOBpKa40ziZ3Z74mf47rzl1GZH4FfAvNyF1K2LoXQA0T3eOG8ZtbiG+C3zccTR7DdlrUYa3E3Ez/AWxM/0tVmrqcdmwM/p2IauXQulZxPDV+vkLiSxy4iHxrsC/0lMOZXaYBnxM/1E4mf8irzlJLcecc96Zu5C6tKlUDqG2KWhzZvQXgIcCTyF+G+V2uybxPDWUbR78elaxBqm5+UupA5dCaWXETPN2vrfezHxA/vXuABP3fNt4hexI2nvlldrAacQ97JWa+tNeqw3AJ/PXUQiFxGLDhcA/5u3FCm77xC/mB1O/KLWRp8HXpO7iJTaHkrvAj6eu4gEbiE2ctwT+H7mWqTSfJ/4Re3FwO8y15LCp2nx6QVtDqV3jry1yXLgPcRhg1/PW4pUvFOJc5/eS7x22uR44F9yF5FCW0PpDUQvqU1OItZqvA+PVJZ69QBxA9+RCKk2eQ/w5sw1VK6NofQa2jVkdzExTHcscFvmWqSmupUYztsTuDRvKZX6MPB3uYuoUttC6WXEeGsb3E30+BYQExokDe8iYD7wRtqzt9wngVfkLqIqbQqlo2nPLLsziMWBn8tdiNRSnwF2IXZ3aYPP0ZJ1TG0JpYOAL+UuogJ3EGfLHEIMN0hK51biPKdjgTsz11KFr9KCLYnaEErziMVza2auY1gnE7+5nZK7EKljTiJm6Z2Wu5AhrcXDC4kbq+mhNJdYMLdu7kKGsJzodr8U+EvmWqSu+gtxftNLiP31mmoW8C3g0bkLGVSTQ2km8CNg89yFDOEKYDfcjUEqxSlET+Py3IUMYXPgu8Q9snGaHEqnAk/KXcQQPkNsiXJj7kIkreYGYtbrZ3MXMoR5NPRRQFND6V3EMRRNdA8xXPdGYEXmWiRNbAXw98Ss3qYeLHgoDdzVpomhdDgN/EaPuBSH66QmOR3YnebuPv4uGjZVvGmhNI+Y9thEnyCGBG7JXYikvtxC7ATxqdyFDOhLNOhRR5NCaS7wA5p3auxS4DnA24BVmWuRNJiVwFuIkZqmDeetA3yPhszIa0oojc602yx3IX26GXgqcZyxpOYbPRajaUdijM7IWzt3IdNpSig1cabdFcQPr7PrpHa5jnhtX5O7kD7NowE73zQhlP6N5s20OxvYB/hz7kIkJbEY2AO4IHchfToK+NfcRUyl9FA6HPjn3EX06TvEflpNXhUuaXr3EPtufid3IX16N7G/ZpFKDqWtgK/kLqJPnwWOxAkNUlesIF7zJ+YupE9fAx6fu4iJlBxKp9KsPe3eSSy2k9Q9ryVOgm2KWcRGtMUpNZSOA56cu4gerSQ2cfxg7kIkZfU+4l7QlJGSPYmlKkWZsWD+brlrGO+JxOmQa+UupAf3EWuQzspdiKRiPBP4Js0Y6VlB7MF5Re5CRpXWU1qTGLZrQiDdCeyHgSRpdWcQ94aluQvpwdrEWW7FnEdXWii9H9gxdxE9WEqc8NjU/bAkpXUJsC/NCKadKOh5WEmhNB94a+4ienAf0T2/Onchkop2FXGvuC93IT14B7EgOLtSQmldYtiudCuBI4Bf5y5EUiP8mrhnrMxdSA9OooDnYKWE0ieALXIX0YOXAz/JXYSkRvkJce8o3ZbAR3MXUUIoHQS8IncRPTiOeCAoSf06mWacA/caYkeabHKH0kY0Y9eGzwAfyV2EpEb7IPA/uYvowZeIe3MWuUPpC8Q5SSX7OnF0uSQN63XEERIlm0vG8MwZSi8mzpAv2c+AF+UuQlKrHAWcl7uIaRxG1Fm7XKE0C/hYprZ7dQnxP+ah3IVIapWVxC7dxeyiMIlPEffqWuUKpXcDG2dquxc30Jz1BZKaZxlxj7kldyFT2IQMRwflCKUtKHs37duApwNLMtchqd0WE/eaO3IXMoW3Ekep1yZHKH2Ecve2W0UM2f0+dyGSOuFG4HmUu7P4WsCH62yw7lCaT6xuLtV7cLcGSfU6nzj2olRHA7vX1VjdofTpmtvrx3nAB3IXIamT3gv8MncRU/hkXQ3VGUrHAPNqbK8fd5Bp+qMkjTgK+EvuIiaxJzHMmFxdobQ28KGa2hrEC4iHjpKUyx+BY3MXMYUPUkNm1BVKbwUeW1Nb/ToBWJi5BkkC+CHlPubYCnhz6kbqOA59U2KGyXqpGxrAJUS3tAnbykvqhjWBi4BdcxcygaXAtiRcMlNHT+m9lBlIy4EjMZAklWUlcW9alruQCcwm7unJpA6lnYmt0Ev0SspeTS2pu26g3E0GXkP0lpJIHUqfSnz9QX2R2P1bkkr1FeI02NKsScLDAFOG0jOB/RJef1DXAm/IXYQk9eC1wKLcRUzgEBLd31OGUokLUVcQY7X35y5EknpwH/B84t5VmuNTXDRVKO0BPCnRtYfxAeDq3EVIUh9+Q5knX+9Fgvt8qlB6S6LrDuNWYvGXJDXN+4h7WGn+qeoLpgilzYHDE1x3WG+hzC6wJE3nfhIEQAWOpOKjLVKE0j8kuu4wzge+mbsISRrCyZS3aesaVLzLQ9U7OswiupilLZZ9IjHrTpKa7EmUd7zO3URvqZIJZFX3aF5NeYH0XxhIktrhMuDE3EWMsyHwqqouVnVP6SbgcVVecEh3E5sILs1chyRVZVPgOiIMSrEI2LGKC1XZUzqSsgIJ4J0YSJLa5c8k3n9uANsAh1VxoSpD6bgKr1WFRcB/5i5CkhL4JHB97iLGeWsVF6kqlBZQ3mLZ1wIP5S5CkhJYRUUhUKFKFtNWFUqlfXO+iwf3SWq3HwI/zV3EOG8f9gJVTHTYnJjgUMrapAeJbdX/mLsQSUpsG+BKYK3chYxYRUwuG3j3iSqCpLTFsl/EQJLUDYuAr+YuYow1gDcOc4Fhe0prAH8CNh7mIhXbhZguKUldsCNwRe4ixrgTeAwDPtMftodzMGUF0vcxkCR1yzXAGbmLGGMT4jy9gQwbSs8f8uurdkLuAiQpgxNyFzDO0YN+4TChNBN43hBfX7XLcMadpG76CWWdFXc4cWx634YJpWcD6w7x9VVLdma8JDXAx3IXMMaGREb0bZhQGrh7lsDtxLbuktRVXwNuy13EGAM93hk0lNYHnjPg16bwcdy9QVK3rQA+nbuIMQ4lHvP0ZdBQOoxyFmstBz6TuwhJKsBnqOhcowqsBzy33y8aNJRKGro7EViWuwhJKsAS4Eu5ixij76wYZPHsRsS45UAzKyq2CtgeuCV3IZJUiK0oZ73mCmAufXQcBukpPY8yAgngOxhIkjTWTcD3chcxYm3giH6+YJBQKmnB7MdzFyBJBSrp3tjXEF6/obQZcFCfX5PKZcAFuYuQpAKdTTn74f0NfWxH128oHdXn56fkuiRJmtwpuQsY48heP7HfUDqmz89P6Wu5C5CkgpV0j+x5CK+fUNqcOO62BL9kiEOkJKkDfg/8KncRI/YnZuFNq59Q+tvBaknCoTtJmt6puQsY45BePqmfUNp3wEJSKGmsVJJKdVLuAsbYu5dP6meroH0GLKRqZwN35C5C6ri9gJ2IU09nE2tjbgKuB36drSqNtxg4jx4DIbGeMqTXUJoLPGHwWiplL0nKY3diIeTBxKbMY40dSbkb+CGxD9viWirTVE6mjFDaDphDbIU0qV6H70pZm7QSOC13EVLHzAE+DHyVCKXxgTTehsQi++9R1jKSrjo9dwFjTJslvYZSKUN3PwXuyl2E1CGbETe1Zw3wtbOAdwOvrLQi9WsxcGbuIkZMmyW9hlIJXT8oayaJ1HYbAF8AHjXkdd5Cn/ufqXKljDBNmyW9hNL6wK7D1zK0B4Fv5i5C6pC3A1tXdK13ArtUdC3173Ti8UduuxE96En1EkoHVFLK8L4P3Ju7CKkjdqfa3s3awEcrvJ76swQ4I3cRROZMuQlDL6FUyvqkH+QuQOqQ1yW45haUsytMF5VynMWUmdKkUDo3dwFSR2xJuslNL0h0XU3vvNwFjJjyZ2u6UJoJPKW6WgZ2J3Bt7iKkjnhGwmvbU8rnSmINWW57AjMm+8fpQmkP+tv1IZWFuQuQOiTl6Mg6wKYJr6+pLcxdAJEpCyb7x+lCqZSp4OfkLkDqiHWAJyduY4vE19fkSnkMMukQ3nShtF/FhQyqlLFQqe32p/9z1vq1XuLra3Kl/II/abZM98O3e7V1DOQe4JLcRUgdUcfuLe7Kks9FwH25i2CKbJkqlNYnthjJzV6SVJ8DE1//IWInceXxEHB+7iKIQ2PXnugfpgqlHdPU0rdSxkClttuB2Hw1pauBBxK3oamVck/deaIPNiGUzs5dgNQRdaxJLOG39K4r5bnS9hN9cKpQ2jZRIf14ELggdxFSR+xfQxs/r6ENTe184t6a23YTfXCqUJowxWp2ITEGKimtWaSf2LQcuDRxG5reA8DFuYugoaFUSjdTaru9SD8V/Bz8JbMUJTxX2mGiD071QzhhitXs0twFSB1Rx5pEnw+Xo4RlNn09U1of2CRdLT27IXcBUkc8rYY2FtbQhnpTwrT8uUxwttJkoVTKYVzX5S5A6oCdST8V/LfEmT4qQwmhBBMM4U0WSiUM3S0GluUuQuqAOqaCO3RXliWU8UtCz6FUwiSHUpJcars6thZy0lJ5SrjHPqIDVHJPqYRvmNR2s0i/K/gyyniwrtWV8Mz+ER2gkntKJXzDpLaro5fk/pVlKuEe23MoTbgnUc1K+IZJbVfHVHB3cShTCaNRO43/wEShtDGwQfpaplXCN0xqO7cW6q4S7rGzGTfzc6JQKuF5EpTxDZPabBfSTwW/ijJmeemRSrnHrpY5E4XSY2sqZCpL8QdZSq2O50n2ksq1mNiPMLfHjP3LRKG0fk2FTOXa3AVIHVDH0J2THMp2Te4CGPe4aKJQKuF5kpMcpLRmAbslbmMZ7l9ZukW5C2DcVkOl9pT+lLsAqeXcgFUAt+UugB5CacOaCpmK2wtJadURSu7iUL57chdAD6H0iF1bM7g7dwFSy7nfnaCMe20jninZU5LSeSLpp4JfiTNom+De3AXQkGdKhpKUTh1Twe0lNUMjhu/sKUnt5vMkjSrhXrtaR8hnSlK31DUV/LLEbagaJfSUVptcV+rsuxK+UVIbHVBDGwtraEPVKOFeO+3w3Xo1FTKVEh6+SW3k+iSNVUIoTTt8V0JPyeE7KY0DamhjYQ1tqBolPFNqxDqlEr5RUtvsSvrX9+X4+m2SEv5fNWKdUgldSqltHLrTeCWMSjWip2QoSdWrYxcHp4I3Swk9pWlDabIj0iU11yzgrxK3sQy4InEbqtYDuQsA1hn7FwNI6oYDamhjYQ1tqOUMJakbfJ6kRjCUpG44oIY2FtbQhlrOUJLa70mkn8D0G8p4aK6GM5Sk9vPsJDWGoSS1n7uCqzEMJand5hCH+qW0BLgqcRvqCENJajcP9FOjGEpSu+1fQxsO3akyhpLUbq5PUqMYSlJ77Ub6qeCX4lRwVchQktrL50lqHENJaq86hu7OraENdYihJLXTHJwKrgYylKR2qmPW3Vk1tKGOMZSkdvJAPzWSoSS1Ux2hdF4NbahjDCWpfXYn/VTwi3EquBIwlKT2qWMquEN3SsJQktqnjkkOrk9SEoaS1C5zgJ0Tt7EEuCZxG+ooQ0lqF6eCq9EMJaldnAquRjOUpPaYQfpQWgX8PHEb6jBDSWqP3alnKvj9idtQhxlKUnvUsQGrQ3dKylCS2qOO50lOBVdShpLUDnOAnRK3sQS4LnEb6jhDSWqHA2po42c1tKGOM5SkdqjjeZKz7pScoSQ1X11TwT1lVskZSlLz7Q6sl7iNi3AquGpgKEnNV8fWQvaSVAtDSWq+OkLJ50mqhaEkNdscYPvEbdwO3JC4DQkwlKSmO6iGNlwwq9oYSlKz1bGLg0N3qo2hJDXXDGDvxG2sAs5P3Ib0/xlKUnM9hfRTwX+FU8FVI0NJaq59amjDqeCqlaEkNVcdWws5yUG1MpSkZpoL7JC4DaeCq3aGktRMdSyYXVhDG9JqDCWpmeoIJYfuVDtDSWqeGcAeidtYBVyQuA3pEQwlqXnqmAr+S5wKrgwMJal5HLpTaxlKUvPUsbXQOTW0IT2CoSQ1y1xgu8Rt3A7cmLgNaUKGktQsB9TQxs9qaEOakKEkNUsduzi4tZCyMZSk5qhjKvgKnAqujAwlqTn+mvRTwS/CqeDKyFCSmqOOWXdOBVdWhpLUHHWsT/KUWWVlKEnNMBfYOnEbtwO3JG5DmpKhJDXDgTW0cWYNbUhTMpSkZvB5kjrBUJLKtwawIHEbK4DzErchTctQkspXx1TwC4njKqSsDCWpfHUM3bmLg4pgKEnl86gKdYahJJVtLrBV4jZ+j1PBVQhDSSrbQTW04YJZFcNQkspWx/MkQ0nFMJSkcq0B7JW4jRXALxK3IfXMUJLKtQBYO3Ebv8Cp4CqIoSSVq44D/c6poQ2pZ4aSVC63FlLnGEpSmeqYCn4zMR1cKoahJJXp6TW0YS9JxTGUpDL5PEmdZChJ5VkD2CNxG04FV5EMJak8e+BUcHWUoSSVp46hO58nqUiGklSeOqaC/7SGNqS+GUpSWR4PPCFxGzcCixO3IQ3EUJLK4tCdOs1QkspSx9CdU8FVLENJKkcdU8GXA79M3IY0MENJKkcdU8EvxKngKpihJJVj/xracOhORTOUpHLUEUo/q6ENaWCGklSGLYnp4Ck5FVzFM5SkMtQxFfznNbQhDcVQksqwTw1t+DxJxTOUpPzWABYkbsOp4GoEQ0nKb2/q2RX8ocRtSEMzlKT83FpIGmEoSfkdVEMbC2toQxqaoSTltSXwqMRtXI9TwdUQhpKUl7s4SGMYSlJerk+SxjCUpHzWAZ6auI3lwK8TtyFVxlCS8tmT9FPBL8Cp4GoQQ0nKp45dHJwKrkYxlKR8DqyhDZ8nqVEMJSmPrUk/FfxanAquhjGUpDz2raENh+7UOIaSlEcdoeT6JDWOoSTVbx3q2RX84sRtSJUzlKT67Un61965OBVcDWQoSfVz6E6ahKEk1e9pNbTxsxrakCpnKEn12oZ6poIvSdyGlIShJNWrjl3BnQquxjKUpHrVsbWQuziosQwlqT7rAPMTt7EMuDRxG1IyhpJUn71I/5o7D6eCq8EMJak+bi0kTcNQkupzQA1tLKyhDSkZQ0mqx/aknwp+NU4FV8MZSlI93MVB6oGhJNXDU2alHhhKUnrrAE9N3IZTwdUKhpKU3t7UMxVcajxDSUqvjq2F3MVBrWAoSenVMcnBUFIrGEpSWtuSfir4lTgVXC1hKElpuSu41AdDSUprvxracJKDWsNQktJZB3hy4jacCq5WMZSkdPYj/WvMoTu1iqEkpeOsO6lPhpKUzoE1tHFuDW1ItTGUpDR2AOYkbsOp4GodQ0lKwwP9pAEYSlIadUwF96gKtY6hJFVvFjAvcRvLgMsStyHVzlCSqrcX6V9bCxNfX8rCUJKqV8fQnVPB1UqGklS9p9XQhqGkVjKUpGrtTPqp4JcTz5Sk1jGUpGrtU0MbTgVXaxlKUrXqWJ/kVHC1lqEkVWcW9ewKfkXiNqRsDCWpOnvX0MbCGtqQsjGUpOq4K7g0JENJqo5TwaUhGUpSNeqYCv4bnAquljOUpGrUMRXcXpJaz1CSqlHH8yQP9FPrGUrS8OqYCr4EuCpxG1J2hpI0PHdxkCpiKEnD27+GNnyepE4wlKTh1XFUhc+T1AmGkjScXUg/FfxinAqujjCUpOHU8TzJXpI6w1CShlPH8yR3BVdnGErS4OYAuyVuYwlwdeI2pGIYStLg6hi6O6uGNqRiGErS4OoYunN9kjrFUJIGV8dUcJ8nqVMMJWkwuxPbC6X0a+C+xG1IRTGUpMG4tZCUgKEkDcahOykBQ0nq3xxiJ4eUlgDXJm5DKo6hJPXvgBra+FkNbUjFMZSk/tXxPMmhO3WSoST1ZwbpT5ldhZMc1FGGktSf3Uk/Ffxi4P7EbUhFMpSk/riLg5SQoST1x1NmpYQMJal3c4DtE7dxO3BD4jakYhlKUu8OqqENh+7UaYaS1DufJ0mJGUpS7xbU0Mb5NbQhFctQknqzLemngl+Iu4Kr4wwlqTc71dDGuTW0IRXNUJJ6s1ENbfg8SZ1nKEm9eSDx9Z0KLmEoSb36XeLrL0x8fakRDCWpN6lDyaE7CUNJ6tUfgT8luvb9wAWJri01iqEk9e6ria77fdwVXAIMJakf3wDuTXDd/0pwTamRDCWpd/cA/1rxNb8E/L7ia0qNZShJ/TkDOL2ia/0O+I+KriW1gqEk9e94YNGQ17gWeAFuKyStxlCS+rcCeCFw2oBf/6ORr19SVUFSWxhK0mDuAd4LHAP8osevuR14N/A27CFJE1ordwFSw10BvArYBjiUOJl2S+DxRPD8GfgD8RzqjEw1So1hKEnVWAR8IncRUtM5fCdJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqhqEkSSqGoSRJKoahJEkqxkSh9GDtVTySYSlJ6a2ZuwDGZc5EN/+7aypkKhvmLkCSOqCEe+1qmTNRKN1TUyFTmZW7AEnqgA1yF8C4zJkolJbVVMhUSvhGSVLbldBTmjaU7ClJUjesn7sA7ClJkkaU0FNaLXNK7SmV8I2SpLYrYVRq2okOJfSUSuhSSlLbldABmHb4zinhktQNjegp3VtTIVOxpyRJ6ZXw/H61zCn1mVIJ3yhJarsS7rXT9pRKGL4r4RslSW1Xwr122p5SCcN3JXyjJKntSrjXNmL23aNzFyBJHfCo3AXQQ0+phOG7bXMXIEkdsF3uAmjI7LttchcgSR2wY+4C6GFHhz/VVMhU5gCb5i5Cklrs0cA6uYsAbhv7l4lC6YaaCpmOvSVJSqeUe+zVY/8yUSgtBe6op5YplTDWKUltVcI99jZgxdgPTHbs+KL0tUyrhG+YJLVVCffYR4zMTRZK1yUupBfOwJOkdEoIpevHf8CekiR1UwnPlHoOpUd8Ygb2lCQpnR1yF8AEHaDJQqmEGXibAbNzFyFJLTSHMu6vPfeUSgglKKN7KUltU8pIVM8THe4AlqetpSelfOMkqU22z10AsfxoyfgPThZKAL9NVkrvds9dgCS10G65CwCuneiDU4VSCUN4++YuQJJaqIR764QZM1UolTADbwEwI3cRktQiM4Gn5C6CSTJmqlC6MVEh/VgL2DN3EZLUInsQ99bc+u4plbCrA8DeuQuQpBYp5Z7ad0+phOE7gP1yFyBJLVLKPXXCnYOmCqVbKWNaeCmpLkltsE/uAoD7GXeO0qipQgng8upr6duGwJNyFyFJLTAPWDd3EcCvJ/uH6ULp7IoLGZS9JUkaXin30kmzpSmhVEJ3U5KaroT1STBkKK2qtpaBHJi7AElqgQNyF0BkynmT/eN0obQM+E2l5QxmM2Dr3EVIUoNtD2ySuwjgYuDeyf5xulACOLe6WobiEJ4kDa6Ue+g5U/1jL6H084oKGdazchcgSQ1Wyj10ykyZsWD+tJvFzgEWV1XNEJYTw3gP5C5EkhpmfeDPlLG90EYMOXy3BLi6qmqGsB5wRO4iJKmBnkcZgXQ5UwQS9BZKMM0YYI2Ozl2AJDVQKffOaeco9BpKpaxXehbR9ZMk9WYj4Om5ixgx7RyFXkOplMkOaxLdUElSb55P3DtLcOZ0n9BrKP2JSXZ0zaCUbqgkNcExuQsYcQ0xR2FKvYYSlDOEdyAwN3cRktQAm1HOURU9zU1oYihBdEclSVN7Ue4CxugpQ/oJpR8NWEgKDuFJ0vRKuVeuBH7Qyyf2E0qLgYWDVJPAnsBjcxchSQXbHJifu4gRZwF39fKJ/YQSwCn915LMC3MXIEkFOzZ3AWOc2usn9htK3+zz81N6Qe4CJKlgpQzdAZze6yf2G0pLKOfZ0pOAvXIXIUkF2gfYNXcRI74HLO31k/sNJYDTBviaVN6WuwBJKlBJ98a+MqOXXcLHm0VMeli73y9MZBfgutxFSFIhtgV+m7uIEQ8Sa6WW9foFg/SUllHOEB7AW3MXIEkFeXvuAsb4X/oIJBgslKCPmRQ1OJZIYknquk2Bl+QuYoy+H/cMGkrfIg7dK8HawBtyFyFJBXgz5TxaWQ58t98vGjSUHiBmVJTi/wAzcxchSRnNBF6fu4gxvs0AJ4UPGkpQ1iy8jYFX5i5CkjJ6NbBh7iLGGCgjBpl9N2pN4C/EMeUlWATsmLsIScrkZsrZfu1u4ln/qn6/cJie0kr6WKVbg22AI3IXIUkZHEU5gQSRDX0HEgwXSlDWEB6UtWBMkuryz7kLGGfgGdrDhtKPiW5aKebj1kOSuuUAytlSCOKxzk8H/eJhQ2klcOKQ16iavSVJXfIPuQsY50vAQ4N+8bChBPBRBhw7TORQ4Km5i5CkGswDDs5dxBirgI8Nc4EqQulWYj56Sf4zdwGSVIP/zl3AOKcTmTCwKkIJ4ISKrlOVecDLcxchSQm9mjjCpyQnDHuBqkLpAuCSiq5VlfcRO5pLUtvMBt6fu4hxLgMuHPYiVYUSDDmOmMBc4N9yFyFJCfxfYE7uIsb5QBUXGWZHh0dcC/gd8OiqLliBlcRQ3tW5C5GkiuxA9ErWzF3IGH8AtqriQlX2lB6ivGdLawKfyl2EJFXo85QVSACfrOpCVYYSxEyQUo60GLUfcFjuIiSpAkdS3gYBy4HPVXWxqkNpCbFwqjQfo5wzRiRpEOtQ3rN7gP+hz9Nlp1J1KEEspi3NlpR1RLAk9es4YPPcRUzg41VeLEUo3QR8P8F1h3UcZU3CkKRePZYyt1D7DnBLlRdMEUoAn0h03WGsQ8WJLkk1+QRxDyvNCVVfMFUonQVclOjawzgKODx3EZLUh8Mo8751AXBu1RdNFUoAb0147WGcSFmHYUnSZLYEvpC7iEm8McVFU4bSBcB3E15/UBsCX89dhCRNYwbwDeKeVZpvAJemuHDKUAL4J8o61mLUX+MWRJLK9j5iR5rSrCTu7UmkDqXrKO8QwFH/THmL0CQJ4jTZf8xdxCQ+T8Uz7saqcu+7ycwFFgHrpm5oALcCfwXclbsQSRqxMXAVsFnuQiawDNgOuCNVA6l7SgCLKW9PvFGbU+YOFJK662TKDCSIHSWSBRLUE0oAHwLurKmtfh0CvD53EZJEzFo+KHcRk7gT+PfUjdQVSvcQD+1K9WEg+TimJE3hSZR9n3wPcF/qRuoKJYgjJH5XY3v9WBs4jTKfe0lqv1nAN4G1chcyiZuAz9bRUJ2htAr4lxrb69c2ePaSpDy+QEWH5CVyHHFmXnJ1hhLEA7zLa26zH8cCx+QuQlKnvBR4bu4ipnAxsVi2FnWHEsBrMrTZj8/j8yVJ9XgK8OncRUzj1XU2liOULqLsYbJ1gR8BW+cuRFKrbU3ca0p+lv1x4LI6G6xj8exEZgLXAo/L0XiPbiF+i1mSuQ5J7TMX+AWx4WqpbgZ2AR6os9EcPSWI/8hXZGq7V1sCZ1D2bzGSmmcWcW8pOZAAXkLNgQT5QgngZ8AXM7bfi3nEyYozchciqRVmECdz75q7kGn8N3HSQ+1yhhLAW4DbMtcwnQMp9zwTSc3yNWDv3EVM43YybgabO5TuofzZeAAvAo7PXYSkRvsQcfp16V5F3JuzyB1KAD+gxjnwQ3gH8PLcRUhqpNdS7mncY50G/DBnASWEEsDfAUtzF9GDzxIbuEpSrw6h7GUwo+6kgM2pSwmlJcDf5y6iB2sQR6k/JXchkhphT+Ke0QRvpoAlMKWEEsBJwI9zF9GDtYnu7Y65C5FUtJ2B7xH3jNJ9n9gGLruSQgnimU3SA6QqsjGwkPKndUrKY1di2cvs3IX04DZq3kpoKqWF0mLgaGJH8dJtBvwcmJ+7EElFmU/cG0o9PXasVcRmsItzFzKqtFACOBt4d+4iejQbOBM4IHMdkspwAHFPaEIPCeI4oV/lLmKsEkMJ4IPERoVNsB7xjOnZuQuRlNWziXvBerkL6dEZwEdyFzFeqaEEsWD1D7mL6NFaxKmRnsUkddMxlH1y7Hg3Ay/IXcRESg6lpcRY54O5C+nRGsBXgJdlrkNSvV5DvPZLvp+O9SBwOIWuDS39m3gJzVgFPdbngffnLkJSLT5C+Yf0jfdG4IrcRUym9FAC+Ayx9UWT/CPxTGxW7kIkJTGbWFf5ptyF9OkbxC/OxWpCKEGcvXR97iL6dBBxyu42uQuRVKntgYuJEwSa5Goa8HihKaF0P3AEsDx3IX3ajphu+bTchUiqxDOI1/QTchfSp+XEc6T7M9cxraaEEkTKvzR3EQOYTUy9/AAeFig11Qzg34lTDZo4LP9SYFHuInrRpFAC+DbwrtxFDOhtxCrvubkLkdSXzYHziENJm+hfiXtnIzQtlCB6HCflLmJAewK/AfbJXYiknjwNuJTmbid2EnG4YGM0MZQgNm7Ncn58BeYS25D8a+5CJE3pPcTQ+yaZ6xjUBTTwYNKmhtIq4FDgpsx1DGoNYn+/M4FNM9ciaXWbEq/Nf8ldyBCuJe6RTdjcejVNDSWAu4CDKXRVco/2IxYIL8hdiCQgXouXEK/NpvoL8CziHtk4TQ4lgBuAv6V5U8XH2pyYAPEhYGbmWqSuWpfYneFs4jXZVMuBvwFuyV3IoJoeSgAXAocAK3IXMoQ1ie2UriIW3Uqqz0HEa+9NNPueeB8xenRJ7kKG0eT/AWOdAxwJrMxdyJCeQGxP9EXidFtJ6WwGfI14zW2RuZZhPQg8Bzg/dyHDaksoQSxqO5YGPtibwIuA3wIvyV2I1FKvIHpHz89dSAVWESd2n5W7kCq0KZQATgVelbuIimwCnAj8DNgqbylSa2xLvKY+R3tGI14O/G/uIqrStlCCONfkzbmLqNC+xDbzHwI2ylyL1FRziIkMlxOvqbZ4Lc3dTGBCbQwliPNN3pO7iAqtQ0yEuH7kvbP0pN7MJI6SuYGYyLB23nIq9Y/EaEqrtDWUAN5Hc/fJm8wcosfk8yZpei8nFpG+n9gYuU3eBZyQu4gU2hxKEPvkvT53EQlsQfyGdDGxlb6kh/0tMS36v4DHZa4lhdcT97ZWansoQfxgvjp3EYn8FTHr8EzgSZlrkXKbRyxE/w6wa+ZaUnkJcU9rrS6EEsS6n2Nox3TxiewH/Br4KrBl5lqkum0NnAz8Etgrcy2pPEjcw07JXUhqXQklgG8CzyP+57bV0cA1xGyctr44pVH7EMtAriYWz7fV/cBhxD2s9boUSgDfIzYqbPJeedNZCziKGMb4FbFI0Nl6aouZwCuJ56lnAUcQ23S11XLgmcQRGp3QtVACWAjsD9yRuY467E4sEvw9MWuv6VupqLu2II4j/wPwWeJ5atvdRtyrGr91UD+6GEoQM3PmE0NdXbAxD69zOh03fVVzPIM4yvt64jjyOTmLqdGVxD2q0ZurDmLGgvm75a4hpw2IIb29cxeSwc3EePypwGWZa5HG2p3Yk+75xCbFXbOQeIZ0b+Y6suh6KEH0Fr9MTBLoqmuA04iA6krvUWXZltiI+Ghgh8y15PRlYv/Oh3IXkouh9LB3AMfnLqIAlxPhdDINPihMjbAl8EIiiNq6rqgfxxH783WaobS6w4ibcZv2xxrGRcS6iK8Df8xci9rhMTwcRE/OXEspVgAvIBb9dp6h9Ei7ET8cbdyeZBhXEIcp/pzYQWJJ1mrUFHOApxOzyPYFnpi1mvLcQkxr/03uQkphKE1sDtFDcJba5K4GziYeyp4F/DlrNSrFZsTrZj8iiHbMW07RziQW/d6Tu5CSGEpTeyft22k8lWt4uCf1U7qxDkwwlwih/Ykg6vIkhV6tAt5LnGSgcQyl6T0N+Abt2/o+tduJoBp9uxa4jlhv0tmZRQ01A9ieCJzRt51G3s/NWFcT3Ulsd3Zu7kJKZSj15vHEotN5uQtpgQeJA9dGQ+oa4nyoa7F3ldtcInx2IobdRgNoG2L7Kg3nEmIy1a25CymZodSfDwBvy11Ei90DXEX8NnkXcDcxoWLpmL+P/vmukT+P/v2B+sst0kxgI6JnP3vkz2P/Ppt4Zjob2HDk3zYFdgFm1V9uZ3yQeBygaRhK/duL2IXb2XmSpnMzsSj4wtyFNEVX974bxvnEtNaTchciqWhfIw7fNJD6YCgNZhlwLDGdc2nmWiSVZQlxb3gZHd2/bhiG0nBGj10+O3chkopwNvF8zt0ZBmQoDe9WYp3G63CXA6mr/gK8lrgXLM5cS6MZStX5H2BnYjNTSd1xEjF1/sTchbSBoVStO4AXAwcTs24ktddNxE4Wx+IoSWUMpTTOJMaVP0gsFpXUHg8SaxZ3oWNHldfBUErnAWKx3O44JVRqi18R07zfRRw5oYoZSuldA+wDvAQPzZOa6iZiaH4vYnssJWIo1ecU4mHoO3Btk9QUS4B/IvYDdBJTDQyleq0EPgpsC3wKnzdJpXoQ+ASwHfAx4rWrGhhKeSwB3kI8KD09bymSxvkGsUv624jNflUjQymvG4GjgacC381ci9R13yEmJr0An/9mYyiV4TfAEcQL4lt5S5E653RiRt2RwJWZa+k8Q6ksVwLPJ14gpxHHJkuq3ipi4sIuxGjF1XnL0ShDqUxXE2ew7Epsf+9DVqkaK4nX1M7EFG+ndxfGUCrbdcT299sQM4D+krUaqbnuBD5CvJZeBizKWo0mZSg1wx+JtRKPJ3YjvyJvOVJjXE7s3r0FcBzxWlLBDKVmeYDYjXwesUX+t3FoTxpvJTF54UDgycTu3Q9krUg9Wyt3ARrY2SNvWwBvAo4BHp21Iimv24AvEwvT7RE11IwF83fLXYOqcwAxk+gIYJO8pUi1uJPoFZ0KLMxbiqpgKLXTGsAziIA6HNgwazVStZYSC11PBc4AHspbjqpkKLXfTOBZREA9G1gvbznSQJYTu56cBnwPn6W2lqHULesChxEBdTCwdt5ypCndD/wI+Doxqef+rNWoFoZSd21APHs6mpil5KQXleBB4KdEj+h0YFneclQ3Q0kAs4C9gX2B/YH5GFKqxwriNNezgXOAc4F7s1akrLzxCOK30TNG3iCeQ+0B7EcE1Z74LErVWA6cTwTQOcAFeKy4xjCUNJEHeHgdFMAM4niN/Ymg2huYnac0NcwS4DwigM4GLsLZcpqCw3ca1G7APjzcm5qbtxwV4nZiCG50OO6yvOWoaQwlVWUuccz79sDWxDHSo28bZ6xL1bsTuAG4fuRt0cj7G4DFGetSCzh8p6osHnn7xQT/thGxO/MOI+9Hw2tb3BqpVLcSJyNfR4TNIuDakb/fk7EutZyhpDrcBVwy8jaROcQzqjnEVPXRv0/2ttEEH1s3Ue1Ncx+x48HYt7tG3u4e97HRvy8hgmbJmL9LWRhKKsGSkbdb8pYhKTePrpAkFcNQkiQV4/8BdOGJhSKfMscAAAAASUVORK5CYII=) center/contain no-repeat;
 }
-#snd.on{color:var(--core);border-color:var(--core2)}
-.pill{
-  font-size:12.5px;letter-spacing:.14em;color:var(--bg);background:var(--core);
-  text-decoration:none;padding:9px 18px;border-radius:999px;font-weight:600;
-  transition:transform .25s ease, box-shadow .25s ease;
+#nav .wordmark{font-family:var(--serif);font-size:19px;letter-spacing:-.022em;color:#F4EFE6;line-height:1}
+/* 字标定稿②「同色一体」（2026-08-02 Trev 拍板，规范 brain/BRAND.md §5）：Soulor·灵镜 中点相连、
+   灵镜同主字色、字号=拉丁×0.68、字距 .05em；中点主字色 55% 透明。 */
+#nav .dotmark{color:#F4EFE6;opacity:.55;font-size:13px;line-height:1;margin:0 -3px}
+#nav .zhmark{color:#F4EFE6;font-size:13px;letter-spacing:.05em;line-height:1}
+#nav .dom{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:rgba(255,217,160,.5);margin-left:auto}
+#nav .pill{
+  font-size:11.5px;padding:6px 13px;border-radius:999px;line-height:1.3;
+  border:1px solid rgba(255,217,160,.3);color:var(--core);text-decoration:none;white-space:nowrap;
+  transition:background .3s ease,border-color .3s ease;
 }
-.pill:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,217,160,.25)}
-/* ── 拉条：原版官网右侧 scrubber 的移植（Trev 2026-08-02「拉条搬回来」）──
-   点一下=跳那一章，按住上下拖=亲手洗片（拖动时临时关 snap，松手钉回整章）。
-   点阵亮度照各章画面给（暗→亮），拉条本身就是「天要亮了」的缩影——原版的老规矩。
-   ⚠️ 全尺寸都出（Trev 2026-08-02「那个拉条在网页版用不了」）：以前只在 ≤820px 显示，
-   桌面上摆的是左边那条不能点的装饰线 #rail，看着像拉条却拖不动——那条已经退役删掉了。
-   pointer 事件在鼠标上本来就通，桌面只是把点阵放大一档、补个 cursor。 */
-#mrail{position:fixed;right:2px;top:50%;transform:translateY(-50%);z-index:41;
-  cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
-.mtrack{position:relative;display:flex;flex-direction:column;align-items:center;gap:9px;padding:14px 8px}
-#mline{position:absolute;left:50%;transform:translateX(-50%);top:20px;bottom:20px;width:1px;background:var(--line)}
-#mfill{position:absolute;left:50%;transform:translateX(-50%);top:20px;width:1px;height:0;background:var(--core2)}
-.mdot{position:relative;z-index:1;width:22px;height:18px;display:flex;align-items:center;justify-content:center}
-.mdot b{width:5px;height:5px;border-radius:3px;background:var(--core);transition:width .25s ease,height .25s ease,opacity .25s ease}
-.mdot.act b{width:2.5px;height:14px;border-radius:2px;opacity:1!important}
-#mrail:hover #mlab{opacity:1}
-#mlab{position:absolute;right:42px;top:50%;transform:translateY(-50%);white-space:nowrap;
-  font-family:var(--mono);font-size:10px;letter-spacing:.26em;color:var(--core2);
-  text-shadow:0 1px 4px rgba(5,4,9,.9);opacity:0;transition:opacity .25s ease;pointer-events:none}
-#mrail.drag #mlab{opacity:1}
-#chlabel{
-  position:fixed;left:clamp(14px,2vw,30px);bottom:26px;z-index:40;
-  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--mut);
-  writing-mode:vertical-rl;text-orientation:sideways;opacity:.8;
-}
-#hint{
-  position:fixed;bottom:clamp(18px,4vh,40px);left:50%;transform:translateX(-50%);z-index:40;
-  font-size:12px;letter-spacing:.28em;color:var(--mut);transition:opacity .6s;pointer-events:none;
-}
-#hint b{color:var(--core);font-weight:400}
-/* 结尾 CTA */
-.finale{pointer-events:auto}
-.finale .cta{
-  display:inline-block;margin-top:clamp(22px,4vh,40px);white-space:nowrap;
-  background:var(--core);color:var(--bg);text-decoration:none;font-weight:700;
-  font-size:clamp(14px,1.2vw,17px);letter-spacing:.06em;
-  padding:clamp(13px,1.6vh,17px) clamp(24px,3vw,44px);border-radius:999px;
-  opacity:0;transition:opacity .8s ease .6s, transform .25s ease, box-shadow .25s ease;
-}
-.finale .cta:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(255,217,160,.3)}
-.finale .alt{margin-top:18px;font-size:13px;color:var(--mut);opacity:0;transition:opacity .8s ease .72s}
-.finale .alt a{color:var(--ink2);text-underline-offset:3px}
-.finale .foot{margin-top:clamp(30px,7vh,64px);font-family:var(--mono);
-  font-size:10px;letter-spacing:.3em;color:var(--mut);line-height:2;
-  opacity:0;transition:opacity .8s ease .84s}
-.chapter.in .cta,.chapter.in .alt,.chapter.in .foot{opacity:1}
+#nav .pill:hover{background:rgba(255,217,160,.1);border-color:rgba(255,217,160,.55)}
+@media(max-width:430px){#nav .dom{display:none}#nav .pill{margin-left:auto}}
 
-/* ── 手机档（≤820px）──
-   照搬原版官网（website/deploy/index.html 的 max-width:799px 段）逐轮拍板出来的结论，
-   不重新发明（Trev 2026-08-02：「不用自己重新做」）。原版那三轮是：
-   先贴底 →「字都太下面了，应该全部放中间才对」→ 居中后「放中间就会挡住那个动态图，
-   直接放上面吧文字」→ 靠上之后「还是放中间吧」。**以居中为最终**。
-   一屏三带，各占一条，互不打架：
-     上 影片主体 · 中 正文（translateY(-42%)） · 底 演示卡（bottom 贴底）
-   ⚠️ -42% 不是 -50%：比几何中心略低一点，把上方再让一点给影片主体。
+/* ── 中/EN 切换 ──
+   两种语言都放在同一个文件里（每个文案元素挂 data-en），切换只换 textContent。
+   不做两个 HTML：官网现在是「一个自包含文件、零外部请求」，分家就要维护两份、
+   而且两个对外链接（Pages + Artifact 镜像）的推送流程都要翻倍。 */
+#langbtn{
+  display:inline-flex;align-items:center;gap:5px;background:none;border:0;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:8px 6px;
+  color:var(--mut);transition:color .3s ease;
+}
+#langbtn:hover{color:var(--ink2)}
+#langbtn .sep{opacity:.4}
+#langbtn .on{color:var(--core)}
+#langbtn .off{color:var(--mut)}
+html[data-lang="en"] #langbtn .on{color:var(--mut)}
+html[data-lang="en"] #langbtn .off{color:var(--core)}
+/* 英文版把衬线英文副题藏掉：那一行本来就是中文标题的英文，
+   标题已经翻成英文了再留着就是同一句说两遍。 */
+html[data-lang="en"] .en{display:none}
+/* 🔴 BRAND.md §5：拉丁展示字一律 Instrument Serif 400，字距收到 -.022em。
+   中文标题走 PingFang（Instrument Serif 没有中文字形，套上去会掉字），
+   所以这条只在英文版生效——两种语言的标题本来就该是两种字。 */
+html[data-lang="en"] h1,
+html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:-.022em}
+@media(min-width:800px){#langbtn{font-size:11.5px;padding:9px 8px}}
 
-   ⚠️⚠️ 一条必须先知道的事实，别再花时间去调 mop 的 y 了（2026-08-02 实测）：
-   **竖屏手机上 mop 的 y 是死值，改它什么都不会发生。**
-   素材全是 16:9，竖屏视口（390×844）比它窄得多，object-fit:cover 于是**按高度**缩放：
-   算出来 1500×844，正好把高度填满、左右各裁掉 555px。垂直方向的余量是 0，
-   object-position 的 y 没有东西可以分配（实测 freeY=0，十章全是 0）。
-   能动的只有 x（freeX=-1110px，横向裁掉 74%）。
-   所以「把主体压到上 1/3」这件事，光靠 mop 做不到——主体在竖直方向落在哪，
-   完全由素材自己决定。实测十章的亮度重心：
-     ch0 39.8% · ch2 29.5% · ch3 37.0% · ch4 37.4% · ch5 29.8%
-     ch6 31.3% · ch7 11.3% · ch8 31.5% · ch9 25.2%（ch1 无主体）
-   七章本来就在上 1/3，ch0/ch3/ch4 落在 37~40%，正好压着正文顶沿（≈39%）。
-   真要把这三章抬上去，只有"放大画面"一条路（例如把 .poster/video 改成
-   `top:auto;bottom:0;height:116%`，锚住下沿、向上溢出），代价是再吃掉 16% 的画面，
-   而且 ch7 的核本来就只剩左上角一牙、再抬就整个出画。**没做，留给 Trev 定。**
-   现在的兜法是：eyebrow 加黑影（见下），h1 本来就有 text-shadow + .block::before 那层暗罩。
-   mop 的 y 仍然照写着——横屏手机（视口比 16:9 更扁）那边 y 是真的生效的。 */
-/* 中等桌面（1025~1439）：正文列 720px + 右侧演示卡，这两样并排根本塞不下。
-   实测正文盒右沿 vs 卡左沿：1025 差 258px、1200 差 108px、1280 差 57px、1400 差 6px，
-   1440 起才真正让开（差 14px）。这段一直是坏的（卡还是 400px 那版时 1280 就压 6px 了），
-   把卡加大之后更明显——正文最后几行直接钻进卡底下，被卡的毛玻璃糊掉。
-   收窄正文列**必须连字号一起收**：h1 每行是 `white-space:nowrap` 装在 `overflow:hidden`
-   的 .line 里，盒子一窄，末字直接被裁掉（第一版就把 ch5 的「谁」切了）。
-   全章最长一行 10 个字（ch8「只发生在你的手机里。」），10em ≤ 42vw ⇒ 字号 ≤ 4.2vw，取 4vw。
-   ≥1440 不进这段：那边 720px + 大卡本来就让得开，标题维持 5.4vw。 */
-@media(min-width:1025px) and (max-width:1439px){
-  .block{max-width:min(720px,42vw)}
-  h1{font-size:clamp(30px,4vw,70px)}
+/* ── 右侧拉条（scrubber）──
+   不只是进度指示：点的颜色按那一页的亮度排，从冷灰一路烧到核金，
+   所以拉条本身就是这个故事的缩影 —— 一眼看得见"天要亮了"。 */
+#rail{
+  position:fixed;right:0;top:0;bottom:0;width:46px;z-index:30;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;   /* 只有点那一段可抓，其余让滚动穿过去 */
 }
-@media(max-width:1024px){
-  /* 字全置中（Trev 2026-08-02「字要置中全部」）：手机上左块/右块的区分没有意义，
-     正文列就一条，全部走居中排版；正文块自身也 margin auto 兜住 max-width 的情况。 */
-  .block.bl,.block.br,.block.ml{
-    left:34px;right:34px;top:50%;bottom:auto;transform:translateY(-42%);
-    text-align:center;max-width:none}
-  .body{margin-inline:auto}
-  h1{font-size:clamp(27px,7.8vw,40px)}
-  .cc h1{font-size:clamp(32px,9vw,46px)}
-  .body{font-size:13px;line-height:1.75}
-  .en{font-size:14px}
-  .num{font-size:150px;right:-14px;bottom:-8px;left:auto}
-  /* 背景适度调暗（Trev：手机没那么多空间，正文直接压在画面上）：
-     桌面那两层渐晕之外，再垫一层 .30 的平光压暗——只暗手机，桌面不动。 */
-  #vig{background:
-    radial-gradient(140% 110% at 50% 42%, transparent 58%, rgba(5,4,9,.42) 100%),
-    linear-gradient(to top, rgba(5,4,9,.62) 0%, transparent 34%),
-    linear-gradient(rgba(5,4,9,.3),rgba(5,4,9,.3))}
-  #chlabel{display:none}
-  /* 手机上拉条收窄一档：点阵必须整个住在正文右留白里，宽了就骑到正文最后一列字上。
-     实测（402/375/360 三档）正文 inset 22px 时墨迹右沿离屏边只有 22~23px，
-     而拉条要 24px——每章都压 5~8px，Trev 的 iOS 截图上「不给建」「标着依」都被点阵咬住。
-     所以两头一起让：拉条收到 24px 宽，正文 inset 22→34px（左右对称让，字才还在正中）。 */
-  .mtrack{gap:5px;padding:12px 4px}
-  .mdot{width:16px;height:15px}
-  .mark .zh{display:none}
-  /* eyebrow 是全页最小最暗的一行（10px + --mut），正文居中之后它正好落在
-     影片主体的下边缘上——实测 ch0/ch3/ch4 的主体重心在 37~40%，和正文顶沿
-     （≈39%）重叠，「THE SUN TAKES SHAPE」的后半截会被亮部吃掉。
-     用的就是 .cc .eyebrow 早就在用的那层黑影，不改颜色不改字号。 */
-  .eyebrow{letter-spacing:.22em;font-size:10px;
-    text-shadow:0 0 16px rgba(5,4,9,.9),0 1px 4px rgba(5,4,9,.85)}
-  .plab{display:none}
-  #snd{padding:7px 11px}
-  /* 卡贴底。⚠️ 别改成 position:static 去跟着正文流——桌面上 .democard 是 section 的
-     子节点、绝对定位钉在正文对侧，JS 里 sec.appendChild(dc) 不能动。手机上只把
-     同一个绝对定位盒挪到屏底：正文居中、卡贴底，两者各占一带，不重叠。
-     ⚠️ 选择器必须把 .dcl/.dcr 一起写上：那两条是**两个类**（0,2,0），
-     光写 .democard（0,1,0）压不过它们的 right/bottom——媒体查询不加特异性。
-     （改之前那版就是这么半生效的：left 是手机的、right/bottom 还是桌面 .dcr 的，
-      top 和 bottom 同时成立，卡被拉成一条竖长条。） */
-  .democard,.democard.dcl,.democard.dcr{
-    left:22px;right:22px;top:auto;bottom:clamp(18px,4vh,44px);width:auto;padding:13px 15px}
-  .bub{font-size:13px}
-  .democard .face{font-size:14px;line-height:1.7}
-  /* 卡在手机上必须真的瘦下来，不是"看着紧凑"就行 ——
-     正文居中之后，正文下沿和卡上沿之间只剩一条缝，卡长高一点就直接压上去。
-     实测 05「成形」那张最高（两条轴 + 10 个 chip）：不收的话 257px，
-     在 iPhone SE(375×667) 上压正文 58px、在 360×780 上压 9px。
-     收法照搬原版官网 max-width:799px 段对同一张卡的处理（chip 收一档 + 轴距收紧）：
-       .chip{font-size:9.5px;padding:3px 8px;letter-spacing:.04em} / .axes{gap:7px}
-     再补一刀原版没有的：这份卡是 flex column gap:9px，7 个孩子 = 6 道缝 54px，
-     单这一项就比所有字加起来还高——gap 收到 4px 是最省的一笔。
-     .daxlab 的上下 margin 和 flex gap 重复计费，手机上归零。 */
-  .democard{gap:4px}
-  .democard .lab{font-size:9.5px;letter-spacing:.22em;margin-bottom:1px}
-  .daxlab{font-size:8.5px;margin:2px 0 0}
-  .dchip{font-size:9.5px;padding:3px 8px;letter-spacing:.04em;margin:0 3px 3px 0}
-  .democard .dfoot{margin-top:0}
+#rail.drag .railtrack{cursor:grabbing}
+@media(max-width:560px){#rail{width:34px}}
+.railtrack{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:13px;
+  padding:14px 12px;pointer-events:auto;touch-action:none;cursor:grab;
 }
-/* 矮屏（手机竖屏里偏矮的那半：SE / 780 高的安卓 / 工具栏都展开的时候）再收一档。
-   照原版官网 max-height:660px 那条的思路：mandatory snap 下压出去的内容永远看不见，
-   所以这是硬需求不是优化。收的是"缝"不是"字"——行高和外边距先让，字号不动。 */
-@media(max-width:1024px) and (max-height:780px){
-  .body{line-height:1.62;margin-top:14px}
-  .en{margin-top:10px}
+@media(max-height:600px){.railtrack{gap:9px}}
+.railline{
+  position:absolute;left:50%;top:0;bottom:0;width:1px;margin-left:-.5px;
+  background:#241F2E;
+}
+.railfill{
+  position:absolute;left:50%;top:0;width:1px;margin-left:-.5px;height:0;
+  background:linear-gradient(180deg,rgba(255,217,160,.10),rgba(255,217,160,.62));
+  transition:height .34s cubic-bezier(.16,.8,.24,1);
+}
+.railtrack a{
+  position:relative;width:18px;height:14px;display:flex;align-items:center;justify-content:center;
+  text-decoration:none;
+}
+.railtrack a b{
+  display:block;width:5px;height:5px;border-radius:3px;background:#3B3446;
+  transition:width .42s cubic-bezier(.16,.8,.24,1),height .42s cubic-bezier(.16,.8,.24,1),
+             background .5s ease,box-shadow .5s ease,opacity .4s ease;
+  opacity:.55;
+}
+.railtrack a.act b{width:2px;height:15px;opacity:1}
+.railtrack a span{
+  position:absolute;right:24px;top:50%;transform:translateY(-50%) translateX(4px);white-space:nowrap;
+  font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:rgba(255,217,160,.66);
+  opacity:0;transition:opacity .28s ease,transform .28s ease;pointer-events:none;
+}
+.railtrack a:hover span,.railtrack a:focus-visible span,#rail.drag a.act span{opacity:1;transform:translateY(-50%) translateX(0)}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   桌面层（≥800px）—— 2026-07-29 新增
+
+   在这之前**整份样式表只有 max-width 断点**："桌面"不是一个被设计过的档，
+   只是"没触发手机覆盖"的默认态，而那个默认态每个数值都是照手机一列字校准的：
+   正文列被 max-width:560px 焊死贴在左边，正文上限 14.8px、eyebrow 固定 9.5px
+   （跟手机一模一样）。实测 2560 宽的屏上正文列只占 22%，右边 1920px 全空。
+   Trev 原话：「网页版看着很别扭，他好像就是为手机看而做的一样。字都在左边，
+   而且字都太小了。」这一层专治那个 —— **手机档一个像素都不动**。
+
+   构图分两种（Trev 2026-07-29 拍板「按页分开处理」）：
+   · 叙事页（hero / 虚无 / 照亮 / 开始）：保留大留白和暗场。那是故事的一部分，
+     大屏上反而更有张力，只把尺度做对，不塞东西进去填空。
+   · 功能页（`.split`：第一句/聚拢/点亮/成形/诚实/主权）：打开成**真两栏**，
+     文案在左、演示卡在右，右边不再是空的。两栏顺带把纵向压力卸掉一大半 ——
+     卡片从竖直堆叠里挪出去了，矮窗口反而更安全。
+
+   ⚠️ 两条硬约束，改这一层之前必须知道：
+   1. 整站是 `scroll-snap-type:y mandatory`，**每页必须在一屏内装得下**，
+      装不下的内容永远滚不到、看不见。所以每个字号都同时对 vw 和 vh 做 clamp，
+      vh 那一项是矮窗口的保险丝。改完必须重跑 verify-fit.js（含 1440×720、
+      1024×620 这些"宽但矮"的窗口，那是最容易翻车的一档）。
+   2. 这一块必须放在下面 `max-height:660px` 那些**按高度收紧**的块**之前**，
+      否则宽而矮的窗口会丢掉收紧、直接溢出。间距一律用朴素选择器（`.body`）写，
+      好让后面按高度的规则能压过来。
+   ══════════════════════════════════════════════════════════════════════════ */
+@media(min-width:800px){
+  /* 舞台居中：2560 的屏上构图不再散到左上角，而是一整块居中的版面 */
+  section{padding:0 clamp(40px,4vw,72px)}
+  /* `100% - 96px` 是给右侧拉条留的通道（拉条是 fixed 的，不参与布局，
+     不主动让路就会压在正文右边缘上）。左右各收 48px，所以仍然对称居中。 */
+  .col{max-width:none;width:min(1240px,100% - 96px);margin-inline:auto}
+
+  /* ── 字级：桌面档重配。原来的上限（正文 14.8 / eyebrow 9.5）是手机数值 ── */
+  .eyebrow{font-size:11px;letter-spacing:.24em;margin-bottom:clamp(16px,2.2vh,26px)}
+  h1,h2{font-size:clamp(38px,min(4.5vw,8vh),74px);line-height:1.15;letter-spacing:-.02em}
+  .en{font-size:clamp(17px,min(1.45vw,2.8vh),25px);margin-top:clamp(13px,2vh,20px)}
+  .body,.sub{font-size:clamp(14px,min(1.15vw,2.05vh),17.5px);line-height:1.82;margin-top:clamp(15px,2.5vh,26px)}
+
+  /* 卡片、气泡、标签也都是手机尺寸，一起抬一档 */
+  .lab,.foot{font-size:10.5px}
+  .card{padding:18px 22px;border-radius:16px}
+  .bub{font-size:15px;padding:11px 15px}
+  .face{font-size:17.5px;line-height:1.7}
+  .face.sm{font-size:15.5px}
+  .dateline{font-size:15px}
+  .dateline .n{font-size:22px}
+  .axlab{font-size:10px}
+  .chip{font-size:11.5px;padding:5px 12px}
+  .fact{padding:15px 20px}
+  .fact p{font-size:15px}
+  .duo .card p{font-size:15px}
+  .etym{font-size:clamp(15px,min(1.3vw,2.2vh),18px)}
+  .cta{font-size:15px;padding:14px 26px}
+  .ghost{font-size:14.5px}
+  .actions{margin-top:clamp(22px,3.4vh,34px);gap:14px 22px}
+
+  /* ── 功能页：真两栏。左文案 / 右演示卡 ──
+     卡片用 grid-row:1/-1 跨满左边所有行再自己垂直居中，
+     这样左右两栏各自的高度互不牵扯，左边加一行字不会把卡片顶歪。 */
+  section.split .col{
+    display:grid;
+    /* 左栏要宽到能让最长的一行标题不折 —— 「它才开口说你是谁。」9 字 ×74px
+       需要约 660px，左栏给到 .62 才稳。右栏放卡片 440px 足够。 */
+    grid-template-columns:minmax(0,1.28fr) minmax(0,.72fr);
+    column-gap:clamp(40px,3.8vw,68px);
+    align-items:center;
+  }
+  section.split .col>.eyebrow,
+  section.split .col>h2,
+  section.split .col>.en,
+  section.split .col>.body,
+  section.split .col>.axes{grid-column:1}
+  section.split .col>.card,
+  section.split .col>.facts{
+    /* ⚠️ 这里**不能**写 grid-row:1/-1。行是隐式生成的，`-1` 指的是**显式**网格的
+       末尾行线，而显式行数是 0 —— 结果 -1 解析成第 1 条线，卡片只占第一行，
+       align-self:center 也就无从居中（表现为卡片吊在右上角）。用 span 跨足够多行。 */
+    grid-column:2;grid-row:1/span 30;align-self:center;
+    margin:0;max-width:none;
+  }
+  /* 主权页三张事实卡在右栏竖排，间距给足 */
+  section.split .col>.facts{gap:14px}
+
+  /* 叙事页：不塞东西，但正文列别拉太宽 —— 中文一行 35~40 字是舒服区间，
+     一行 60 字读起来会丢行。 */
+  section:not(.split) .body,
+  section:not(.split) .sub,
+  section:not(.split) .en{max-width:min(46em,720px)}
+  #hero .actions{max-width:none}
+
+  /* ── 右侧拉条：整轴放大一档 ──
+     原来的 46px 宽 / 5px 圆点 / 9px 标签也是手机尺度，在大屏上小得像个瑕疵。
+     ⚠️ 轴变宽之后正文列必须跟着留出通道：`.col` 用 `100% - 96px` 收一档，
+     这样左右仍然对称居中，同时保证右边缘永远够不到拉条。
+     （窄屏那边是靠 `section{padding-right:46px}` 让路的，两套机制不要混用。） */
+  #rail{width:72px}
+  .railtrack{gap:20px;padding:18px 16px}
+  .railtrack a{width:30px;height:22px}
+  .railtrack a b{width:7px;height:7px;border-radius:4px}
+  .railtrack a.act b{width:2.5px;height:22px}
+  .railtrack a span{right:34px;font-size:12px;letter-spacing:.18em}
+}
+
+/* ── 窄屏：上方留给天空，下方交给文字 ── */
+@media(max-width:799px){
+  /* 右边给拉条让出通道，正文不能跑到点底下 */
+  section{padding-right:46px}
+  /* 顶部给导航让出通道。⚠️ 这条必须挂在 section 上、不能挂在 .col 上：
+     居中是在 section 的**内容盒**里居中，padding 撑开的通道才真的排除掉 nav；
+     写在 .col 的 padding 上只是把文字往下推，盒子还是能顶进 nav
+     （2026-07-29 手机改居中后，英文版矮屏的成形页标题就是这样压进导航的——
+      中文版没露出来，因为英文更长、居中后向上溢出得更多）。 */
+  section{padding-top:68px}   /* 实测 nav 底沿 57px，留 11px 呼吸；54px 会压掉 2px */
+  .footbar{right:46px}
+  /* 手机：正文垂直居中，核在正文**下方**。
+     Trev 2026-07-29 定了三轮：先贴底 →「字都太下面了放，应该全部放中间才对」→
+     居中之后「放中间就会挡住那个动态图，直接放上面吧文字」→ 靠上之后
+     「还是放中间吧」。**以居中为最终**。
+     ⚠️ 「居中」这次不再挡动图，关键不在这条 CSS 而在 canvas：核已经从
+     「钉在正文**上沿**之上」改成「钉在正文**下沿**之下」
+     （`cy = S.cb*H + …`，见 draw() 的 narrowW 分支），幽灵短语也一起翻到了下半屏。
+     所以居中现在是把**顶上**让给星尘，而不是像第一次那样把天空吃掉。
+     结论：这条要是再改回贴上/贴底，canvas 那半边必须跟着一起改。 */
+  section:not(#begin){align-items:center}
+  /* ⚠️ 百分比内边距按**宽度**算不是高度，要垂直留白只能写死 px/vh。
+     ⚠️ 底部让位只加在 #begin 上——`.footbar` 全站**只出现在 09 那一页**，
+     加在通用 .col 上等于让另外 9 页各白占 68px 高度（英文版矮屏就是这么被挤爆的）。 */
+  .col{padding:0;max-width:none}
+  /* 首屏天上本来就没有核，正文再贴底就会在导航和标题之间空掉半屏。
+     让它居中：上方留给幽灵短语，又不至于把字甩到浏览器工具栏边上。
+     ⚠️ 必须写成 section#hero：上面那条 `section:not(#begin)` 里的 :not() 取参数的
+     特异性，#begin 是 ID，所以那条是 ID 级的，单写 #hero 会被它压掉。 */
+  section#hero{align-items:center}
+  /* ⚠️ 百分比内边距按**宽度**算不是高度，这里要的是垂直留白，只能写死 px */
+  /* hero 天上本来没有核，不需要给核让位，底部也不用躲 footbar（这页没有） */
+  #hero .col{padding:28px 0 22px}
+  /* 提示竖线在手机上正好卡在浏览器工具栏边上，像个杂物；分页和拉条已经说明了"还有" */
+  .hint{display:none}
+  section::before{background:none}
+  #fog{display:block}
+  /* 09 也居中，并且必须给 footbar 留够通道 —— 加了 TestFlight 按钮之后
+     内容变高，贴底就会和页脚重叠（Trev 真机截图逮到的）。 */
+  #begin{justify-content:center}
+  /* footbar 是 position:absolute、不占布局，正文能直接长进去 ——
+     2026-07-29 加了 TestFlight 按钮之后就是这么让「或者写信」压在页脚上的。 */
+  #begin .col{padding:0 0 clamp(64px,10vh,96px)}
+  .card,.facts{max-width:none}
+  /* 两条轴在窄屏上收一档 —— 英文 chip 比中文宽得多（"Habits & Preferences" vs
+     "习惯与偏好"），在 390px 宽屏上会折成三行，实测让成形页在 390×620 英文版
+     超出 51px。mandatory snap 下超出的内容永远看不到，所以这是硬需求不是优化。 */
+  .chip{font-size:9.5px;padding:3px 8px;letter-spacing:.04em}
+  .ax{gap:5px}
+  .axes{gap:7px;margin-top:15px}
+  .footbar{bottom:14px}
+}
+
+/* 矮视口（不分宽窄）：加了「人格声音 × 生活场景」两条轴之后，
+   成形页在 1024×620 这种"宽但矮"的窗口下会差几个像素。只按宽度收紧覆盖不到它。 */
+@media(max-height:660px){
+  .axes{margin-top:12px;gap:6px}
+  .card{margin-top:13px}
+  /* 行高也收一档：英文正文在 390 宽下是 5 行，1.78 的行高单这一项就吃掉 116px。
+     实测 390×620 英文版只差 3px 就装不下——3px 的余量等于没有余量，
+     随便改一句文案就会再破，所以这里一次留够。 */
+  .body,.sub{margin-top:14px;line-height:1.66}
+}
+
+/* 极矮视口（手机横屏、或浏览器上下工具栏都展开时）：整体收紧一档。
+   mandatory snap 下装不下的内容是永远看不到的，所以这一档是硬需求不是优化。 */
+@media(max-width:820px) and (max-height:580px){
+  h1,h2{font-size:clamp(21px,min(4.6vw,5.6vh),50px);line-height:1.22}
+  .col{padding-bottom:7%}
   .eyebrow{margin-bottom:12px}
-  .democard,.democard.dcl,.democard.dcr{bottom:14px;padding:10px 13px}
-  .democard .face{line-height:1.6}
-  .dchip{padding:2px 7px;margin:0 3px 2px 0}
+  .en{margin-top:11px}
+  .body,.sub{margin-top:13px;line-height:1.66}
+  .card{margin-top:14px;padding:12px 14px}
+  .face{margin-top:8px}.face.sm{line-height:1.6}
+  .foot{margin-top:7px}
+  .dateline{margin-top:8px}
+  .chips,.axes{margin-top:13px;gap:5px}
+  .ax{gap:5px}
+  .chip{padding:3px 8px}
+  .facts{margin-top:14px;gap:7px}
+  .fact{padding:10px 14px}
+  .fact p{margin-top:4px;line-height:1.55}
+  .bub{padding:7px 11px}
+  .bub.me{margin-top:8px}
+  .bub.ai{margin-top:7px}
+  .mailrow{margin-top:14px}
 }
+
 @media(prefers-reduced-motion:reduce){
-  .scene,.scene video,#dip,.line>span,.eyebrow,.en,.body,.num,.formula,
-  .finale .cta,.finale .alt,.finale .foot{transition:none!important}
-  .scene.kenburns .poster,.chapter.in .ghost{animation:none}
-  .chapter .line>span{transform:none;opacity:1}
-  .chapter .eyebrow,.chapter .en,.chapter .body,.chapter .formula{opacity:1}
-  .chapter .num{opacity:.05}
-  .chapter .cta,.chapter .alt,.chapter .foot{opacity:1!important}
+  #deck{scroll-behavior:auto}
+  .ln>i{transform:none;transition:none}
+  .fu{transform:none;transition:opacity .45s ease}
+  .on .fu{transform:none}
+  .hint{animation:none;transform:translateX(-50%) scaleY(1);opacity:.55}
+  .cta,.ghost,.railtrack a b,.railfill,#nav{transition:none}
 }
 </style>
-</head>
-<body>
 
-<div id="stage"></div>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div id="fog" aria-hidden="true"></div>
+<div id="grain" aria-hidden="true"></div>
+
+<!-- FILM 镜头层（见文件头注释①）：z 与 #sky 同层、DOM 在后，雾/颗粒照旧压在上面 -->
+<div id="stage" aria-hidden="true">
+  <div class="scene" data-i="0" style="background-image:url(ch0.jpg)"></div>
+  <div class="scene" data-i="1" style="background-image:url(ch1.jpg)"></div>
+  <div class="scene" data-i="2" style="background-image:url(ch2.jpg)"></div>
+  <div class="scene" data-i="3" style="background-image:url(ch3.jpg)"></div>
+  <div class="scene" data-i="4" style="background-image:url(ch4.jpg)"></div>
+  <div class="scene" data-i="5" style="background-image:url(ch5.jpg)"></div>
+  <div class="scene" data-i="6" style="background-image:url(ch6.jpg)"></div>
+  <div class="scene" data-i="7" style="background-image:url(ch7.jpg)"></div>
+  <div class="scene" data-i="8" style="background-image:url(ch8.jpg)"></div>
+  <div class="scene" data-i="9" style="background-image:url(ch9.jpg)"></div>
+</div>
 
 <header id="nav">
-  <a class="mark" href="https://soulor.id/"><span class="logoglyph" aria-hidden="true"></span><span class="lat">Soulor</span><span class="zh">灵 镜</span></a>
-  <div class="navr">
-    <button id="snd" type="button" aria-pressed="false">声音 ·关</button>
-    <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">进内测 →</a>
-  </div>
+  <a class="brand" href="#hero" aria-label="Soulor·灵镜"><span class="mark" aria-hidden="true"></span><span class="wordmark">Soulor</span><span class="dotmark">·</span><span class="zhmark">灵镜</span></a>
+  <span class="dom">SOULOR.ID</span>
+  <button id="snd" type="button" aria-label="环境声开关 / Ambient sound"></button>
+  <button id="langbtn" type="button" aria-label="切换语言 / Switch language"><span class="on">中</span><span class="sep">/</span><span class="off">EN</span></button>
+  <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener" data-en="Join the beta →">进内测 →</a>
 </header>
-<div id="mrail" aria-hidden="true"><div class="mtrack"><i id="mline"></i><i id="mfill"></i></div><span id="mlab"></span></div>
-<div id="chlabel" aria-hidden="true"></div>
-<div id="hint">往下 · 一格是一幕 <b>↓</b></div>
 
-<main id="deck"></main>
-<audio id="bgm" loop preload="none" src="bgm.m4a"></audio>
+<nav id="rail" aria-label="章节">
+  <div class="railtrack">
+    <div class="railline" aria-hidden="true"></div>
+    <div class="railfill" aria-hidden="true"></div>
+    <a href="#hero"      data-i="0"><b></b><span data-en="Prologue">序幕</span></a>
+    <a href="#scatter"   data-i="1"><b></b><span data-en="Scatter">虚无</span></a>
+    <a href="#drop"      data-i="2"><b></b><span data-en="One Grain">落下</span></a>
+    <a href="#gather"    data-i="3"><b></b><span data-en="Gravity">聚拢</span></a>
+    <a href="#ignite"    data-i="4"><b></b><span data-en="First Light">点亮</span></a>
+    <a href="#sun"       data-i="5"><b></b><span data-en="Takes Shape">成形</span></a>
+    <a href="#honest"    data-i="6"><b></b><span data-en="Honest">诚实</span></a>
+    <a href="#planets"   data-i="7"><b></b><span data-en="Every Planet">照亮</span></a>
+    <a href="#sovereign" data-i="8"><b></b><span data-en="Yours Alone">主权</span></a>
+    <a href="#begin"     data-i="9"><b></b><span data-en="Begin">开始</span></a>
+  </div>
+</nav>
+
+<main id="deck" tabindex="0">
+
+<section id="hero" data-stage="hero">
+  <div class="col">
+    <p class="eyebrow fu" data-en="SOULOR·2026">SOULOR·灵镜·2026</p>
+    <h1>
+      <span class="ln"><i class="l1" data-en="Everything you show the world">你对外的一切，</i></span>
+      <span class="ln"><i class="l2" data-en="begins at the core.">都源自那个内核。</i></span>
+    </h1>
+    <p class="en fu d1">Everything you show the world begins at the core.</p>
+    <p class="sub fu d2">
+      <span class="nb" data-en="Soulor catches what you say in passing, and keeps your core for you.">Soulor 接住你随口说的话，替你把内核存下来。</span>
+      <span class="nb"><b data-en="A diary, written every day, on its own.">日记，每天自动写成。</b></span>
+    </p>
+    <div class="actions fu d3">
+      <a class="cta" href="#begin" data-en="Say your first sentence →">开始说第一句 →</a>
+      <a class="ghost" href="#scatter" data-en="See how it happens ↓">往下看它怎么发生 ↓</a>
+    </div>
+  </div>
+  <div class="hint" aria-hidden="true"></div>
+</section>
+
+<section id="scatter" data-stage="scatter">
+  <div class="col">
+    <p class="eyebrow fu" data-en="01 · THE SCATTER">01 · 虚无 / THE SCATTER</p>
+    <h2>
+      <span class="ln"><i class="l1" data-en="You say thousands of things a day.">你每天说几千句话，</i></span>
+      <span class="ln"><i class="l2" data-en="None of them are kept.">留下来的是零。</i></span>
+    </h2>
+    <p class="en fu d1">A galaxy of dust. Everywhere, and nowhere.</p>
+    <p class="body fu d2" data-en="Late-night spirals, messages you never sent, the honest thing you told a friend and forgot by morning — they evaporate faster than you think. Your inner life never stops talking. No one has ever written it down.">深夜的胡思乱想、没发出去的消息、对朋友说过就忘的那句真话——蒸发得比你想的快。你的内心一直在说话，只是从来没有人记下来。</p>
+  </div>
+</section>
+
+<section id="drop" data-stage="drop" class="split">
+  <div class="col">
+    <p class="eyebrow fu" data-en="02 · ONE GRAIN">02 · 第一句 / ONE GRAIN</p>
+    <h2>
+      <span class="ln"><i class="l1" data-en="Say one sentence.">说一句，</i></span>
+      <span class="ln"><i class="l2" data-en="One grain settles.">就落下一粒。</i></span>
+    </h2>
+    <p class="en fu d1">One sentence. One grain of matter.</p>
+    <p class="body fu d2" data-en="Drop — say it and go. The AI catches it and files it. No judgment, no advice. That's the end of it; gravity takes the rest.">Drop——随口一句就走。AI 接住它、归好类，不评判、不给建议。说完这件事就结束了，剩下的交给引力。</p>
+    <div class="card fu d3">
+      <div class="lab" data-en="DROP · SAY IT AND GO">DROP · 随口一句</div>
+      <div class="bub me" data-en="In the meeting today, I swallowed what I was about to say.">今天开会，话到嘴边又咽回去了。</div>
+      <div class="bub ai" data-en="Caught. Filed under Disposition, in Work. You can go back to it any time.">接住了。归进「特质倾向」，场景是「职场」，随时能翻回来。</div>
+    </div>
+  </div>
+</section>
+
+<section id="gather" data-stage="gather" class="split">
+  <div class="col">
+    <p class="eyebrow fu" data-en="03 · GRAVITY">03 · 聚拢 / GRAVITY</p>
+    <h2>
+      <span class="ln"><i class="l1" data-en="When you want to talk it through,">想聊透的时候，</i></span>
+      <span class="ln"><i class="l2" data-en="gravity grows.">引力会变大。</i></span>
+    </h2>
+    <p class="en fu d1">Gravity does the gathering.</p>
+    <p class="body fu d2" data-en="Chat — for when you want to go all the way into something. It answers as a witness, unfolding what you said layer by layer, then asks: have I got this right? When you don't know what to say, draw an Echo card.">Chat——想聊透一件事。它见证式地回应，把你的话一层层拆开听懂，最后问你一句：这样理解，对吗？不知道说什么的时候，抽一张回响牌。</p>
+    <div class="card fu d3">
+      <div class="lab" data-en="ECHO CARD · WHEN YOU DON'T KNOW WHAT TO SAY">回响牌 · 不知道说什么的时候</div>
+      <p class="face" data-en="“Lately, was there something small you said you'd let go of — but didn't?”">「最近有没有一件小事，你嘴上说算了，心里其实没算？」</p>
+      <div class="foot" data-en="Draw one · answering is optional">抽一张 · 答不答都行</div>
+    </div>
+  </div>
+</section>
+
+<section id="ignite" data-stage="ignite" class="split">
+  <div class="col">
+    <p class="eyebrow fu" data-en="04 · FIRST LIGHT">04 · 点亮 / FIRST LIGHT</p>
+    <h2>
+      <!-- 04 标题/正文 2026-08-01 定稿（BRAND.md §2.2）：旧标题「到了晚上/At night, it ignites」
+           是十屏里唯一跳出宇宙隐喻的一句，且只为配合 23:59 那个假承诺（App 没有定时系统）而存在。
+           机器锁：mirror 的 diaryPromiseCopy.test.ts 会扫这两份 html。别改回去。 -->
+      <span class="ln"><i class="l1" data-en="A day of grains.">一天的话落满了，</i></span>
+      <span class="ln"><i class="l2" data-en="It lights itself.">它自己亮起来。</i></span>
+    </h2>
+    <p class="en fu d1">A day of grains. It lights itself.</p>
+    <p class="body fu d2" data-en="The things you say in passing become a diary, written every day — in your own words, nothing invented. You don't write the diary. You just talk, and the diary comes on its own.">随口说过的那些话，每天自动写成一篇日记——用你的原话，不加想象。你不用写日记。你只要说话，日记自己会来。</p>
+    <div class="card fu d3">
+      <div class="lab" data-en="DIARY · WRITTEN DAILY">日记 · 每天自动写成</div>
+      <div class="dateline"><span class="n">7.28</span><span data-en=" · Tue"> · 周二</span></div>
+      <p class="face sm" data-en="In the morning you said you swallowed your words. At night you added: it wasn't that hard to say after all. Put those two together — that was today.">白天你说，话到嘴边又咽了回去。到了晚上你补了一句：其实也没那么难开口。这两句放在一起，就是今天。</p>
+      <div class="foot" data-en="Written from your 6 sentences today · every one traces back">由你今天的 6 句话写成 · 每句都能翻回原文</div>
+    </div>
+  </div>
+</section>
+
+<section id="sun" data-stage="sun" class="split">
+  <div class="col">
+    <p class="eyebrow fu" data-en="05 · THE SUN TAKES SHAPE">05 · 成形 / THE SUN TAKES SHAPE</p>
+    <h2>
+      <span class="ln"><i class="l1" data-en="It speaks only">攒够证据，</i></span>
+      <span class="ln"><i class="l2" data-en="with evidence.">它才开口说你是谁。</i></span>
+    </h2>
+    <p class="en fu d1">It speaks only with evidence.</p>
+    <p class="body fu d2" data-en="Six categories of personality voice × four life settings — every judgment carries its evidence, and one tap takes you back to your own words. A judgment is always refutable: a mirror doesn't create you, it only lets you see.">六个品类的人格声音 × 四个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。</p>
+    <div class="axes fu d3">
+      <div class="ax">
+        <span class="axlab" data-en="PERSONALITY VOICE · 6">人格声音 · 6</span>
+        <span class="chip" data-en="Disposition">特质倾向</span><span class="chip" data-en="Coping Style">应对风格</span><span class="chip" data-en="Values">价值观</span><span class="chip" data-en="Worldview &amp; Beliefs">世界观与信念</span><span class="chip" data-en="Goals &amp; Drives">目标与动机</span><span class="chip" data-en="Habits &amp; Preferences">习惯与偏好</span>
+      </div>
+      <div class="ax">
+        <span class="axlab" data-en="LIFE SETTINGS · 4">生活场景 · 4</span>
+        <span class="chip" data-en="Work">职场</span><span class="chip" data-en="Relationships">情感</span><span class="chip" data-en="Family">家庭</span><span class="chip" data-en="Solitude">独处</span>
+      </div>
+    </div>
+    <div class="card fu d4">
+      <div class="lab" data-en="PERSONALITY VOICE · DISPOSITION">人格声音 · 特质倾向</div>
+      <p class="face sm" data-en="In a crowd, you put your words away.">你在人多的场合，会把话收起来。</p>
+      <div class="foot" data-en="From 4 of your own sentences · mostly in Work ›">依据 4 条原话 · 多在「职场」被说起 ›</div>
+    </div>
+  </div>
+</section>
+
+<section id="honest" data-stage="honest" class="split">
+  <div class="col">
+    <p class="eyebrow fu" data-en="06 · IT SAYS WHEN IT'S UNSURE">06 · 诚实 / IT SAYS WHEN IT'S UNSURE</p>
+    <h2>
+      <span class="ln"><i class="l1" data-en="When the evidence is thin,">证据不够的时候，</i></span>
+      <span class="ln"><i class="l2" data-en="it says so.">它会直说还不够。</i></span>
+    </h2>
+    <p class="en fu d1">It tells you when it doesn't know yet.</p>
+    <p class="body fu d2" data-en="It would rather be slow than hand you a conclusion that looks like it understands you but has nothing behind it. That's a rule of the product, not a line of copy.">宁可慢，也不给你一个看起来很懂你、其实没有依据的结论。这是产品的铁律，不是一句文案。</p>
+    <div class="card dim fu d3">
+      <div class="lab" data-en="PERSONALITY VOICE · WORLDVIEW &amp; BELIEFS">人格声音 · 世界观与信念</div>
+      <p class="face sm" data-en="3 isn't enough to judge. Slow is fine.">3 条还不够下判断。宁可慢。</p>
+      <div class="foot" data-en="Still gathering">还在积累中</div>
+    </div>
+  </div>
+</section>
+
+<section id="planets" data-stage="planets">
+  <div class="col">
+    <p class="eyebrow fu" data-en="07 · ONE CORE, EVERY PLANET">07 · 照亮 / ONE CORE, EVERY PLANET</p>
+    <h2>
+      <span class="ln"><i class="l1" data-en="One core.">一个内核，</i></span>
+      <span class="ln"><i class="l2" data-en="Every planet lit.">照亮所有星球。</i></span>
+    </h2>
+    <p class="en fu d1">One core. Every planet lit.</p>
+    <p class="body fu d2" data-en="Right now every app guesses who you are from scratch: dating apps hand you a list of tags, job sites ask for your bio again, and the robots to come will have to meet you all over again. A core should be gathered once — and held by you. That's Soulor ID: your solar system, with you at the centre.">现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍，未来的机器人还要重新认识你一次。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。</p>
+    <!-- 公式 2026-08-01 Trev 重申版（BRAND.md §1 / BOARD 全员必读卡）：Mirror 入式、「灵镜」进公式。别退回「+ or =」那版。 -->
+    <p class="etym fu d3"><span class="s">Soul</span><span data-en=" (soul) + ">（灵魂）＋ </span><span class="s">Mirror</span><span data-en=" (mirror) = ">（镜子）＝ </span><span class="s">Soulor</span><span data-en=" (灵镜 — sounds like ">（灵镜，谐音 </span><span class="s">Solar</span><span data-en=", the sun)"> 太阳）</span></p>
+  </div>
+</section>
+
+<section id="sovereign" data-stage="sovereign" class="split">
+  <div class="col">
+    <p class="eyebrow fu" data-en="08 · YOURS ALONE">08 · 主权 / YOURS ALONE</p>
+    <h2>
+      <span class="ln"><i class="l1" data-en="All of this">这一切，</i></span>
+      <span class="ln"><i class="l2" data-en="never leaves your phone.">只发生在你的手机里。</i></span>
+    </h2>
+    <p class="en fu d1">It never leaves your hand.</p>
+    <div class="facts">
+      <div class="fact fu d2">
+        <div class="lab" data-en="Stored locally">本地存储</div>
+        <p data-en="Your data stays on your phone. Not a promise not to look — there is no upload path at all.">数据只在你手机里。不是「承诺不看」，是架构上就没有上传。</p>
+      </div>
+      <div class="fact fu d3">
+        <div class="lab" data-en="No advice">不给建议</div>
+        <p data-en="It catches you. It doesn't direct your life.">它接住你，不指导你的人生。</p>
+      </div>
+      <div class="fact fu d4">
+        <div class="lab" data-en="Refutable">可反驳</div>
+        <p data-en="Every judgment traces back to your own words — and every one can be deleted.">每条判断都翻得回原话，也都删得掉。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="begin" data-stage="begin">
+  <div class="col">
+    <p class="eyebrow fu" data-en="09 · BEGIN">09 · 第一句 / BEGIN</p>
+    <h2><span class="ln"><i class="l1" data-en="Begin with one sentence.">从你的第一句开始。</i></span></h2>
+    <p class="en fu d1">Begin with one sentence.</p>
+    <p class="body fu d2" data-en="The iOS beta is open — install with TestFlight and start talking.">现在是 iOS 内测阶段——用 TestFlight 装上就能说话。</p>
+    <div class="actions fu d3">
+      <a class="cta" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener" data-en="Install with TestFlight →">用 TestFlight 安装 →</a>
+    </div>
+    <p class="mailrow fu d3"><span data-en="Or write to us: ">或者写信：</span><a href="mailto:hello@soulor.id">hello@soulor.id</a></p>
+  </div>
+  <div class="footbar">
+    <div class="l" data-en="Soulor — a mirror for the soul">Soulor·灵镜 — 一面灵魂的镜子</div>
+    <div class="r">SOULOR.ID · © 2026</div>
+  </div>
+</section>
+
+</main>
 
 <script>
-/* ══ 数据：品牌故事十幕（BRAND.md §2 原文） ══
-   op  = 桌面 object-position（影片主体摆哪）
-   mop = 手机 object-position（缺省时回落到 op）。
-         ⚠️ **竖屏手机上只有 x 生效，y 是死值**——16:9 素材在竖屏里按高度铺满，
-         垂直没有余量给 object-position 分配（实测 freeY=0）。y 写的 22%~26%
-         是给横屏手机用的（那边视口比 16:9 还扁，y 才真的会裁）。
-         想在竖屏把主体抬到上 1/3 不能靠这里改，详见手机档 @media 那段的说明。 */
-var CH=[
-{pos:'cc',num:'',eyebrow:'SOULOR · 灵镜 · 2026',
- h:['你对外的一切，','都源自那个内核。'],
- en:'Everything you show the world begins at the core.',
- body:'Soulor 接住你随口说的话，替你把内核存下来。日记，每天自动写成。',
- op:'55% 40%',mop:'55% 24%'},
-{pos:'bl',num:'01',eyebrow:'01 · 虚无 / <b>THE SCATTER</b>',
- h:['你每天说几千句话，','留下来的是零。'],
- en:'A galaxy of dust. Everywhere, and nowhere.',
- body:'深夜的胡思乱想、没发出去的消息、对朋友说过就忘的那句真话——蒸发得比你想的快。你的内心一直在说话，只是从来没有人记下来。',
- op:'62% 50%',mop:'62% 26%',
- ghosts:[['算了，没什么','14%','22%'],['其实我挺累的','64%','18%'],['这话跟谁说呢','58%','48%'],['明天再想吧','70%','34%']]},
-{pos:'bl',num:'02',eyebrow:'02 · 第一句 / <b>ONE GRAIN</b>',
- h:['说一句，','就落下一粒。'],
- en:'One sentence. One grain of matter.',
- body:'Drop——随口一句就走。AI 接住它、归好类，不评判、不给建议。说完这件事就结束了，剩下的交给引力。',
- op:'68% 35%',mop:'68% 22%',
- demo:{side:'dcr',lab:'DROP · 随口一句',html:'<div class="bub me">今天开会，话到嘴边又咽回去了。</div><div class="bub ai">接住了。归进「特质倾向」，场景是「职场」，随时能翻回来。</div>'}},
-{pos:'br',num:'03',eyebrow:'03 · 聚拢 / <b>GRAVITY</b>',
- h:['想聊透的时候，','引力会变大。'],
- en:'Gravity does the gathering.',
- body:'Chat——想聊透一件事。它见证式地回应，把你的话一层层拆开听懂，最后问你一句：这样理解，对吗？不知道说什么的时候，抽一张回响牌。',
- op:'62% 38%',mop:'62% 24%',
- demo:{side:'dcl',lab:'回响牌 · 不知道说什么的时候',html:'<p class="face">「最近有没有一件小事，你嘴上说算了，心里其实没算？」</p><div class="dfoot">抽一张 · 答不答都行</div>'}},
-{pos:'bl',num:'04',eyebrow:'04 · 点亮 / <b>FIRST LIGHT</b>',
- /* 04 的标题/正文 2026-08-01 定稿（BRAND.md §2.2）：别退回「到了晚上/23:59」——
-    23:59 是假承诺（App 里没有定时系统），机器锁在 mirror 的 diaryPromiseCopy.test.ts */
- h:['一天的话落满了，','它自己亮起来。'],
- en:'A day of grains. It lights itself.',
- body:'随口说过的那些话，每天自动写成一篇日记——用你的原话，不加想象。你不用写日记。你只要说话，日记自己会来。',
- op:'62% 40%',mop:'62% 24%',
- demo:{side:'dcr',lab:'日记 · 每天自动写成',html:'<div class="dateline"><span class="n">7.28</span><span>· 周二</span></div><p class="face">白天你说，话到嘴边又咽了回去。到了晚上你补了一句：其实也没那么难开口。这两句放在一起，就是今天。</p><div class="dfoot">由你今天的 6 句话写成 · 每句都能翻回原文</div>'}},
-{pos:'bl',num:'05',eyebrow:'05 · 成形 / <b>THE SUN TAKES SHAPE</b>',
- h:['攒够证据，','它才开口说你是谁。'],
- en:'It speaks only with evidence.',
- body:'六个品类的人格声音 × 四个生活场景——每一条判断都标着依据，点开就是你的原话。判断永远可反驳：镜子不产生你，它只让你看见。',
- op:'70% 35%',mop:'70% 24%',
- demo:{side:'dcr',lab:'人格声音 · 特质倾向',html:'<p class="face">你在人多的场合，会把话收起来。</p><div class="dfoot">依据 4 条原话 · 多在「职场」被说起 ›</div><div class="daxlab">人格声音 · 6</div><div>'+['特质倾向','应对风格','价值观','世界观与信念','目标与动机','习惯与偏好'].map(function(t){return '<span class="dchip">'+t+'</span>';}).join('')+'</div><div class="daxlab">生活场景 · 4</div><div>'+['职场','情感','家庭','独处'].map(function(t){return '<span class="dchip">'+t+'</span>';}).join('')+'</div>'}},
-{pos:'ml',num:'06',eyebrow:'06 · 诚实 / <b>IT SAYS WHEN IT\'S UNSURE</b>',
- h:['证据不够的时候，','它会直说还不够。'],
- en:'It tells you when it doesn\'t know yet.',
- body:'宁可慢，也不给你一个看起来很懂你、其实没有依据的结论。这是产品的铁律，不是一句文案。',
- op:'66% 36%',mop:'66% 24%',
- demo:{side:'dcr dim',lab:'人格声音 · 世界观与信念',html:'<p class="face">3 条还不够下判断。宁可慢。</p><div class="dfoot">还在积累中</div>'}},
-{pos:'bl',num:'07',eyebrow:'07 · 照亮 / <b>ONE CORE, EVERY PLANET</b>',
- h:['一个内核，','照亮所有星球。'],
- en:'One core. Every planet lit.',
- body:'现在，每个 app 都在从零猜你是谁：约会软件让你填一遍标签，招聘平台让你再写一遍自我介绍。内核只该被采集一次——而且该由你自己持有。这就是 Soulor ID：你的太阳系，中心是你。',
- formula:true,
- still:true,   /* 四次生成都在这章翻车（月牙×3、流星线×1）——它的魔法在标签和文案，静帧+缓推最干净 */
- op:'55% 45%',mop:'30% 28%',
- plabs:[['约会',.695,.375],['招聘',.829,.648],['陪伴',.601,.805],['还没被发明的',.934,.316]]},
-{pos:'bl',num:'08',eyebrow:'08 · 主权 / <b>YOURS ALONE</b>',
- h:['这一切，','只发生在你的手机里。'],
- en:'It never leaves your hand.',
- body:'数据只在你手机里。不是「承诺不看」，是架构上就没有上传。它接住你，不指导你的人生。每条判断都翻得回原话，也都删得掉。',
- op:'66% 36%',mop:'66% 24%'},
-{pos:'cc',num:'09',eyebrow:'09 · 第一句 / <b>BEGIN</b>',
- h:['从你的第一句开始。'],
- en:'Begin with one sentence.',
- body:'现在是 iOS 内测阶段——用 TestFlight 装上就能说话。',
- op:'50% 32%',mop:'50% 22%',finale:true},
+(function(){
+'use strict';
+
+var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ══════════ 1. 数学 ══════════ */
+function sstep(e0,e1,t){ t=(t-e0)/(e1-e0); t=t<0?0:(t>1?1:t); return t*t*(3-2*t); }
+function s01(t){ t=t<0?0:(t>1?1:t); return t*t*(3-2*t); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+// 光衰减：物理感的关键是"不是线性"。用 pow 让中心极亮、边缘长尾。
+function falloff(d){ var k=1-d; return k<=0?0:Math.pow(k,3.4); }
+// 确定性哈希噪声。resize 重烘时表面/布局必须复现，不能用 Math.random。
+function hash2(x,y){ var n=Math.sin(x*127.1+y*311.7)*43758.5453123; return n-Math.floor(n); }
+function vnoise(x,y){
+  var xi=Math.floor(x), yi=Math.floor(y), xf=x-xi, yf=y-yi;
+  var u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf);
+  return hash2(xi,yi)*(1-u)*(1-v) + hash2(xi+1,yi)*u*(1-v)
+       + hash2(xi,yi+1)*(1-u)*v   + hash2(xi+1,yi+1)*u*v;
+}
+function fbm(x,y){
+  return vnoise(x,y)*.54 + vnoise(x*2.13+5.2,y*2.13+1.3)*.30 + vnoise(x*4.37+9.1,y*4.37+7.7)*.16;
+}
+
+/* ══════════ 2. 关键帧表 ══════════
+   一页一帧。吸附之后 scrollTop 是页高的整数倍，插值系数正好落在 0/1 上，
+   所以每一页看到的都是这张表里写死的那个状态，不是某个中间态。
+
+   solid = 核的"实体度"（这一版新加的那条线）：
+     0    纯雾，没有边界，只是一团弥散的光
+     0.5  光球层开始从雾里凝出来，边缘半透
+     1.0  完全的实体：有临边昏暗、有米粒组织、有色球边，外面才是日冕
+   虚 → 实，跟"说的话攒成内核"是同一件事。                         */
+// cxw/cyw = 宽屏(≥800)专用的核落位。窄屏走 cx/cy + narrowCX()，两套互不干扰。
+// 加这一组的原因：桌面改成两栏之后，演示卡占住了右栏中部，而 cx 原值(.58~.64)
+// 正好把核摆在卡片正中间——卡片把太阳切成两半，脚注也被亮部冲淡。见 §桌面层注释。
+var KEYS = ['cx','cy','cxw','cyw','cr','lum','grav','spin','disk','rs','pl','ring','solid','halo'];
+var KF = [
+  {cx:.50,cy:.58,cxw:0.62,cyw:0.52,cr:.30,lum:.012,grav:.02,spin:0,  disk:0,  rs:1.12,pl:0,  ring:0, solid:0,   halo:.18}, // 序幕：最虚无，只有一丝在酝酿
+  {cx:.50,cy:.55,cxw:0.64,cyw:0.5,cr:.30,lum:.045,grav:.14,spin:.03,disk:0,  rs:.94, pl:0,  ring:0, solid:0,   halo:.66}, // 虚无：核附近开始聚星辰
+  {cx:.62,cy:.50,cxw:0.74,cyw:0.26,cr:.30,lum:.085,grav:.38,spin:.12,disk:.15,rs:.80, pl:0,  ring:0, solid:0,   halo:.42}, // 落下
+  {cx:.60,cy:.50,cxw:0.74,cyw:0.26,cr:.32,lum:.14, grav:.72,spin:.55,disk:.80,rs:.55, pl:0,  ring:0, solid:.10, halo:.16}, // 聚拢
+  {cx:.60,cy:.48,cxw:0.74,cyw:0.26,cr:.34,lum:.46, grav:.90,spin:.80,disk:.60,rs:.42, pl:0,  ring:0, solid:.58, halo:0}, // 点亮
+  {cx:.64,cy:.50,cxw:0.755,cyw:0.27,cr:.40,lum:1.0, grav:1,  spin:1,  disk:.25,rs:.34, pl:0,  ring:0, solid:1.0, halo:0}, // 成形
+  {cx:.58,cy:.48,cxw:0.74,cyw:0.26,cr:.37,lum:.95, grav:1,  spin:.95,disk:.24,rs:.32, pl:0,  ring:0, solid:1.0, halo:0}, // 诚实：核几乎不动，让"它会直说还不够"这句自己站住
+  {cx:.34,cy:.21,cxw:0.205,cyw:0.125,cr:.26,lum:.92, grav:1,  spin:.90,disk:.22,rs:.26, pl:1,  ring:0, solid:1.0, halo:0}, // 照亮：核抬到左上，让它照得到右下那几颗
+  {cx:.50,cy:.44,cxw:0.74,cyw:0.27,cr:.24,lum:.78, grav:1,  spin:.70,disk:.15,rs:.30, pl:.35,ring:1, solid:.92, halo:0}, // 主权
+  {cx:.50,cy:.30,cxw:0.5,cyw:0.26,cr:.18,lum:.62, grav:1,  spin:.50,disk:.10,rs:.50, pl:0,  ring:0, solid:.74, halo:0}  // 开始
 ];
-var N=CH.length;
 
-/* ══ 环境 ══ */
-/* 衔接镜头总开关。Trev 2026-08-02 拍板：回到「溶解转场」那一版的体验——
-   翻页途中不再播 brK，走交叉溶解 + 黑场沉降。
-   br0-br8 的资产仍然留在发布目录里（没删），这里改回 true 即可原样重开；
-   bridgeFor()/bridges[] 那一整套代码也一并保留，只是被这个开关短路掉。 */
-var USE_BRIDGES=false;
-var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-var nc=navigator.connection||{};
-var noVideo=reduce||nc.saveData||/(^|-)2g$/.test(nc.effectiveType||'')||location.protocol==='file:';
-var narrowScreen=matchMedia('(max-width:820px)').matches;
+var GHOST_ZH=['算了，没什么','其实我挺累的','这话跟谁说呢','明天再想吧'];
+var GHOST_EN=['Never mind.',"I'm actually exhausted.",'Who would I even tell?',"I'll think about it tomorrow."];
+var GHOST  = GHOST_ZH;
+var PLANETS= [[.70,.34,.038],[.84,.58,.052],[.60,.76,.026],[.93,.28,.017]];
+var PLABEL_ZH=['约会','招聘','陪伴','还没被发明的'];
+var PLABEL_EN=['Dating','Hiring','Companionship','Not yet invented'];
+var PLABEL = PLABEL_ZH;
 
-/* ══ 搭 DOM：舞台（影片）+ 翻页容器（章节/字幕） ══ */
-var stage=document.getElementById('stage');
+/* ══════════ 3. sprite 烘焙（一次性；resize 后重烘） ══════════ */
+
+// 弥散光：核还"虚"的时候就是它 —— 没有边界，只有一团连续衰减的光。
+// hollow>0 时把中心挖掉，留给光球层，这样核读起来是"凝出来的"而不是"糊上去的"。
+function bakeGlow(S, tR, tG, tB, hollow){
+  var c=document.createElement('canvas'); c.width=c.height=S;
+  var g=c.getContext('2d'), img=g.createImageData(S,S), d=img.data;
+  var cc=S*0.5, R=S*0.5;
+  for(var y=0;y<S;y++){
+    for(var x=0;x<S;x++){
+      var dx=(x+0.5-cc)/R, dy=(y+0.5-cc)/R;
+      var dist=Math.sqrt(dx*dx+dy*dy);
+      var ang=Math.atan2(dy,dx);
+      // 外圈不该是完美的圆 —— 完美的圆是 CSS radial-gradient 的签名。
+      // 只在外圈叠低频角向起伏，核心盘保持正圆。
+      var wob=1 + 0.052*Math.sin(ang*3+0.7) + 0.030*Math.sin(ang*5-1.9) + 0.017*Math.sin(ang*8+3.3);
+      var v=falloff(dist/(1+(wob-1)*sstep(0.20,0.78,dist)));
+      if(hollow>0) v *= sstep(hollow*0.42, hollow*1.15, dist);   // 给光球层让位
+      // 色温：最亮处近白，往外走成暖金，再远成暗紫余色
+      var r,gg,b;
+      if(v>0.62){ var k=(v-0.62)/0.38; r=255; gg=246+9*k; b=228+27*k; }
+      else if(v>0.18){ var k2=(v-0.18)/0.44; r=201+54*k2; gg=123+123*k2; b=74+154*k2; }
+      else { var k3=v/0.18; r=5+196*k3; gg=4+119*k3; b=9+65*k3; }
+      var a=Math.min(1,v*1.35);
+      var pr=r*a*tR, pg=gg*a*tG, pb=b*a*tB;
+      // 胶片颗粒集中在中间调：黑场几乎干净、亮部被光压平。全画面等量加噪＝廉价感。
+      var lum=(pr*0.30+pg*0.59+pb*0.11)/255;
+      var amp=11*(0.22+1.55*Math.sqrt(lum)*(1-lum*0.72))*Math.min(1,v*14);
+      var n=(Math.random()-.5)*amp;
+      var i4=(y*S+x)*4;
+      d[i4]=clamp(pr+n,0,255); d[i4+1]=clamp(pg+n,0,255); d[i4+2]=clamp(pb+n,0,255); d[i4+3]=255;
+    }
+  }
+  g.putImageData(img,0,0); return c;
+}
+
+// 光球层：核"实"起来之后的那个面。这是这一版的主角。
+// 三样东西让它读起来是实体而不是又一团光：临边昏暗、米粒组织、色球边。
+function bakePhotosphere(R){
+  R=Math.max(6,Math.round(R));
+  var pad=Math.ceil(R*0.34)+2, S=(R+pad)*2;
+  var c=document.createElement('canvas'); c.width=c.height=S;
+  var g=c.getContext('2d'), img=g.createImageData(S,S), d=img.data;
+  var cc=S/2;
+  for(var y=0;y<S;y++){
+    for(var x=0;x<S;x++){
+      var i4=(y*S+x)*4;
+      var dx=x+0.5-cc, dy=y+0.5-cc;
+      var dd=Math.sqrt(dx*dx+dy*dy), nrm=dd/R;
+      if(nrm>1.30) continue;
+      if(nrm<=1){
+        var nz=Math.sqrt(Math.max(0,1-nrm*nrm));
+        // 米粒组织（对流元胞）：球面投影采样，纹理才贴在球上而不是贴在圆盘上
+        var ux=(dx/R)/(nz+0.30)*4.6, uy=(dy/R)/(nz+0.30)*4.6;
+        var gran=(0.62*fbm(ux,uy)+0.38*fbm(ux*2.6+7.1,uy*2.6-3.3))-0.5;
+        // 临边昏暗：I(μ)=I0(1-u(1-μ))，恒星的标志性特征，u≈0.7
+        var limb=0.30+0.70*Math.pow(nz,0.52);
+        var v=clamp(limb*(1+gran*0.50),0,1);
+        var edge=sstep(0,1.7,R-dd);
+        // 色温必须跟着亮度大幅摆：中心近白、临边烧成琥珀金。
+        // 上一版三个通道一起线性抬，得到的只能是一块灰盘。
+        var pr0=Math.min(255,226+29*v);
+        var pg0=Math.min(255,150+ 88*Math.pow(v,0.85));
+        var pb0=Math.min(255, 72+133*Math.pow(v,1.90));
+        // 盘缘的抗锯齿不能淡成透明：外面紧挨着色球，淡成透明会在交界处留一条 1px 暗线。
+        // 让它淡向色球的颜色和它 0.36 的起始不透明度，两边就接得上。
+        var w=1-edge;
+        d[i4]  =Math.round(pr0*(1-w)+255*w);
+        d[i4+1]=Math.round(pg0*(1-w)+212*w);
+        d[i4+2]=Math.round(pb0*(1-w)+152*w);
+        d[i4+3]=Math.round(Math.max(edge,0.36*w)*255);
+      }else{
+        // 色球：紧贴 limb 外的一薄层，把实体的边"焊"进外面的日冕里
+        // 色球只是一薄层热边，不能比盘面还亮 —— 那会把临边昏暗整个盖反
+        var t=(nrm-1)/0.24;
+        var cv=Math.pow(1-t,2.4)*0.36;
+        d[i4]=255; d[i4+1]=212; d[i4+2]=152; d[i4+3]=Math.round(clamp(cv,0,1)*255);
+      }
+    }
+  }
+  g.putImageData(img,0,0); return c;
+}
+
+// 星球：完全移植内核稿 system 分支的球体代码。光照方向烘焙时固定。
+function bakePlanet(pr, ldx, ldy, lz, tintR, tintB, lit, idx){
+  pr=Math.max(4,pr);
+  var pad=Math.ceil(pr*0.34)+3, S=Math.ceil((pr+pad)*2);
+  var c=document.createElement('canvas'); c.width=c.height=S;
+  var g=c.getContext('2d'), img=g.createImageData(S,S), d=img.data;
+  var px=S/2, py=S/2, lnorm=Math.sqrt(1+lz*lz);
+  for(var y=0;y<S;y++){
+    for(var x=0;x<S;x++){
+      var i4=(y*S+x)*4;
+      var ddx=x+0.5-px, ddy=y+0.5-py;
+      var dd=Math.sqrt(ddx*ddx+ddy*ddy);
+      if(dd>pr){
+        // 球体外一圈极薄的前向散射，让球和背景之间有过渡而不是剪贴边
+        var hal=Math.pow(Math.max(0,1-(dd-pr)/(pr*0.30)),2.6)*lit*0.42;
+        if(hal>0.002){ d[i4]=236; d[i4+1]=204; d[i4+2]=164; d[i4+3]=Math.round(Math.min(1,hal*0.62)*255); }
+        continue;
+      }
+      var nx=ddx/pr, ny=ddy/pr;
+      var nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
+      var ux=(nx/(nz+0.32))*1.85+idx*17.3, uy=(ny/(nz+0.32))*1.85+idx*9.7;
+      var relief=fbm(ux,uy)-0.5;
+            // 起伏只能轻扰法线：扰太狠终止线会被搅成锯齿状的怪边，读起来是瑕疵不是地貌
+      var lamRaw=(nx*ldx+ny*ldy+nz*lz)/lnorm + relief*0.15*(1-nz*0.45);
+      var lam=sstep(-0.11,0.44,lamRaw);      // 终止线是一条更宽的渐变带
+      lam *= 0.60+0.40*Math.pow(nz,0.55);    // 临边昏暗
+      var alb=0.66+0.68*(0.58*fbm(ux*0.52,uy*0.52)+0.42*fbm(ux*2.7+4.1,uy*2.7-2.3));
+      var rim=Math.pow(1-nz,5.5)*Math.max(0,-(nx*ldx+ny*ldy))*lit*1.1;
+      var s=Math.min(1, lam*alb*lit*4.4 + lam*0.05 + rim);
+      var edge=sstep(0,1.8,pr-dd);
+      d[i4]  =Math.round(Math.min(255,(12+218*Math.pow(s,0.86))*tintR));
+      d[i4+1]=Math.round(Math.min(255, 13+206*Math.pow(s,0.98)));
+      d[i4+2]=Math.round(Math.min(255,(20+182*Math.pow(s,1.22))*tintB));
+      d[i4+3]=Math.round(edge*255);
+    }
+  }
+  g.putImageData(img,0,0); return c;
+}
+
+function bakeDot(S,r,g0,b){
+  var c=document.createElement('canvas'); c.width=c.height=S;
+  var x=c.getContext('2d'), img=x.createImageData(S,S), d=img.data;
+  for(var y=0;y<S;y++) for(var i=0;i<S;i++){
+    var dx=(i+0.5-S/2)/(S/2), dy=(y+0.5-S/2)/(S/2);
+    var dd=Math.sqrt(dx*dx+dy*dy), t=Math.max(0,1-dd);
+    var v=t*t*0.5+Math.pow(Math.max(0,1-dd*2.4),2)*0.7;
+    var k=(y*S+i)*4;
+    d[k]=r; d[k+1]=g0; d[k+2]=b; d[k+3]=Math.round(Math.min(1,v)*255);
+  }
+  x.putImageData(img,0,0); return c;
+}
+
+function bakeGrainTile(){
+  var S=96,c=document.createElement('canvas'); c.width=c.height=S;
+  var x=c.getContext('2d'), img=x.createImageData(S,S), d=img.data;
+  for(var i=0;i<d.length;i+=4){ var n=Math.round(Math.random()*255); d[i]=d[i+1]=d[i+2]=n; d[i+3]=255; }
+  x.putImageData(img,0,0); return c.toDataURL();
+}
+
+/* ══════════ 4. 引擎 ══════════ */
+var cv=document.getElementById('sky'), ctx=cv.getContext('2d');
 var deck=document.getElementById('deck');
-CH.forEach(function(c,i){
-  var sc=document.createElement('div');sc.className='scene';
-  var po=document.createElement('div');po.className='poster';po.setAttribute('aria-hidden','true');
-  po.style.backgroundImage='url(ch'+i+'.jpg)';
-  po.style.backgroundPosition=(narrowScreen&&c.mop)?c.mop:c.op;
-  sc.appendChild(po);
-  if(!noVideo&&!c.still){
-    var v=document.createElement('video');
-    v.muted=true;v.defaultMuted=true;v.loop=true;v.playsInline=true;v.preload='none';
-    v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');
-    v.setAttribute('aria-hidden','true');
-    v.style.objectPosition=(narrowScreen&&c.mop)?c.mop:c.op;
-    v.addEventListener('canplay',function(){v.classList.add('ready');});
-    v.addEventListener('error',function(){
-      v.classList.remove('ready');
-      if(/\.webm$/.test(v.currentSrc||'')&&!v.dataset.fellBack){
-        v.dataset.fellBack='1';v.src='ch'+i+'.mp4';v.load();return;
-      }
-      sc.classList.add('kenburns');
-    },true);
-    sc.appendChild(v);
-  } else sc.classList.add('kenburns');   // still 章与降级档同路：海报 + 46s 缓推
-  stage.appendChild(sc);
+var secEl=[].slice.call(deck.querySelectorAll('section[data-stage]'));
+var N=secEl.length;
+var railWrap=document.getElementById('rail');
+var railA=[].slice.call(railWrap.querySelectorAll('a'));
+var railFill=railWrap.querySelector('.railfill');
+var navEl=document.getElementById('nav');
 
-  var sec=document.createElement('section');sec.className='chapter';sec.dataset.i=i;
-  var bk=document.createElement('div');bk.className='block '+c.pos;
-  var htm='';
-  if(c.num) htm+='<div class="num" aria-hidden="true">'+c.num+'</div>';
-  htm+='<div class="eyebrow">'+c.eyebrow+'</div>';
-  htm+='<h1>'+c.h.map(function(l){return '<span class="line"><span>'+l+'</span></span>';}).join('')+'</h1>';
-  htm+='<p class="en">'+c.en+'</p>';
-  htm+='<p class="body">'+c.body+'</p>';
-  /* 公式 2026-08-01 Trev 重申版（BRAND.md §1）：Mirror 入式、「灵镜」进公式。别退回「+ or =」那版 */
-  if(c.formula) htm+='<p class="formula"><i>Soul</i>（灵魂）＋ <i>Mirror</i>（镜子）＝ <i>Soulor</i>（灵镜，谐音 <i>Solar</i> 太阳）</p>';
-  if(c.finale){
-    bk.classList.add('finale');
-    htm+='<a class="cta" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener">用 TestFlight 安装 →</a>'
-       +'<p class="alt">或者写信：<a href="mailto:hello@soulor.id">hello@soulor.id</a></p>'
-       +'<p class="foot">Soulor · 灵镜 — 一面灵魂的镜子<br>SOULOR.ID · © 2026</p>';
-  }
-  bk.innerHTML=htm;
-  sec.appendChild(bk);
-  if(c.ghosts) c.ghosts.forEach(function(g){
-    var s=document.createElement('span');s.className='ghost';s.textContent=g[0];
-    s.style.left=g[1];s.style.top=g[2];sec.appendChild(s);
-  });
-  if(c.demo){
-    var dc=document.createElement('div');dc.className='democard '+c.demo.side;
-    dc.innerHTML='<div class="lab">'+c.demo.lab+'</div>'+c.demo.html;
-    sec.appendChild(dc);
-  }
-  if(c.plabs) c.plabs.forEach(function(g){
-    var s=document.createElement('span');s.className='plab';s.textContent=g[0];
-    s.dataset.fx=g[1];s.dataset.fy=g[2];s.style.transform='translateX(-50%)';sec.appendChild(s);
-  });
-  deck.appendChild(sec);
-});
-var dip=document.createElement('div');dip.id='dip';dip.setAttribute('aria-hidden','true');stage.appendChild(dip);
-var vig=document.createElement('div');vig.id='vig';vig.setAttribute('aria-hidden','true');stage.appendChild(vig);
-var scenes=[].slice.call(stage.querySelectorAll('.scene'));
-var sections=[].slice.call(deck.querySelectorAll('.chapter'));
+var W=0,H=0,M=0,dpr=1,narrowW=false,fewP=false;
+var glowHaze=null,glowCorona=null,emberSprite=null,photoSprite=null,photoR=1;
+var dotWarm=null,dotCool=null,planetSprites=[],warmGrad=null;
+var P=[],ghostIdx=[],dust=[],pdrift=[],colTop=[],colBot=[];
+var T=0,last=0,rafId=0,running=false;
 
-/* 衔接镜头：br{k} = 第 k 章 → 第 k+1 章。素材可以不存在（error → 永远用溶解兜底） */
-var bridges=[];
-function bridgeFor(k){
-  if(!USE_BRIDGES) return null;   /* 溶解版：一个 br 都不装、不下载、不入场 */
-  if(noVideo||k<0||k>=N-1) return null;
-  if(bridges[k]!==undefined) return bridges[k];
-  var v=document.createElement('video');
-  v.className='bridge';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='auto';
-  v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('aria-hidden','true');
-  var webm=v.canPlayType('video/webm; codecs="vp9"');
-  v.src='br'+k+((webm==='probably'||webm==='maybe')?'.webm':'.mp4');
-  v.addEventListener('error',function(){
-    if(/\.webm$/.test(v.currentSrc||'')&&!v.dataset.fellBack){
-      v.dataset.fellBack='1';v.src='br'+k+'.mp4';v.load();return;
+/* ══ 核的表面：一段实拍循环，画进核里 ══════════════════════════════
+   整站到这里为止都是手画的：核是三层 sprite（弥散雾 + 日冕 + 光球）叠出来的。
+   画得再准，光球那一层始终是**一张不动的贴图** —— 恒星表面该有的对流翻涌
+   canvas 给不了，硬写噪声只会更假。
+
+   所以从「点亮」这一页开始，**画的核换成拍的核**：
+   `core.mp4` 是 Seedance 2.0 以我们自己导出的那一帧为首帧生成的（见
+   `export-core-plate.js` / `crop-core-plate.py` / `prompts/core-surface.txt`），
+   首尾同帧所以无缝循环，背景是**纯黑**。
+
+   为什么背景必须纯黑：这段视频是用 `lighter`（相加）画上去的，相加混合里
+   **黑 = 透明**，所以不需要任何遮罩、边缘天然融进画面。素材的黑够不够黑
+   由 `verify-footage.py` 量（实测四角 0.00/255），浏览器解码之后会不会
+   变成 16/255（yuv 有限范围）由 `verify-core-video.js` 在真浏览器里量。
+
+   四条铁律，改这段之前先读：
+   ① **位置和大小永远由关键帧说了算**，视频只负责表面。所以素材里的球不许自己
+      漂、不许自己缩放（`verify-footage.py` 前四项量的就是这个）。
+   ② **它是增强不是依赖**。省流、`prefers-reduced-motion`、解码失败、iOS 低电量
+      模式挡掉 autoplay —— 任何一条命中，`vidMix` 停在 0，画面**逐像素回到**
+      原来那三层 sprite。首屏永远不等它。
+   ③ **不在首屏加载**。等 window load 之后的空闲帧才开始取，186KB 不该跟 HTML 抢。
+   ④ 接管时 sprite 要**同步淡出**，不能两个一起加 —— 相加叠加会把中心烧成一片
+      死白，恰好把想要的米粒组织糊掉。 */
+var coreVid=null, vidMix=0, vidOn=false, vidTried=false;
+// 素材裁切时用的半宽 = 0.70 × 当时的 coreR（crop-core-plate.py --half 700，coreR 1000）。
+// 画的时候必须按同一个比例还原，视频里的球才会和 sprite 的球严丝合缝地重合。
+var VID_SPAN=0.70;
+// 实拍那层的亮度系数，以及视频进来时 sprite 光球让出多少亮度。
+// 两个都**不是拍脑袋的**：`verify-core-video.js` 逐页量「拦掉视频」和「开着视频」
+// 两版的核区平均亮度，`on(G) = 其余层 + G × 视频贡献` 是线性的，测两个 G 就能解出
+// 让比值落在 1.0 附近的那个值。**换素材、改羽化，都必须重解一次。**
+var VID_GAIN=0.34, VID_DIM=0.19;
+var pageF=0,nearPage=-1,litDone=false,bloomT=-1,comets=[],cometNext=2.5;
+var CUR={},TGT={};
+KEYS.forEach(function(k){ CUR[k]=KF[0][k]; TGT[k]=KF[0][k]; });
+CUR.ct=0.5; TGT.ct=0.5;   // 正文上沿（占页高的比例）
+CUR.cb=0.5; TGT.cb=0.5;   // 正文下沿——窄屏摆核/幽灵短语用的就是这个
+                          // ⚠️ ct/cb 都不在 KEYS 里，所以初始化和平滑都得单独写；
+                          // 漏了平滑那一步 CUR.cb 就是 undefined，cy 会算成 NaN、核直接不画
+
+function narrowCX(v){ return 0.5+(v-0.5)*0.71; }    // 照亮页 .22 → .30
+function narrowCY(v){ return 0.26+(v-0.5)*0.42; }   // 核抬到上方，下方留给文字
+
+function buildParticles(){
+  var n=fewP?360:600;
+  P=[];
+  for(var i=0;i<n;i++){
+    var h1=hash2(i*1.13+0.7,3.31), h2=hash2(i*2.71+1.9,7.13), h3=hash2(i*0.53+4.4,11.7),
+        h4=hash2(i*3.17+2.2,5.09), h5=hash2(i*1.77+6.1,13.3), h6=hash2(i*4.31+0.3,2.17),
+        h7=hash2(i*0.91+8.8,17.9);
+    var hx=h1,hy=h2,mx=hx-0.5,my=hy-0.5,mr=Math.sqrt(mx*mx+my*my);
+    if(mr<0.20){ var push=(0.20+h3*0.28)/(mr+0.001); hx=0.5+mx*push; hy=0.5+my*push; }
+    hx=clamp(hx,0.015,0.985); hy=clamp(hy,0.015,0.985);
+    var band=h4<0.30?0.30:(h4<0.58?0.47:(h4<0.79?0.64:0.28+h5*1.00));
+    var orb=Math.max(0.10,band+(h5-0.5)*0.055);
+    P.push({hx:hx,hy:hy,rr:orb,a0:h6*Math.PI*2,sp:0.42/Math.sqrt(orb+0.14),
+            sz:1+h7*1.6,cool:h3>0.62,tw:h5*Math.PI*2,base:0.28+h3*0.62,x:0,y:0,a:0});
+  }
+  ghostIdx=[];
+  // 挂靠点：窄屏全部挑在上半屏（下半屏归正文），宽屏才铺满四角
+  // 窄屏的锚点在**下半屏**（文字在上、天空在下）；宽屏仍是四角散布
+  var want=narrowW?[[0.19,0.80],[0.64,0.86],[0.33,0.91],[0.70,0.96]]
+                  :[[0.30,0.24],[0.74,0.36],[0.24,0.72],[0.70,0.78]];
+  for(var w=0;w<4;w++){
+    var bi=0,bd=1e9;
+    for(var j=0;j<P.length;j++){
+      if(ghostIdx.indexOf(j)>=0) continue;
+      var ddx=P[j].hx-want[w][0], ddy=P[j].hy-want[w][1], dd2=ddx*ddx+ddy*ddy;
+      if(dd2<bd){ bd=dd2; bi=j; }
     }
-    bridges[k]=null;             // 彻底没有 → 以后都走溶解
-    if(v.parentNode)v.parentNode.removeChild(v);
-  },true);
-  v.load();
-  stage.insertBefore(v,dip);     // 在场景之上、黑场之下
-  bridges[k]=v;
-  return v;
+    ghostIdx.push(bi);
+  }
+  dust=[];
+  for(var s=0;s<60;s++)
+    dust.push({x:0.52+hash2(s*1.37,9.13)*0.46,y:0.06+hash2(s*2.11,3.71)*0.88,b:0.16+hash2(s*0.77,6.29)*0.52});
 }
 
-/* ══ 胶片颗粒 ══ */
+function planetPos(i){
+  var d=PLANETS[i];
+  var y=narrowW?(0.14+(d[1]-0.24)*0.40):d[1];
+  return { x:d[0]*W, y:y*H, r:d[2]*M*(narrowW?0.92:1) };
+}
+
+function rebake(){
+  var iw=window.innerWidth, ih=window.innerHeight;
+  narrowW=iw<800;
+  fewP=Math.max(iw,ih)<800 || iw<720;
+  dpr=Math.min(window.devicePixelRatio||1, narrowW?1.75:2);
+  cv.width=W=Math.round(iw*dpr); cv.height=H=Math.round(ih*dpr);
+  cv.style.width=iw+'px'; cv.style.height=ih+'px';
+  M=Math.min(W,H);
+
+  var S=narrowW?384:512;
+  glowHaze   = bakeGlow(S,1,1,1,0);        // 虚：完整的一团弥散光
+  glowCorona = bakeGlow(S,1,1,1,0.26);     // 实：中心挖空，只剩日冕
+  emberSprite= bakeGlow(S,1.0,0.62,0.42,0);// 红温原初核（聚拢页）
+  // 光球层单独按屏幕上的真实大小烘，不从大 sprite 放大 —— 米粒组织放大就糊了
+  photoR = Math.max(8, Math.round(0.26*(KF[5].cr*M*(narrowW?0.8:1))));
+  photoSprite = bakePhotosphere(photoR);
+  dotWarm=bakeDot(16,255,236,208);
+  dotCool=bakeDot(16,216,210,234);
+
+  var pcx=(narrowW?narrowCX(KF[7].cx):KF[7].cxw)*W;
+  // 窄屏的核是按正文上沿钉的，星球受光方向要用同一个位置估算，否则光影和画面对不上
+  var pcy=narrowW
+    ? Math.min(H+0.30*(KF[7].cr*M*0.8), ((colBot[7]||H*0.5/dpr)/(H/dpr))*H + 18*dpr + KF[7].cr*M*0.8*0.50)
+    : KF[7].cyw*H;
+  var tintR=[1.03,0.92,1.08,0.86], tintB=[0.86,1.12,0.80,1.18];
+  planetSprites=[];
+  for(var p=0;p<PLANETS.length;p++){
+    var pp=planetPos(p);
+    var lx=pcx-pp.x, ly=pcy-pp.y, lm=Math.sqrt(lx*lx+ly*ly)||1;
+    var lit=1/(1+Math.pow(lm/(M*0.46),2)*1.9);
+    // lz 抬到 0.62+：光源带足够 z 分量，相位推到凸月——细弯钩相位是 BRAND.md 明令禁止的形象
+    planetSprites.push({img:bakePlanet(pp.r,lx/lm,ly/lm,0.62+p*0.12,tintR[p],tintB[p],lit,p)});
+  }
+
+  warmGrad=ctx.createLinearGradient(0,H*0.52,0,H);
+  warmGrad.addColorStop(0,'rgba(255,190,120,0)');
+  warmGrad.addColorStop(1,'rgba(255,176,108,1)');
+
+  buildParticles();
+  // 量出每页正文的上沿：窄屏要靠它决定核摆在哪，不能用固定比例。
+  // offsetTop 相对 section（section 是 position:relative），不受滚动影响；
+  // 入场动画只动 transform 不动布局，所以这个值是稳定的。
+  colTop=[]; colBot=[];
+  for(var ci2=0;ci2<N;ci2++){
+    var c2=secEl[ci2].querySelector('.col');
+    colTop.push(c2?c2.offsetTop:0);
+    // 下沿：手机改成「文字在上、动图在下」之后，核和幽灵短语要避让的是**正文下沿**。
+    // ⚠️ 必须减掉 padding-bottom —— offsetHeight 含内边距，而 .col 底部那块是
+    // 给 footbar 让路的空白，算进去会把核推到屏幕外面（核就没了）。
+    if(c2){
+      var pb=parseFloat(getComputedStyle(c2).paddingBottom)||0;
+      colBot.push(c2.offsetTop + c2.offsetHeight - pb);
+    } else colBot.push(0);
+  }
+}
+
+/* ── 页位：一切稳定性的来源 ──
+   吸附之后 scrollTop 正好是页高的整数倍 → p 是整数 → 插值系数 0 或 1
+   → 画面精确等于 KF[page]。加一个死区吃掉分数像素带来的尾数。 */
+function readScroll(){
+  var ph=deck.clientHeight||1;
+  var p=clamp(deck.scrollTop/ph, 0, N-1);
+  var r=Math.round(p);
+  if(Math.abs(p-r)<0.005) p=r;          // 死区：保证"停下来＝正好在那一帧"
+  pageF=p;
+  var i0=Math.floor(p), i1=Math.min(N-1,i0+1), t=s01(p-i0);
+  for(var k=0;k<KEYS.length;k++){
+    var key=KEYS[k];
+    TGT[key]=KF[i0][key]+(KF[i1][key]-KF[i0][key])*t;
+  }
+  var a0=colTop[i0]||0, a1=colTop[i1]||0;
+  TGT.ct=(a0+(a1-a0)*t)/ph;
+  var b0=colBot[i0]||0, b1=colBot[i1]||0;
+  TGT.cb=(b0+(b1-b0)*t)/ph;
+  var near=Math.round(p);
+  if(near!==nearPage){
+    nearPage=near;
+    var col=secEl[near].querySelector('.col');
+    if(col) col.classList.add('on');
+    syncRail(near);
+  }
+  var sc=deck.scrollTop>34;
+  navEl.classList.toggle('scrolled',sc);
+  if(railFill) railFill.style.height=(p/(N-1)*100)+'%';
+}
+
+function syncRail(near){
+  for(var i=0;i<railA.length;i++) railA[i].classList.toggle('act', i===near);
+}
+
+/* 拉条的点按各自那一页的亮度上色 —— 拉条本身就是这个故事的缩影：
+   上面几个是冷灰的，越往下越烧成核金。一眼看得见"天要亮了"。 */
+function paintRail(){
+  for(var i=0;i<railA.length;i++){
+    var l=Math.pow(KF[i].lum,0.62);
+    var r=Math.round(59+196*l), g=Math.round(52+165*l), b=Math.round(70+90*l);
+    var b0=railA[i].querySelector('b');
+    b0.style.background='rgb('+r+','+g+','+b+')';
+    b0.style.boxShadow=l>0.25?('0 0 '+(4+8*l).toFixed(1)+'px rgba(255,209,154,'+(0.16*l).toFixed(3)+')'):'none';
+  }
+}
+
+/* ── 帧 ── */
+function draw(dt){
+  var S=CUR;
+  var cxf=narrowW?narrowCX(S.cx):S.cxw;
+  var cx=cxf*W;
+  var coreR=S.cr*M*(narrowW?0.8:1);
+  var cy;
+  if(narrowW){
+    // 窄屏：文字在上、动图在下（Trev 2026-07-29：「放中间就会挡住那个动态图，
+    // 直接放上面吧文字」）。所以核钉在**正文下沿之下**——以前是钉在上沿之上，
+    // 文字一挪到顶上，按旧逻辑核就被挤出屏幕了。
+    // 仍然不能用固定比例：正文高度随内容和视口变，写死的阈值必然有一档会撞上。
+    // 空间不够就让底部裁掉一点，宁可裁一个大太阳，也不要缩成一个小点——
+    // 成形那页的主角就是它。
+    cy = S.cb*H + 18*dpr + coreR*0.50;
+    if(cy > H + coreR*0.30) cy = H + coreR*0.30;
+  } else {
+    cy = S.cyw*H;
+  }
+
+  // 1) 底
+  ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+  ctx.fillStyle='#050409'; ctx.fillRect(0,0,W,H);
+  if(S.lum>0.001){
+    ctx.globalAlpha=S.lum*0.12; ctx.fillStyle=warmGrad;
+    ctx.fillRect(0,H*0.52,W,H*0.48); ctx.globalAlpha=1;
+  }
+
+  // 2) 粒子
+  var g=s01(S.grav), flat=1-0.55*S.disk;
+  var eat=S.grav>0.55&&S.lum>0.04;
+  var infall=(!reduce&&S.lum>0.25&&S.grav>0.7)?dt*0.020*S.lum:0;
+  for(var i=0;i<P.length;i++){
+    var p=P[i];
+    if(infall>0){
+      p.rr-=infall;
+      if(p.rr*S.rs*M<0.30*coreR) p.rr=0.92+hash2(i*7.3+T,4.1)*0.42;
+    }
+    var rr=p.rr*S.rs*M, ang=p.a0+T*p.sp*S.spin;
+    var ox=cx+Math.cos(ang)*rr, oy=cy+(Math.sin(ang)*rr)*flat;
+    var hxp=p.hx*W, hyp=p.hy*H;
+    var x=hxp+(ox-hxp)*g, y=hyp+(oy-hyp)*g;
+    var a=p.base;
+    if(!reduce) a*=0.72+0.28*Math.sin(T*1.6+p.tw);
+    a*=0.75+0.25*S.lum;
+    // 核还没亮的那两页，靠这个把"星辰正在往内核附近聚"画出来：
+    // 离核越近的尘越亮。序幕只有一丝，虚无那页明显得多。
+    if(S.halo>0.004){
+      var hdx=(x-cx)/(M*0.46), hdy=(y-cy)/(M*0.46);
+      a*=1+S.halo*1.9*Math.pow(Math.max(0,1-Math.sqrt(hdx*hdx+hdy*hdy)),2.2);
+    }
+    if(eat){
+      var ddx=x-cx, ddy=y-cy;
+      a*=sstep(0.34,0.80,Math.sqrt(ddx*ddx+ddy*ddy)/coreR);
+    }
+    p.x=x; p.y=y; p.a=a;
+    if(a<=0.004) continue;
+    var sz=p.sz*dpr*3.2;
+    ctx.globalAlpha=Math.min(1,a);
+    ctx.drawImage(p.cool?dotCool:dotWarm, x-sz/2, y-sz/2, sz, sz);
+  }
+
+  // 3) 幽灵短语（挂在 4 颗粒子上，随 grav 上升淡出）
+  // 手机上这几句是上半屏唯一的内容，太淡就只剩"一片空白"；
+  // 但它们又不能飘到下半屏的正文上，也不能撞右边的拉条。所以：更亮更大 + 划定活动范围。
+  var gh=(1-S.grav)*(narrowW?0.92:0.55);
+  if(gh>0.02){
+    ctx.font=((narrowW?14.5:12)*dpr)+'px "PingFang SC","Hiragino Sans GB",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillStyle='#CBC2D6';
+    var railGuard=(narrowW?76:0)*dpr;
+    for(var q2=0;q2<ghostIdx.length;q2++){
+      var gp=P[ghostIdx[q2]]; if(!gp) continue;
+      var ga=gp.a*gh;
+      if(narrowW){
+        // 用正文的实际**下沿**当基准（跟核同一个 S.cb），不能写死比例——
+        // 正文位置随内容多少和视口高度变，写死的阈值在真机上必然有一档会撞上。
+        // 文字在上、天空在下，所以是"到正文下沿之前必须淡干净"，方向跟以前相反。
+        var gLim=S.cb;
+        ga*=sstep(gLim+0.03,gLim+0.15,gp.y/H);
+        var wid=ctx.measureText(GHOST[q2]).width;
+        if(gp.x+11*dpr+wid > W-railGuard) continue; // 别顶到拉条上
+      }
+      if(ga<=0.01) continue;
+      ctx.globalAlpha=Math.min(1,ga);
+      ctx.fillText(GHOST[q2], gp.x+11*dpr, gp.y+1*dpr);
+    }
+  }
+
+  // 4) 彗星（落下页；reduced-motion 关）
+  if(!reduce){
+    if(nearPage===2&&T>cometNext){
+      cometNext=T+6;
+      var sd=hash2(Math.floor(T*13)*1.7,2.9), sd2=hash2(Math.floor(T*13)*3.1,8.3);
+      var side=Math.floor(sd*4)%4, x0,y0;
+      if(side===0){ x0=sd2*W; y0=-0.07*H; }
+      else if(side===1){ x0=1.07*W; y0=sd2*H; }
+      else if(side===2){ x0=sd2*W; y0=1.07*H; }
+      else { x0=-0.07*W; y0=sd2*H; }
+      comets.push({x0:x0,y0:y0,t0:T,ang:sd2*Math.PI*2,rf:0.5+sd*0.5});
+    }
+    for(var ci=comets.length-1;ci>=0;ci--){
+      var c=comets[ci], u=(T-c.t0)/1.8;
+      if(u>=1||u<0){ comets.splice(ci,1); continue; }
+      var tr=c.rf*S.rs*M;
+      var tx=cx+Math.cos(c.ang)*tr, ty=cy+Math.sin(c.ang)*tr*flat;
+      var vx=tx-c.x0, vy=ty-c.y0, vl=Math.sqrt(vx*vx+vy*vy)||1, bend=0.20*vl;
+      var qx=(c.x0+tx)/2+(-vy/vl)*bend, qy=(c.y0+ty)/2+(vx/vl)*bend;
+      for(var k2=0;k2<5;k2++){
+        var uu=u-k2*0.035; if(uu<0) continue;
+        var iv=1-uu;
+        var px2=iv*iv*c.x0+2*iv*uu*qx+uu*uu*tx;
+        var py2=iv*iv*c.y0+2*iv*uu*qy+uu*uu*ty;
+        var ca=(1-k2*0.20)*Math.min(1,u*7)*(1-u*u)*0.95;
+        if(ca<=0.01) continue;
+        var cs=(k2===0?5.6:4.2-k2*0.55)*dpr;
+        ctx.globalAlpha=Math.min(1,ca);
+        ctx.drawImage(dotWarm, px2-cs/2, py2-cs/2, cs, cs);
+      }
+    }
+  }
+
+  // 5) 核：虚 → 实。
+  //    弥散雾（glowHaze）随 solid 交给日冕（glowCorona），光球层从中心长出来。
+  //    光是相加的，全用 lighter。
+  var base=Math.pow(clamp(S.lum,0,1),0.8);
+  var toGold=sstep(0.08,0.45,S.lum);
+  var sol=clamp(S.solid,0,1);
+  var dia=coreR*2*(0.92+0.08*S.lum);
+  // 实拍表面接管的程度。两个因子相乘：
+  //   vidMix —— 素材到位没有（0→1 淡入，见 frame()），任何一条降级路径命中它就永远是 0
+  //   sol    —— 核"实"到什么程度。前几页核还是一团雾，那是画的活，视频不掺和；
+  //             越往后越实，接管越多，「点亮」那一页正好是交接的过程本身。
+  var take=vidMix*sstep(0.15,0.75,sol);
+  if(base>0.001){
+    ctx.globalCompositeOperation='lighter';
+    var ea=base*(1-toGold)*1.6;
+    if(ea>0.003){ ctx.globalAlpha=Math.min(1,ea); ctx.drawImage(emberSprite, cx-dia/2, cy-dia/2, dia, dia); }
+    var ga2=base*toGold;
+    if(ga2>0.003){
+      if(sol<0.995){ ctx.globalAlpha=Math.min(1,ga2*(1-sol)); ctx.drawImage(glowHaze,   cx-dia/2, cy-dia/2, dia, dia); }
+      // ⚠️ 日冕这一层**不交给视频**，永远画满。
+      //    第一版让视频连日冕一起接管，把暗部提亮之后露出两个硬伤：素材羽化到 0 的
+      //    那个半径变成一道看得见的圆边，日冕带全是被模型放大的抖动颗粒。
+      //    现在分工是：**盘子交给拍的，盘子外面那圈光交给画的** —— sprite 的日冕
+      //    本来就平滑干净可控，而 canvas 真正给不了的只有表面的对流翻涌。
+      //    素材那边对应地收到了 0.40→0.60 羽化（remaster-core.py），收边落在
+      //    日冕最亮的地方，接缝被光盖住。
+      if(sol>0.005){ ctx.globalAlpha=Math.min(1,ga2*sol); ctx.drawImage(glowCorona, cx-dia/2, cy-dia/2, dia, dia); }
+    }
+    // 光球层：实体的那个面。半径跟着 coreR 走，从烘好的最大尺寸缩下来（缩小不糊）。
+    var photoA=Math.pow(sol,1.70)*(0.68+0.32*base);
+    if(sol>0.006){
+      var prNow=0.26*coreR;
+      // 凝聚：还"虚"的时候盘子大而淡，随实体度收拢成小而实——收拢本身就是"凝"的动作
+      prNow*=0.62+0.38*sol;
+      var pd=prNow/photoR*photoSprite.width;
+      // 不能整体乘 base：lum 一低盘子就淡成中性灰（加法混合下半透明的近白就是灰）。
+      // 恒星的表面不会因为变小变远就变透明，给个 0.68 的下限。
+      // 视频进来时只压一点点（VID_DIM），给相加的那层腾出亮度 —— **不能压到 0**，
+      // 盘子的**轮廓和边缘**永远由它说了算，见下面那段。
+      ctx.globalAlpha=Math.min(1,photoA*(1-take*VID_DIM));
+      ctx.drawImage(photoSprite, cx-pd/2, cy-pd/2, pd, pd);
+    }
+    // 实拍的那一层：**只补盘子内部的纹理，不碰边缘**。
+    //
+    // 试过让它整个接管光球，两次都更难看：模型输出比我们自己渲染的**软**，
+    // 盘子边缘糊成一圈渐变、球读起来像失焦（`vid/disk2.png` 那组对比）。
+    // 结论写在这里，别再试第三次：
+    //   **画的负责形（轮廓、临边、颜色），拍的负责质（表面的对流翻涌）。**
+    // 所以素材羽化收到 0.20→0.34（盘子半径是 0.371），到边之前就淡干净了，
+    // 最外圈那 8% 纯粹是画的 —— 锐利的那一圈一点没动。
+    //
+    // 尺寸严格按素材的裁切比例还原（VID_SPAN），纹理才会和盘子严丝合缝地重合。
+    if(take>0.002&&coreVid&&coreVid.readyState>=2){
+      var vd=dia*VID_SPAN;
+      ctx.globalAlpha=Math.min(1,take*photoA*VID_GAIN);
+      try{ ctx.drawImage(coreVid, cx-vd/2, cy-vd/2, vd, vd); }
+      catch(e){ vidOn=false; coreVid=null; }   // 解码器抽风也不能让整帧崩掉
+    }
+    // 点火脉冲
+    if(bloomT>=0){
+      var bu=(T-bloomT)/0.6;
+      if(bu<=1){
+        var bs=dia*(1+0.25*Math.sin(bu*Math.PI));
+        ctx.globalAlpha=0.35*(1-bu);
+        ctx.drawImage(glowHaze, cx-bs/2, cy-bs/2, bs, bs);
+      } else bloomT=-1;
+    }
+    ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+  }
+
+  // 6) 星球 + 标签 + 星球间的尘
+  var pv=Math.max(0,(S.pl-0.12)/0.88);
+  if(pv>0.004){
+    ctx.globalCompositeOperation='lighter';
+    for(var du=0;du<dust.length;du++){
+      var dd3=dust[du], da=dd3.b*pv*0.5, ds=(1.1+dd3.b*1.6)*dpr*1.6;
+      ctx.globalAlpha=Math.min(1,da);
+      ctx.drawImage(dotWarm, dd3.x*W-ds/2, dd3.y*H-ds/2, ds, ds);
+    }
+    ctx.globalCompositeOperation='source-over';
+    // 四颗一样亮、而且完全静止 —— 那就是贴纸。三件事把它拉回"场景"：
+    //   漂移（各自的周期和幅度都不同）、景深（远的更暗）、到场时略微涨大。
+    var PDEPTH=[0.94,1.00,0.84,0.66];
+    for(var pi=0;pi<planetSprites.length;pi++){
+      var sp=planetSprites[pi], pp2=planetPos(pi), im=sp.img, sw=im.width;
+      var ph=T*(0.048+pi*0.019)+pi*2.1;
+      var ox2=reduce?0:Math.cos(ph)*(2.4+pi*1.1)*dpr;
+      var oy2=reduce?0:Math.sin(ph*0.83+1.3)*(1.7+pi*0.8)*dpr;
+      var sc=(0.90+0.10*Math.min(1,pv*1.35))*sw;
+      ctx.globalAlpha=Math.min(1,pv*PDEPTH[pi]);
+      ctx.drawImage(im, pp2.x+ox2-sc/2, pp2.y+oy2-sc/2, sc, sc);
+      pp2.ox=ox2; pp2.oy=oy2; pdrift[pi]=pp2;
+    }
+    // 标签：上一版是钉在球底下的 mono 小字，读起来像信息图不像场景。
+    // 拉开字距、压暗、离球远一点，让它退回注解的位置。
+    ctx.font=(9*dpr)+'px ui-monospace,SFMono-Regular,Menlo,monospace';
+    if('letterSpacing' in ctx) ctx.letterSpacing=(1.6*dpr)+'px';
+    ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='rgba(255,217,160,1)';
+    for(var li=0;li<PLABEL.length;li++){
+      var lp=pdrift[li]||planetPos(li), hw=ctx.measureText(PLABEL[li]).width/2+8*dpr;
+      ctx.globalAlpha=Math.min(1,pv*0.30*PDEPTH[li]);
+      ctx.fillText(PLABEL[li], clamp(lp.x+(lp.ox||0),hw,W-hw), lp.y+(lp.oy||0)+lp.r+15*dpr);
+    }
+    if('letterSpacing' in ctx) ctx.letterSpacing='0px';
+    ctx.globalAlpha=1;
+  }
+
+  // 7) 主权环：不能用 ctx.arc 画一个完美正圆再纯色描边 —— 那是最容易露怯的一笔。
+  //    改成带半径起伏的折线路径（跟光晕外圈同一条纪律：完美的圆是程序生成的签名），
+  //    再单独重描最后一小段当"笔尖"，读起来是正在被画出来，而不是贴上去的一个圈。
+  if(S.ring>0.004){
+    var prog=Math.min(1,S.ring), R0=0.42*M, TAU=Math.PI*2, steps=170;
+    function ringPt(u){
+      var an=-Math.PI/2+u*TAU;
+      var rr=R0*(1+0.0052*Math.sin(an*3+1.1)+0.0028*Math.sin(an*7-0.4)+0.0015*Math.sin(an*13+2.2));
+      return [cx+Math.cos(an)*rr, cy+Math.sin(an)*rr];
+    }
+    ctx.save();
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath();
+    for(var g2=0;g2<=steps;g2++){
+      var q=ringPt(g2/steps*prog);
+      g2?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);
+    }
+    ctx.strokeStyle='rgba(255,217,160,0.19)'; ctx.lineWidth=Math.max(1,1*dpr); ctx.stroke();
+    // 笔尖：最后 16% 更亮、更粗，带一点外发光
+    var h0=Math.max(0,prog-0.16);
+    if(prog-h0>0.004){
+      ctx.beginPath();
+      var hs=Math.max(6,Math.round(steps*(prog-h0)/Math.max(prog,0.001)));
+      for(var g3=0;g3<=hs;g3++){
+        var q2b=ringPt(h0+(prog-h0)*g3/hs);
+        g3?ctx.lineTo(q2b[0],q2b[1]):ctx.moveTo(q2b[0],q2b[1]);
+      }
+      ctx.strokeStyle='rgba(255,229,183,0.60)'; ctx.lineWidth=Math.max(1,1.4*dpr);
+      ctx.shadowColor='rgba(255,209,154,0.55)'; ctx.shadowBlur=9*dpr;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+function frame(now){
+  rafId=requestAnimationFrame(frame);
+  var dt=Math.min(0.05,(now-last)/1000); last=now;
+  if(!reduce) T+=dt;
+  readScroll();
+  // 轻平滑吃掉滚动抖动；收敛后直接吸附，不然浮点尾数会让"静止"的画面每帧亚像素抖动
+  for(var k=0;k<KEYS.length;k++){
+    var key=KEYS[k], d0=TGT[key]-CUR[key];
+    CUR[key]=(d0<0.00002&&d0>-0.00002)?TGT[key]:CUR[key]+d0*0.15;
+  }
+  var dct=TGT.ct-CUR.ct;
+  CUR.ct=(dct<0.00002&&dct>-0.00002)?TGT.ct:CUR.ct+dct*0.15;
+  var dcb=TGT.cb-CUR.cb;
+  CUR.cb=(dcb<0.00002&&dcb>-0.00002)?TGT.cb:CUR.cb+dcb*0.15;
+  // 实拍表面：到位之后用 1.4 秒淡进来。不给渐变的话，视频 ready 的那一帧
+  // 核会"啪"地换一次脸——正好是用户还在读首屏的时候，很扎眼。
+  var vidWant=(vidOn&&coreVid&&coreVid.readyState>=2)?1:0;
+  vidMix+=(vidWant-vidMix)*Math.min(1,dt/1.4);
+  if(vidMix<0.0005) vidMix=vidWant?vidMix:0;
+  if(!litDone&&CUR.lum>0.30){
+    litDone=true;
+    document.body.classList.add('lit');
+    if(!reduce) bloomT=T;
+  }
+  if(!window.FILM) draw(dt);   /* FILM 版：画面交给 #stage，引擎只当骨架 */
+}
+function start(){
+  if(running) return;
+  running=true; last=performance.now(); rafId=requestAnimationFrame(frame);
+  if(coreVid&&vidOn){ var p=coreVid.play(); if(p&&p.catch) p.catch(function(){}); }
+}
+function stop(){ running=false; cancelAnimationFrame(rafId); if(coreVid) coreVid.pause(); }
+document.addEventListener('visibilitychange',function(){ document.hidden?stop():start(); });
+
+/* ── 核视频：取素材 + 四条降级路径 ──────────────────────────────
+   这个函数**任何一步失败都不该有后果** —— 失败＝ vidOn 永远是 false ＝
+   draw() 里那段跳过 ＝ 画面就是原来三层 sprite 的样子。所以这里一个
+   throw 都不能往外冒，也不允许把 canvas 那条主线挡住。 */
+function initCoreVideo(){
+  if(window.FILM) return;   /* FILM 版：核由整幅镜头出，不取 core.mp4 */
+  if(vidTried) return; vidTried=true;
+  // ① 用户明确要求减少动态：这是"动态效果"，不是内容，直接不取
+  if(reduce) return;
+  // ② 省流模式 / 2G：这段素材不值得，画的核已经完整
+  var nc=navigator.connection;
+  if(nc&&(nc.saveData||/(^|-)2g$/.test(nc.effectiveType||''))) return;
+  // ③ 直接从磁盘打开（file://）：**必须跳过**。
+  //    file:// 下每个文件都是各自独立的不透明源，视频一旦画进 canvas 就把 canvas
+  //    "污染"了，之后任何 getImageData 直接抛 SecurityError。
+  //    本仓库一半的验收脚本（verify-core-mobile.js 等）就是 file:// + 读像素，
+  //    2026-08-01 接进来当场全挂。线上是 https 同源、不存在这个问题，
+  //    所以这里只挡 file:// —— 想在真环境里验，用 verify-core-video.js，它起了本地 http。
+  if(location.protocol==='file:') return;
+  var v;
+  try{ v=document.createElement('video'); }catch(e){ return; }
+  // 两个编码，只下一个：
+  //   WebM/VP9  —— 更小（133KB vs 185KB），Chrome / Firefox / Edge / Safari 14+ 都能放
+  //   MP4/H.264 —— iOS Safari 的保底，那边 VP9 支持到今天仍然不稳
+  // ⚠️ 别以为"MP4 到处都能放"就只发一个：**Playwright 自带的 Chromium 是开源构建，
+  //    根本没有 H.264 解码器**（2026-08-01 第一次接进来就栽在这——视频 err=4
+  //    MEDIA_ERR_SRC_NOT_SUPPORTED，看着像素材坏了，其实是测试浏览器放不了）。
+  //    发两个编码之后，验证脚本走 VP9、真机走谁都行，合成那条代码路径是同一条。
+  var canWebm=v.canPlayType&&v.canPlayType('video/webm; codecs="vp9"');
+  v.src=(canWebm==='probably'||canWebm==='maybe')?'core.webm':'core.mp4';
+  v.loop=true; v.muted=true; v.defaultMuted=true; v.preload='auto';
+  v.playsInline=true;
+  v.setAttribute('muted',''); v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline','');
+  // 留在 DOM 里（有些浏览器不给游离元素解码），但一个像素、不可见、不可点
+  v.style.cssText='position:fixed;left:-9px;top:-9px;width:1px;height:1px;opacity:0;pointer-events:none';
+  v.setAttribute('aria-hidden','true');
+  function giveUp(){ vidOn=false; coreVid=null; }
+  v.addEventListener('error',giveUp);
+  v.addEventListener('stalled',function(){ /* 慢就慢，别放弃：ready 之前本来就用 sprite */ });
+  v.addEventListener('playing',function(){ coreVid=v; vidOn=true; });
+  v.addEventListener('canplay',function(){
+    var p=v.play();
+    // ③ iOS 低电量模式会连 muted autoplay 一起挡。挂一次"首次交互再试"，
+    //    再失败就彻底认了 —— 不做第三次，免得每次点击都在重试。
+    if(p&&p.catch) p.catch(function(){
+      var again=function(){
+        document.removeEventListener('touchstart',again);
+        document.removeEventListener('click',again);
+        deck.removeEventListener('scroll',again);
+        var q=v.play(); if(q&&q.catch) q.catch(giveUp);
+      };
+      document.addEventListener('touchstart',again,{once:true,passive:true});
+      document.addEventListener('click',again,{once:true});
+      deck.addEventListener('scroll',again,{once:true,passive:true});
+    });
+  });
+  document.body.appendChild(v);
+}
+// ④ 绝不跟首屏抢带宽：等 load 之后的空闲帧。没有 requestIdleCallback 就退到 setTimeout。
 (function(){
-  var g=document.createElement('div');g.id='grain';g.setAttribute('aria-hidden','true');
-  var c=document.createElement('canvas');c.width=c.height=128;
-  var x=c.getContext('2d'),im=x.createImageData(128,128);
-  for(var i=0;i<im.data.length;i+=4){var nz=(Math.random()*255)|0;
-    im.data[i]=im.data[i+1]=im.data[i+2]=nz;im.data[i+3]=255;}
-  x.putImageData(im,0,0);
-  g.style.background='url('+c.toDataURL()+')';
-  stage.appendChild(g);
-  if(!reduce){var f=0;setInterval(function(){f=(f+1)%3;
-    g.style.transform='translate('+(f*17)+'px,'+(f*-23)+'px)';},120);}
+  var go=function(){
+    (window.requestIdleCallback||function(f){setTimeout(f,600);})(initCoreVideo,{timeout:3000});
+  };
+  if(document.readyState==='complete') go();
+  else window.addEventListener('load',go,{once:true});
 })();
 
-/* ══ 章节视频装载/卸载 ══ */
-function srcFor(i){
-  var v=scenes[i].querySelector('video');if(!v||v.dataset.src) return v;
-  var webm=v.canPlayType('video/webm; codecs="vp9"');
-  v.src='ch'+i+((webm==='probably'||webm==='maybe')?'.webm':'.mp4');
-  v.dataset.src='1';v.preload='auto';v.load();
-  return v;
+/* ── 翻页 ── */
+function goto(i,smooth){
+  i=clamp(Math.round(i),0,N-1);
+  deck.scrollTo({top:i*deck.clientHeight, behavior:(smooth&&!reduce)?'smooth':'auto'});
 }
-function ensureLoaded(i){
-  for(var k=Math.max(0,i-1);k<=Math.min(N-1,i+1);k++) srcFor(k);
-  bridgeFor(i);bridgeFor(i-1);
-  scenes.forEach(function(s,k){
-    if(Math.abs(k-i)<=1)return;
-    var vv=s.querySelector('video');
-    if(vv&&vv.dataset.src){
-      vv.removeAttribute('src');vv.load();
-      delete vv.dataset.src;vv.classList.remove('ready');
-    }
-  });
-  bridges.forEach(function(b,k){
-    if(!b)return;
-    if(k<i-1||k>i+1){
-      if(b.parentNode)b.parentNode.removeChild(b);
-      bridges[k]=undefined;
-    }
-  });
-}
+// 锚点链接自己接管：#hash 在 scroll 容器里默认行为不可靠
+document.addEventListener('click',function(e){
+  var a=e.target.closest?e.target.closest('a[href^="#"]'):null;
+  if(!a) return;
+  var id=a.getAttribute('href').slice(1);
+  for(var i=0;i<secEl.length;i++) if(secEl[i].id===id){ e.preventDefault(); goto(i,true); return; }
+},true);
 
-/* ══ 播放（含被拒断路 + 手势解锁）══ */
-var playFail=[],playBlocked=false,gestureArmed=false,cur=-1;
-function tryPlay(v,i){
-  if(playBlocked){ scenes[i]&&scenes[i].classList.add('kenburns'); return; }
-  var now=performance.now();
-  if(v.dataset.lastTry&&now-v.dataset.lastTry<1000) return;
-  v.dataset.lastTry=now;
-  var pr=v.play();
-  if(pr&&pr.catch)pr.catch(function(){
-    playFail[i]=(playFail[i]||0)+1;
-    if(playFail[i]>=3){
-      playBlocked=true;
-      scenes.forEach(function(s){s.classList.add('kenburns');});
-      if(!gestureArmed){
-        gestureArmed=true;
-        var unlock=function(){
-          playBlocked=false;playFail=[];
-          scenes.forEach(function(s){s.classList.remove('kenburns');});
-          var vv=cur>=0&&scenes[cur].querySelector('video');
-          if(vv){delete vv.dataset.lastTry;tryPlay(vv,cur);}
-        };
-        addEventListener('pointerdown',unlock,{once:true});
-        addEventListener('touchend',unlock,{once:true});
-        addEventListener('keydown',unlock,{once:true});
-      }
-    }
-  });
-}
-var seeking={},pending={};
-function seekTo(v,key,t){
-  if(!isFinite(v.duration)||v.duration<=0) return;
-  t=Math.min(Math.max(0,t),v.duration-0.06);
-  if(seeking[key]){pending[key]=t;return;}
-  seeking[key]=true;
-  try{v.currentTime=t;}catch(e){seeking[key]=false;}
-}
-function armSeek(v,key){
-  if(v.dataset.seekArmed)return;
-  v.dataset.seekArmed='1';
-  v.addEventListener('seeked',function(){
-    seeking[key]=false;
-    if(pending[key]!=null){var t=pending[key];pending[key]=null;seekTo(v,key,t);}
-  });
-}
-
-/* ══ 引擎：snap 翻页 + 衔接镜头 ══ */
-var chlabel=document.getElementById('chlabel');
-var hint=document.getElementById('hint');
-/* 手机拉条：点阵 + 拖拽洗片（原版官网 scrubber 的移植）。
-   点一下＝pointerdown 直接 scrub 到那个位置、松手钉回整章——和原版同一套手感。 */
-var mrail=document.getElementById('mrail');
-var mtrack=mrail.querySelector('.mtrack');
-var mfill=document.getElementById('mfill');
-var mlab=document.getElementById('mlab');
-var GLOW=[.35,.2,.4,.5,.6,.95,.7,.85,.55,1];   /* 每章画面的亮度→点的亮度：从暗夜排到天亮 */
-var mdots=CH.map(function(_,k){
-  var d=document.createElement('span');d.className='mdot';
-  var b=document.createElement('b');b.style.opacity=(.2+GLOW[k]*.6).toFixed(2);
-  d.appendChild(b);mtrack.appendChild(d);return d;
+function curPage(){ return Math.round(deck.scrollTop/(deck.clientHeight||1)); }
+window.addEventListener('keydown',function(e){
+  var k=e.key;
+  if(k==='ArrowDown'||k==='PageDown'||k===' '){ e.preventDefault(); goto(curPage()+1,true); }
+  else if(k==='ArrowUp'||k==='PageUp'){ e.preventDefault(); goto(curPage()-1,true); }
+  else if(k==='Home'){ e.preventDefault(); goto(0,true); }
+  else if(k==='End'){ e.preventDefault(); goto(N-1,true); }
 });
+
+/* ── 拉条拖动：真·洗刷 ──
+   拖的时候临时关掉吸附、直接写 scrollTop，所以太阳会跟着手指实时地凝出来 / 化回去；
+   松手再吸附到最近的那一页。 */
 (function(){
-  var dragging=false;
-  function scrub(cy){
-    var a=mdots[0].getBoundingClientRect(),z=mdots[N-1].getBoundingClientRect();
-    var y0=a.top+a.height/2,y1=z.top+z.height/2;
-    var p=Math.max(0,Math.min(1,(cy-y0)/(y1-y0)));
-    deck.scrollTop=p*(N-1)*deck.clientHeight;
+  var track=railWrap.querySelector('.railtrack'), dragging=false;
+  // 映射用首/末两个点的圆心，不用带 padding 的盒子——不然第一页永远差一点点到不了
+  function pageFromY(cy){
+    var a=railA[0].getBoundingClientRect(), z=railA[N-1].getBoundingClientRect();
+    var y0=a.top+a.height/2, y1=z.top+z.height/2;
+    if(y1-y0<=1) return 0;
+    return clamp((cy-y0)/(y1-y0),0,1)*(N-1);
   }
-  mrail.addEventListener('pointerdown',function(e){
+  function onDown(e){
+    if(e.button!==undefined&&e.button!==0) return;
     dragging=true;
-    mrail.classList.add('drag');deck.classList.add('scrubbing');
-    try{mrail.setPointerCapture(e.pointerId);}catch(_){}
-    scrub(e.clientY);e.preventDefault();
-  });
-  mrail.addEventListener('pointermove',function(e){if(dragging)scrub(e.clientY);});
-  function mup(){
-    if(!dragging)return;dragging=false;
-    mrail.classList.remove('drag');deck.classList.remove('scrubbing');
-    var H=deck.clientHeight;
-    deck.scrollTo({top:Math.round(deck.scrollTop/H)*H,behavior:reduce?'auto':'smooth'});
+    railWrap.classList.add('drag'); deck.classList.add('scrubbing');
+    if(track.setPointerCapture&&e.pointerId!==undefined) track.setPointerCapture(e.pointerId);
+    onMove(e);
   }
-  mrail.addEventListener('pointerup',mup);
-  mrail.addEventListener('pointercancel',mup);
+  function onMove(e){
+    if(!dragging) return;
+    e.preventDefault();
+    deck.scrollTop=pageFromY(e.clientY)*deck.clientHeight;
+  }
+  function onUp(e){
+    if(!dragging) return;
+    dragging=false;
+    railWrap.classList.remove('drag'); deck.classList.remove('scrubbing');
+    goto(pageFromY(e.clientY!==undefined?e.clientY:0),true);
+  }
+  track.addEventListener('pointerdown',onDown);
+  track.addEventListener('pointermove',onMove);
+  track.addEventListener('pointerup',onUp);
+  track.addEventListener('pointercancel',onUp);
 })();
-var activeBridge=-1;
-function frame(){
-  requestAnimationFrame(frame);
-  var H=deck.clientHeight||1;
-  var f=deck.scrollTop/H;                    // 章节浮点：3.42 = 正在 3→4 的路上 42%
-  var k=Math.max(0,Math.min(N-1,Math.round(f)));
-  var base=Math.floor(f), frac=f-base;
-  var inTransit=frac>0.02&&frac<0.98&&base<N-1;
 
-  /* 到章/离章 */
-  if(k!==cur){
-    scenes.forEach(function(s,j){s.classList.toggle('on',j===k);});
-    sections.forEach(function(s,j){s.classList.toggle('in',j===k);});
-    var v0=cur>=0&&scenes[cur].querySelector('video');
-    if(v0&&!v0.paused)v0.pause();
-    cur=k;ensureLoaded(k);
-    chlabel.textContent=k?CH[k].eyebrow.replace(/<[^>]*>/g,'').split('/')[0].trim():'';
-    mdots.forEach(function(d,j){d.classList.toggle('act',j===k);});
-    mlab.textContent=k?chlabel.textContent:'序幕';
-  }
-
-  /* 翻页途中：衔接镜头搓 frac；没有素材 → 交叉溶解 + 黑场沉降 */
-  var br=(USE_BRIDGES&&inTransit)?bridges[base]:null;
-  if(inTransit&&br&&br.readyState>=2){
-    if(activeBridge!==base){
-      if(activeBridge>=0&&bridges[activeBridge])bridges[activeBridge].classList.remove('on');
-      br.classList.add('on');armSeek(br,'b'+base);activeBridge=base;
-    }
-    if(!br.paused)br.pause();
-    seekTo(br,'b'+base,frac*(br.duration||5));
-    /* 尾段淡出：fast 档对尾帧约束服从性差（九条实测只有一条真锁住），
-       桥的最后 ~15% 淡进下一章画面——下一章第一帧就是尾帧目标，偏差全被盖住。
-       这也是真电影的剪法：冲进来，溶到落定。 */
-    br.style.opacity=frac<0.07?Math.max(0,(frac-0.02)/0.05)
-                    :frac>0.80?Math.max(0,1-(frac-0.80)/0.14):1;
-    dip.style.opacity=0;
-  }else{
-    if(activeBridge>=0){
-      if(bridges[activeBridge]){bridges[activeBridge].classList.remove('on');bridges[activeBridge].style.opacity='';}
-      activeBridge=-1;
-    }
-    if(inTransit){
-      /* 溶解：两章都显影，按 frac 换透明度；中点轻沉一下（电影黑场） */
-      scenes.forEach(function(s,j){
-        var on=(j===base||j===base+1);
-        s.classList.toggle('xfade',on);
-        s.style.opacity=on?(j===base?1-frac:frac):'';
-        s.style.visibility=on?'visible':'';
-      });
-      dip.style.opacity=Math.max(0,1-Math.abs(frac-0.5)/0.5)*0.5;
-    }else{
-      scenes.forEach(function(s){s.classList.remove('xfade');s.style.opacity='';s.style.visibility='';});
-      dip.style.opacity=0;
-    }
-  }
-
-  /* 稳定态：本章循环播放 */
-  var v=scenes[k].querySelector('video');
-  if(v&&v.dataset.src&&v.readyState>=2&&v.paused&&!document.hidden)tryPlay(v,k);
-
-  mfill.style.height=Math.min(1,Math.max(0,f/(N-1)))*Math.max(0,mtrack.clientHeight-40)+'px';
-  hint.style.opacity=deck.scrollTop<60?1:0;
-}
-ensureLoaded(0);
-requestAnimationFrame(frame);
-setTimeout(function(){sections[0].classList.add('in');scenes[0].classList.add('on');},60);
-
-/* 键盘翻页：末章向下 no-op（别把正要点 CTA 的人拽走） */
-addEventListener('keydown',function(e){
-  if(e.metaKey||e.ctrlKey||e.altKey)return;
-  var k=e.key,d=0;
-  if(k===' ')d=e.shiftKey?-1:1;
-  else if(k==='ArrowDown'||k==='PageDown')d=1;
-  else if(k==='ArrowUp'||k==='PageUp')d=-1;
-  if(!d)return;e.preventDefault();
-  var H=deck.clientHeight,t=Math.round(deck.scrollTop/H)+d;
-  if(t>=N||t<0)return;
-  deck.scrollTo({top:t*H,behavior:reduce?'auto':'smooth'});
+var rt=0;
+window.addEventListener('resize',function(){
+  clearTimeout(rt);
+  rt=setTimeout(function(){
+    var pg=curPage();
+    rebake();
+    deck.scrollTop=pg*deck.clientHeight;   // 视口变了也别丢当前这一页
+  },200);
 });
-/* 星球标签：帧坐标 → 视口坐标。视频是 object-fit:cover，视口一变、
-   画面裁切就变——视口百分比钉标签必飘（Trev 方形窗口的截图逮的）。
-   这里按 cover 的数学关系换算：16:9 的帧，按短边放大、按 object-position 偏移。 */
-function placePlabs(){
-  var spans=deck.querySelectorAll('.plab');if(!spans.length)return;
-  var W=innerWidth,H=innerHeight,AR=16/9;
-  var dispW=(W/H>AR)?W:H*AR, dispH=(W/H>AR)?W/AR:H;
-  var c=CH[7],op=((narrowScreen&&c.mop)?c.mop:c.op).split(' ');
-  var px=parseFloat(op[0])/100, py=parseFloat(op[1])/100;
-  var offX=(W-dispW)*px, offY=(H-dispH)*py;
-  spans.forEach(function(sp){
-    var x=offX+parseFloat(sp.dataset.fx)*dispW;
-    var y=offY+parseFloat(sp.dataset.fy)*dispH;
-    var out=x<30||x>W-30||y<30||y>H-50;
-    sp.style.left=x+'px';sp.style.top=y+'px';
-    sp.style.display=out?'none':'';
+
+try{
+  rebake();
+  paintRail();
+  document.getElementById('grain').style.backgroundImage='url('+bakeGrainTile()+')';
+  document.getElementById('fog').style.background=
+    'linear-gradient(180deg,rgba(5,4,9,0) 0%,rgba(5,4,9,.30) 30%,rgba(5,4,9,.66) 50%,rgba(5,4,9,.80) 100%)';
+  deck.scrollTop=0;
+  readScroll();
+  for(var kk=0;kk<KEYS.length;kk++) CUR[KEYS[kk]]=TGT[KEYS[kk]];
+
+  /* 给外面的语言切换用：GHOST / PLABEL / rebake 都是这个 IIFE 的局部变量，
+     切换器在 IIFE 外面，只能靠这个钩子进来。星球标签是**烘进 sprite** 的，
+     换了数组必须重烘一次，否则画面上还是旧语言。 */
+  window.__soulorLang = function(en){
+    GHOST  = en ? GHOST_EN  : GHOST_ZH;
+    PLABEL = en ? PLABEL_EN : PLABEL_ZH;
+    rebake();
+  };
+
+  if(!document.hidden) start();
+}catch(err){
+  // canvas 挂了也要让文字全部可读
+  for(var s2=0;s2<secEl.length;s2++){
+    var c2=secEl[s2].querySelector('.col'); if(c2) c2.classList.add('on');
+  }
+}
+})();
+
+/* ══════════ 中 / EN 切换 ══════════
+   两套文案在同一个文件里：每个叶子元素挂 data-en，首次切换时把原中文存进
+   data-zh，之后只换 textContent。选择记进 localStorage，并同步 <html lang>
+   （给屏幕阅读器和搜索引擎用）。canvas 上的中文（幽灵短语 / 星球标签）不参与
+   DOM，单独换数组并强制重烘一次 sprite。 */
+(function(){
+  var KEY='soulor.lang';
+  var btn=document.getElementById('langbtn');
+  if(!btn) return;
+
+  function apply(lang){
+    var en = lang==='en';
+    document.documentElement.setAttribute('data-lang', en?'en':'zh');
+    document.documentElement.lang = en?'en':'zh-CN';
+    var nodes=document.querySelectorAll('[data-en]');
+    for(var i=0;i<nodes.length;i++){
+      var el=nodes[i];
+      if(el.dataset.zh===undefined) el.dataset.zh=el.textContent;
+      el.textContent = en ? el.dataset.en : el.dataset.zh;
+    }
+    // canvas 侧（幽灵短语 / 星球标签不参与 DOM，走主 IIFE 暴露的钩子）
+    try{ if(window.__soulorLang) window.__soulorLang(en); }catch(e){}
+    try{ localStorage.setItem(KEY, en?'en':'zh'); }catch(e){}
+  }
+
+  // 首次进站：跟随浏览器语言，中文用户拿中文，其余拿英文
+  var saved=null;
+  try{ saved=localStorage.getItem(KEY); }catch(e){}
+  // 默认中文（Trev 2026-07-29 定）。不跟随 navigator.language ——
+  // 主要用户在国内，英文版是给海外/投资人看的第二档，不该抢默认。
+  if(!saved) saved='zh';
+  apply(saved);
+
+  btn.addEventListener('click', function(){
+    apply(document.documentElement.getAttribute('data-lang')==='en' ? 'zh' : 'en');
   });
-}
-placePlabs();
-/* resize：钉回最近的整章，别停在半路；标签跟着重排 */
-addEventListener('resize',function(){
-  var H=deck.clientHeight;
-  deck.scrollTop=Math.round(deck.scrollTop/H)*H;
-  placePlabs();
-});
+})();
 
-/* ══ 声音：默认关；点按钮=手势，可以直接播 ══ */
-var bgm=document.getElementById('bgm');
-var snd=document.getElementById('snd');
-var sndOn=false;
-bgm.volume=0;
-function fadeVol(to,ms){
-  var from=bgm.volume,t0=performance.now();
-  (function step(){
-    var p=Math.min(1,(performance.now()-t0)/ms);
-    bgm.volume=from+(to-from)*p;
-    if(p<1)requestAnimationFrame(step);
-    else if(to===0)bgm.pause();
-  })();
-}
-snd.addEventListener('click',function(){
-  sndOn=!sndOn;
-  snd.classList.toggle('on',sndOn);
-  snd.setAttribute('aria-pressed',sndOn?'true':'false');
-  snd.textContent=sndOn?'声音 ·开':'声音 ·关';
-  try{localStorage.setItem('soulor-snd',sndOn?'1':'0');}catch(e){}
-  if(sndOn){bgm.play().then(function(){fadeVol(0.5,1800);}).catch(function(){});}
-  else fadeVol(0,600);
-});
-/* 上次开过声音的人：不自动响（浏览器也不许），但把按钮点亮成提示 */
-try{if(localStorage.getItem('soulor-snd')==='1'){snd.style.borderColor='var(--core2)';}}catch(e){}
+/* ══════════ FILM：十章镜头 + 氛围声（/next/ 独有层，见文件头注释） ══════════ */
+window.FILM = true;
+(function(){
+  var LITE = matchMedia('(max-width:820px)').matches
+          || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var deck=document.getElementById('deck');
+  var stage=document.getElementById('stage');
+  var scenes=[].slice.call(stage.children);
+  var NB=scenes.length;
+  document.getElementById('sky').style.opacity='0';   /* 画的天让位给拍的天 */
 
-document.addEventListener('visibilitychange',function(){
-  if(document.hidden){
-    scenes.forEach(function(s){var v=s.querySelector('video');if(v&&!v.paused)v.pause();});
-    if(!bgm.paused)bgm.pause();
-  }else if(sndOn&&bgm.paused){bgm.play().catch(function(){});}
-});
+  /* 视频：懒建 + 邻页预热 + 远页卸载；autoplay 被拒就断路，等首次手势再试 */
+  var blocked=0, cur=-1;
+  function mkVideo(k){
+    var sc=scenes[k];
+    if(!sc||sc.dataset.v||LITE||blocked>=3) return;
+    sc.dataset.v='1';
+    var v=document.createElement('video');
+    v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline','');
+    v.preload='auto';
+    ['webm','mp4'].forEach(function(ext){
+      var src=document.createElement('source');
+      src.src='ch'+k+'.'+ext; src.type='video/'+ext;
+      v.appendChild(src);
+    });
+    v.addEventListener('error',function(){ if(v.parentNode===sc){sc.removeChild(v);} sc.dataset.v=''; },true);
+    sc.appendChild(v);
+  }
+  function tryPlay(v){
+    if(!v||!v.paused) return;
+    var p=v.play();
+    if(p&&p.catch) p.catch(function(){
+      blocked++;
+      if(blocked===1){
+        var un=function(){
+          document.removeEventListener('touchstart',un);
+          document.removeEventListener('click',un);
+          blocked=0; show(cur,true);
+        };
+        document.addEventListener('touchstart',un,{once:true,passive:true});
+        document.addEventListener('click',un,{once:true});
+      }
+    }); else blocked=0;
+  }
+  function show(k,force){
+    if(k===cur&&!force) return;
+    cur=k;
+    for(var i=0;i<NB;i++){
+      var sc=scenes[i], on=i===k, v=sc.querySelector('video');
+      sc.classList.toggle('on',on);
+      if(on){ mkVideo(i); v=sc.querySelector('video'); if(v) tryPlay(v); }
+      else if(v){
+        v.pause();
+        if(Math.abs(i-k)>2&&sc.dataset.v){ sc.removeChild(v); sc.dataset.v=''; }
+      }
+    }
+    mkVideo(k+1); if(k>0) mkVideo(k-1);
+  }
+  function onScroll(){
+    var p=deck.scrollTop/(deck.clientHeight||1);
+    show(Math.max(0,Math.min(NB-1,Math.round(p))));
+  }
+  deck.addEventListener('scroll',onScroll,{passive:true});
+  document.addEventListener('visibilitychange',function(){
+    var sc=scenes[cur], v=sc&&sc.querySelector('video');
+    if(v){ if(document.hidden) v.pause(); else tryPlay(v); }
+  });
+  show(0);
+
+  /* 氛围声：默认开（Trev 2026-08-02「音乐默认打开」）。浏览器挡 autoplay 就
+     挂一次首手势解锁——点语言、点 CTA、滚一格，随便哪个都算。 */
+  var au=new Audio('bgm.m4a'); au.loop=true; au.volume=0.55;
+  var sndOn=true, btn=document.getElementById('snd');
+  function lab(){
+    var en=document.documentElement.getAttribute('data-lang')==='en';
+    btn.textContent=en?(sndOn?'SOUND · ON':'SOUND · OFF'):(sndOn?'声音 · 开':'声音 · 关');
+    btn.classList.toggle('on',sndOn);
+  }
+  function tryAudio(){
+    if(!sndOn) return;
+    var p=au.play();
+    if(p&&p.catch) p.catch(function(){
+      var un=function(){
+        document.removeEventListener('touchstart',un);
+        document.removeEventListener('click',un);
+        document.removeEventListener('keydown',un);
+        deck.removeEventListener('scroll',un);
+        if(sndOn){ var q=au.play(); if(q&&q.catch) q.catch(function(){}); }
+      };
+      document.addEventListener('touchstart',un,{once:true,passive:true});
+      document.addEventListener('click',un,{once:true});
+      document.addEventListener('keydown',un,{once:true});
+      deck.addEventListener('scroll',un,{once:true,passive:true});
+    });
+  }
+  btn.addEventListener('click',function(){ sndOn=!sndOn; lab(); if(sndOn) tryAudio(); else au.pause(); });
+  new MutationObserver(lab).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
+  lab(); tryAudio();
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden) au.pause(); else if(sndOn) tryAudio();
+  });
+})();
 </script>
 </body>
 </html>
