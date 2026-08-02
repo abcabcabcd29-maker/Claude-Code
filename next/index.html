@@ -122,23 +122,36 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
    [52%,82%] 屏高；375×667 上 [51%,82%]——两档几乎一致，一套羽化段通用）。
    字的对比度仍由 section::before 暗罩层独立保证（后面的块，上暗下透）。 */
 @media(max-width:820px){
-  .scene{background-size:100% auto!important;background-position:center 74%!important;
+  /* 带**贴屏底**（Trev：字居中优先，背景位置服从排版）：402×774 上带占 [71%,100%]，
+     主体（太阳/星球）落在 ≈85% 屏高——正好在正文块下方那条透出带里。
+     钉 84% 那版被暗罩连带压掉了，ch7 的星球标签几乎看不见（联络表逮的）。 */
+  .scene{background-size:100% auto!important;background-position:center 100%!important;
     background-repeat:no-repeat;
-    /* 带上下羽化融进黑底（ch7 学费：段位贴着带算，带顶≈51%、带底≈82%） */
-    -webkit-mask-image:linear-gradient(180deg,transparent 44%,#000 54%,#000 79%,transparent 90%);
-    mask-image:linear-gradient(180deg,transparent 44%,#000 54%,#000 79%,transparent 90%)}
+    /* 只羽化带顶（带底贴屏边不用羽）：段位贴着带算，带顶 ≈71% 屏高 */
+    -webkit-mask-image:linear-gradient(180deg,transparent 64%,#000 76%,#000 100%);
+    mask-image:linear-gradient(180deg,transparent 64%,#000 76%,#000 100%)}
   /* 视频同几何：contain 到屏宽、钉同一纵位——和海报带严丝合缝，全帧无裁切 */
-  .scene video{object-fit:contain;object-position:center 74%}
+  .scene video{object-fit:contain;object-position:center 100%}
   /* 背景层按章提亮（字的对比度靠暗罩层，与此无关）。暗章 1.4~1.5；
      烬日只 1.12（提多了就"点亮"了）；亮章不提。 */
   .scene{filter:brightness(var(--mb,1)) saturate(1.05)}
-  .scene[data-i="0"]{--mb:1.5}
-  .scene[data-i="1"]{--mb:1.45}
-  .scene[data-i="2"]{--mb:1.4}
-  .scene[data-i="3"]{--mb:1.4}
-  .scene[data-i="4"]{--mb:1.5}
-  .scene[data-i="6"]{--mb:1.12}
-  .scene[data-i="7"]{--mb:1.25}
+  .scene[data-i="0"]{--mb:1.75}
+  .scene[data-i="1"]{--mb:1.7}
+  .scene[data-i="2"]{--mb:1.65}
+  .scene[data-i="3"]{--mb:1.65}
+  .scene[data-i="4"]{--mb:1.7}
+  /* ch6 是「已成形但还没点亮」的烬日，本来就该是十章里最暗的一章——但 1.25 档在
+     手机上整屏峰值只有 109，等于没有亮点（一团看不出形状的灰）。提到 1.45 后峰值
+     ≈124，仍不到 ch5 的一半（255），"还没亮"读得出来，形状也终于看得见。 */
+  .scene[data-i="6"]{--mb:1.45}
+  /* ch7 素材本身就是十章里最亮的（峰 251），1.5 档只是把整幅雾一起抬起来、
+     黑场发灰、星球反而糊在背景里。1.2 档黑得下去，四颗星球才立得出来。
+     ⚠️ 核心那团发灰是**素材自带**的（源图核心像素 (255,255,217)，盘内近中性灰），
+     不是这里提亮提出来的——降到 1.0 照样灰。要根治得重生成 ch7，留给下一轮。 */
+  .scene[data-i="7"]{--mb:1.2}
+  .scene[data-i="5"]{--mb:1.15}
+  .scene[data-i="8"]{--mb:1.2}
+  .scene[data-i="9"]{--mb:1.2}
   /* 极缓漂移：静态海报的"活气"（纯 transform 走 GPU）；视频真开播后让位 */
   .scene.on{animation:mbdrift 26s ease-in-out infinite alternate}
   .scene.on:has(video.vp){animation:none}
@@ -566,19 +579,46 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   .axes{gap:7px;margin-top:15px}
   .footbar{bottom:14px}
 }
-/* 手机三版·字上（放在 799 块之后：媒体查询不加特异性，顺序说了算）：
-   所有章照 ch4 范式——字从顶上开始（Trev 点名它排版最好），背景带在下半。 */
+/* 手机三版·字居中（放在 799 块之后：媒体查询不加特异性，顺序说了算）。
+   ⚠️ Trev 2026-08-02 连说两遍「不是置上，是置中」——**字在竖直方向居中**是这一版的
+   铁律，别再改回 flex-start。三版第一稿理解成了「靠顶」，被当场驳回。
+   居中之后背景带要给字让路：带从 74% 沉到 84%（见上面 820 块），
+   暗罩也跟着把渐透点下移。 */
 @media(max-width:820px){
-  section:not(#begin){align-items:flex-start}
-  section#hero{align-items:flex-start}
+  section:not(#begin){align-items:center}
+  section#hero{align-items:center}
   /* #begin 是 flex-direction:column：竖轴居中走的是 justify-content（基础规则 301 行），
      压 align-items 没用——ch9 就是这么漏网的（验收逮的）。 */
-  #begin{justify-content:flex-start}
-  .col{padding-top:8px}
-  #hero .col{padding-top:14px}
-  /* 暗罩配合字上带下：上半暗给字、往下渐透露带。压过 799 块的 background:none。 */
+  #begin{justify-content:center}
+  .col{padding-top:0}
+  #hero .col{padding-top:0}
+  /* 🔴 `align-items:center` 居的是**内容盒**的中，不是屏幕的中。上面 532 行给了
+     `section{padding-top:68px}`（躲固定导航栏），下边却是 0 —— 于是十章一律**低 34px**，
+     两档屏幕、每一章都差这个同一个常数（验收量到「上276/下208」，恒差 68）。
+     补一个等量的下内边距，内容盒就重新以视口中线为中心，`center` 才真是屏幕的中。
+     ⚠️ 别改成「上下各 34px」省高度：68 是量出来的（导航底沿 57px + 11px 呼吸），
+     减了长章的标题就会钻到导航底下。 */
+  section{padding-bottom:68px}
+  /* ch9 的 .col 原本自带 clamp(64px,10vh,96px) 下内边距给页脚让路；
+     现在 section 的 68px 已经把页脚（底 14px + 高 ≈40px）让开了，再叠一层
+     会把正文顶到离中线 70px 以上——留一点余量即可。 */
+  #begin .col{padding-bottom:16px}
+  /* 暗罩只护「裸文字」（标题+正文段落，在正文块中上部），下段放开让带透出来。
+     正文块下部是演示卡——`.card/.facts` 自带底色和描边，不靠这层暗罩，
+     所以渐透点可以提到 58%，带的主体（≈85%）才不会被一起压死。 */
+  /* 渐透点**跟着每章裸文字的实际底部走**（由 fitScrim() 写进 --f0/--f1/--f2）：
+     每章正文长短差很多（ch1 三行 vs ch7 五行+公式），写死一套百分比必然有章
+     被压暗、有章被漏保护——ch7 就是这么漏的（裸文字压在亮带上，峰值 246）。
+     缺省值是「正文中等长度」的安全档，JS 没跑起来也不会糊。 */
   section::before{background:linear-gradient(180deg,
-    rgba(5,4,9,.78) 0%,rgba(5,4,9,.70) 40%,rgba(5,4,9,.30) 54%,rgba(5,4,9,0) 68%)!important}
+    rgba(5,4,9,.50) 0%,rgba(5,4,9,.74) 22%,
+    rgba(5,4,9,.74) var(--f0,50%),rgba(5,4,9,.32) var(--f1,63%),
+    rgba(5,4,9,0) var(--f2,74%))!important}
+  /* 🔴 #fog 必须在手机上关掉：它是**原版**为「核在上、正文在下」做的**底部**压暗
+     （底 0.80 黑度，z-index:1 盖在 #stage 之上），而三版把画面带放到了屏底——
+     两层正好打架。实测 ch5 素材峰值 254，到屏幕上只剩 74，就是被它吃掉的。
+     字的保护已经全交给 section::before（上暗下透），这层在三版里只有害处。 */
+  #fog{display:none!important}
 }
 
 /* 矮视口（不分宽窄）：加了「人格声音 × 生活场景」两条轴之后，
@@ -595,6 +635,12 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
 /* 极矮视口（手机横屏、或浏览器上下工具栏都展开时）：整体收紧一档。
    mandatory snap 下装不下的内容是永远看不到的，所以这一档是硬需求不是优化。 */
 @media(max-width:820px) and (max-height:580px){
+  /* 这一档（横屏 820×580 英文版）正文有 494px 高，比「上下各 68px」留出的 444px 还高，
+     严格居中会让标题往上顶进导航栏 14px。对称内边距改不了这件事——居中点就是视口中线，
+     只有把中线往下挪才躲得开。所以这一档单独把下边距收到 24px：整体下移 22px，
+     580px 高的屏上肉眼看不出偏心，但字不再钻到导航底下。
+     ⚠️ 只在这一档破例，别把它抄回上面的通用块——竖屏各档都是严格居中的。 */
+  section{padding-bottom:24px}
   h1,h2{font-size:clamp(21px,min(4.6vw,5.6vh),50px);line-height:1.22}
   .col{padding-bottom:7%}
   .eyebrow{margin-bottom:12px}
@@ -1886,6 +1932,36 @@ window.FILM = true;
       el.style.top=y+'px';
     });
   }
+  /* 暗罩收口跟着裸文字走：量每章最后一个「直接压在背景上」的元素（标题/正文/公式/
+     副标——不含 .card/.facts，它们自带底色），把渐透三点钉在它下面。
+     只在手机档做（桌面是左右分栏构图，那层径向暗罩另有算法）。 */
+  function fitScrim(){
+    if(!matchMedia('(max-width:820px)').matches){
+      [].forEach.call(deck.querySelectorAll('section'),function(sec){
+        sec.style.removeProperty('--f0'); sec.style.removeProperty('--f1'); sec.style.removeProperty('--f2');
+      });
+      return;
+    }
+    var H=deck.clientHeight||1;
+    [].forEach.call(deck.querySelectorAll('section'),function(sec){
+      var bare=sec.querySelectorAll('h1,h2,.en,.sub,.body,.etym,.eyebrow');
+      var bot=0;
+      [].forEach.call(bare,function(e){
+        var r=e.getBoundingClientRect();
+        if(r.height>4) bot=Math.max(bot, r.bottom-sec.getBoundingClientRect().top);
+      });
+      if(!bot) return;
+      var f=Math.min(0.86, bot/H);              // 封顶 86%：再往下就没有带可露了
+      sec.style.setProperty('--f0',(f*100).toFixed(1)+'%');
+      sec.style.setProperty('--f1',((f+0.07)*100).toFixed(1)+'%');
+      sec.style.setProperty('--f2',((f+0.15)*100).toFixed(1)+'%');
+    });
+  }
+  window.addEventListener('resize',function(){ setTimeout(fitScrim,240); });
+  setTimeout(fitScrim,80);
+  new MutationObserver(function(){ setTimeout(fitScrim,60); })
+    .observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
+
   window.addEventListener('resize',function(){ setTimeout(layoutPlabs,220); });
   new MutationObserver(layoutPlabs).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
   setTimeout(layoutPlabs,60);
