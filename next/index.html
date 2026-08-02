@@ -95,6 +95,9 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
   transition:color .3s,border-color .3s;white-space:nowrap}
 #snd.on{color:var(--core);border-color:rgba(255,217,160,.4)}
 @media(max-width:560px){#snd{padding:7px 9px;letter-spacing:.1em}}
+/* ch4 是一次性叙事章（弧从左到右生成）：桌面底图用「空场」首帧，避免 满弧海报→空场视频
+   的闪跳；手机 LITE 只看海报，必须是完成态满弧——所以只在桌面覆盖。!important 压 inline。 */
+@media(min-width:821px){.scene[data-i="4"]{background-image:url(ch4-first.jpg)!important}}
 
 /* ── 分页容器 ──
    固定满屏 + 自己滚动：section 用 height:100% 就精确等于视口高，
@@ -571,7 +574,7 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   <div class="scene" data-i="1" style="background-image:url(ch1.jpg)"></div>
   <div class="scene" data-i="2" style="background-image:url(ch2.jpg)"></div>
   <div class="scene" data-i="3" style="background-image:url(ch3.jpg)"></div>
-  <div class="scene" data-i="4" style="background-image:url(ch4.jpg)"></div>
+  <div class="scene" data-i="4" data-once="1" style="background-image:url(ch4.jpg)"></div>
   <div class="scene" data-i="5" style="background-image:url(ch5.jpg)"></div>
   <div class="scene" data-i="6" style="background-image:url(ch6.jpg)"></div>
   <div class="scene" data-i="7" style="background-image:url(ch7.jpg)"></div>
@@ -1713,7 +1716,8 @@ window.FILM = true;
     if(!sc||sc.dataset.v||sc.dataset.dead||LITE||blocked>=3) return;
     sc.dataset.v='1';
     var v=document.createElement('video');
-    v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline','');
+    /* data-once：一次性叙事章（如 ch4 弧的生成）——播一遍停在完成态，不循环 */
+    v.muted=true; v.loop=!sc.dataset.once; v.playsInline=true; v.setAttribute('playsinline','');
     v.preload='auto';
     ['webm','mp4'].forEach(function(ext){
       var src=document.createElement('source');
@@ -1747,7 +1751,10 @@ window.FILM = true;
     for(var i=0;i<NB;i++){
       var sc=scenes[i], on=i===k, v=sc.querySelector('video');
       sc.classList.toggle('on',on);
-      if(on){ mkVideo(i); v=sc.querySelector('video'); if(v) tryPlay(v); }
+      if(on){
+        mkVideo(i); v=sc.querySelector('video');
+        if(v){ if(sc.dataset.once){ try{ v.currentTime=0; }catch(e){} } tryPlay(v); }
+      }
       else if(v){
         v.pause();
         if(Math.abs(i-k)>2&&sc.dataset.v){ sc.removeChild(v); sc.dataset.v=''; }
