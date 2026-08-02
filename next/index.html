@@ -152,10 +152,23 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
   .scene[data-i="5"]{--mb:1.15}
   .scene[data-i="8"]{--mb:1.2}
   .scene[data-i="9"]{--mb:1.2}
-  /* 极缓漂移：静态海报的"活气"（纯 transform 走 GPU）；视频真开播后让位 */
-  .scene.on{animation:mbdrift 26s ease-in-out infinite alternate}
-  .scene.on:has(video.vp){animation:none}
-  @keyframes mbdrift{from{transform:scale(1) translateY(0)}to{transform:scale(1.05) translateY(-0.8%)}}
+  /* 🔴 海报自己的推镜——**这是"页面还活着"的下限，不是装饰**。
+     微信/QQ 等 App 内置浏览器对静音视频自动播放是**硬拦截**（平台规则，绕不过，
+     Trev 真机诊断屏实锤 NotAllowedError）。视频播不了的时候，页面全靠这一层还在动；
+     它一停，用户看到的就是一张死图——2026-08-02 Trev 从微信打开：「动画都没了」。
+     原来 26s 走 5% 缩放，算下来每秒变化 0.2%，等于没动。现在 20s 走 8.5%，看得见。
+     ⚠️ **只许纵向推近，不许左右横移**：Trev 早前明令「画面左右乱动」要修掉。
+     ⚠️ 曲线必须是 **linear**：ease-in-out 在一个来回的两端几乎是静止的，用户什么时候
+     看到全凭运气——实测同一条动画，落在慢相位时 5s 只有 3.6% 的像素在变，快相位有 11%。
+     推镜要的是匀速，不是呼吸。
+     transform-origin 钉在底边——画面带本来就贴屏底，从中心缩放会把带的下沿顶出画外。 */
+  .scene{transform-origin:50% 100%}
+  .scene.on{animation:mbdrift 20s linear infinite alternate}
+  .scene.on:has(video.vp){animation:none}   /* 视频真播起来了就让位给它 */
+  @keyframes mbdrift{
+    from{transform:scale(1.015) translateY(0)}
+    to{transform:scale(1.10) translateY(-2%)}
+  }
   @media(prefers-reduced-motion:reduce){.scene.on{animation:none}}
   .plab{font-size:8.5px;letter-spacing:.1em}
 }
@@ -1840,9 +1853,13 @@ window.FILM = true;
     var v=document.createElement('video');
     /* data-once：一次性叙事章（如 ch4 弧的生成）——播一遍停在完成态，不循环 */
     v.muted=true; v.loop=!sc.dataset.once; v.playsInline=true;
-    /* 🔴 iOS 判自动播放资格看的是**内容属性**，不只是 JS 属性：三个都写成 attribute，
-       WebKit 才会自己把它播起来（不必等我们 play()，也就少一条会失败的路径）。 */
-    v.setAttribute('playsinline',''); v.setAttribute('muted',''); v.setAttribute('autoplay','');
+    /* iOS 判自动播放资格看的是**内容属性**，不只是 JS 属性，所以 playsinline/muted
+       写成 attribute。
+       🔴 但**绝不能加 `autoplay` 属性**：WebKit 在"自动播放不被允许"的环境里
+       （微信等 App 内置 WebView、低电量模式），对带 autoplay 的媒体会连**资源都不加载**
+       ——2026-08-02 我加过一轮，Trev 真机诊断屏当场逮到：currentSrc 空、readyState 0、
+       画面彻底不动，比不加还糟。播放由我们自己的 play() 驱动，不需要这个属性。 */
+    v.setAttribute('playsinline',''); v.setAttribute('muted','');
     v.preload='auto';
     ['webm','mp4'].forEach(function(ext){
       var src=document.createElement('source');
@@ -1872,6 +1889,9 @@ window.FILM = true;
     v.addEventListener('canplay',retry);
     v.addEventListener('loadeddata',retry);
     sc.appendChild(v);
+    /* 显式 load()：把资源选择算法踢起来。有些 WebView 里不主动叫它就一直
+       currentSrc 空 / readyState 0（Trev 真机诊断屏就是这个读数）。 */
+    try{ v.load(); }catch(e){}
   }
   /* 策略型拦截（低电量模式 / App 内置浏览器 / 部分 WebView）**绕不过**，只能等一次真手势。
      但绝不能用一次性监听：滚动的 touchstart 也会把它吃掉，吃掉之后就再没有第二次机会。
@@ -1889,6 +1909,9 @@ window.FILM = true;
       var sc=scenes[cur]; if(!sc) return;
       mkVideo(cur);
       var v=sc.querySelector('video'); if(!v) return;
+      /* 手势里先补一次 load()：这类 WebView 连"取数据"都要等手势，
+         没数据的话 play() 拿不到东西可播。 */
+      if(!v.readyState){ try{ v.load(); }catch(e){} }
       var p=v.play();
       if(p&&p.then) p.then(off,function(){}); else off();
     };
@@ -2018,12 +2041,15 @@ window.FILM = true;
         +'  H.264:'+(t.canPlayType('video/mp4; codecs="avc1.42E01E"')||'✗')
         +'\nch'+cur+(sc&&sc.dataset.dead?' [已判定无素材]':'')
         +'  省流:'+(SAVE?'开':'关')+'  减动效:'+(STILL?'开':'关')
-        +'\n'+(v?('选中:'+(v.currentSrc||'').split('/').pop()
-                 +'  readyState:'+v.readyState+'  '+(v.paused?'⏸ 暂停中':'▶ 在播')
-                 +'  t='+v.currentTime.toFixed(1))
+        +'\n'+(v?('选中:'+((v.currentSrc||'').split('/').pop()||'(空)')
+                 +'  readyState:'+v.readyState+'/net:'+v.networkState
+                 +'  '+(v.paused?'⏸ 暂停中':'▶ 在播')+'  t='+v.currentTime.toFixed(1))
                 :'没有 video 元素')
         +'\nplay() 最后一次被拒：'+(lastErr||'（没被拒过）')
-        +(armed?'  · 正在等一次手势':'');
+        +(armed?'  · 正在等一次手势':'')
+        /* 视频播不了时，页面还动不动全看这一层——它是下限，必须能一眼确认 */
+        +'\n海报推镜：'+(sc?(getComputedStyle(sc).animationName||'none'):'?')
+        +'  当前 transform='+(sc?getComputedStyle(sc).transform.slice(0,28):'?');
     },400);
   }
 
