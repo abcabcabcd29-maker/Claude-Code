@@ -115,6 +115,7 @@ section::before{
 .on .fu.d2{transition-delay:.36s}
 .on .fu.d3{transition-delay:.50s}
 .on .fu.d4{transition-delay:.62s}
+.on .fu.d5{transition-delay:.74s}
 
 /* ── 字级：同时对宽度和高度做 clamp，矮屏自动收，保证一页装得下 ── */
 .eyebrow{
@@ -241,7 +242,8 @@ h1,h2{
   transition:background .45s ease,backdrop-filter .45s ease,border-color .45s ease;
 }
 #nav.scrolled{background:rgba(5,4,9,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom-color:var(--line)}
-#nav .brand{display:flex;align-items:center;gap:9px;text-decoration:none}
+#nav .brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto;white-space:nowrap}
+/* 🔴 字标是一个整体，任何情况下都不许折行（375 宽上「灵镜」曾被压成竖排两字）。 */
 /* 就是 App 里那张 logo-mark.png（一面竖向胶囊镜，内里一道斜切反光）。
    它是 alpha 形状、RN 用 tintColor 上色，所以网页侧也走 mask-image 而不是 <img>，
    这样才能跟 App 一样按主题着色，而不是烙死一个颜色。 */
@@ -723,16 +725,17 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
       <span class="ln"><i class="l2" data-en="is yours alone.">都只属于你一个人。</i></span>
     </h2>
     <p class="en fu d1">All of it is yours alone.</p>
+    <p class="body fu d2" data-en="Your core should be yours, not parked on someone else&#39;s server. Your words stay on your phone; they go out only to generate a reply — no copy kept, never used for training. Self-harm content never goes out at all.">内核该由你自己持有，不该躺在别人的服务器上。话落在你自己手机里，只有生成回应那一刻才出去一趟，我们不留副本、不拿它训练；涉及自伤的话，连这一趟都不走。</p>
     <div class="facts">
-      <div class="fact fu d2">
+      <div class="fact fu d3">
         <div class="lab" data-en="Stored locally">本地存储</div>
         <p data-en="Your words are stored on your phone alone. Not a promise not to look — there is no account, so there is no &quot;you&quot; for us to look up.">数据只存在你手机里。不是「承诺不看」，是没有账号——我们这儿没有「你」这一栏。</p>
       </div>
-      <div class="fact fu d3">
+      <div class="fact fu d4">
         <div class="lab" data-en="No advice">不给建议</div>
         <p data-en="It catches you. It doesn't direct your life.">它接住你，不指导你的人生。</p>
       </div>
-      <div class="fact fu d4">
+      <div class="fact fu d5">
         <div class="lab" data-en="Refutable">可反驳</div>
         <p data-en="Every judgment traces back to your own words — and every one can be deleted.">每条判断都翻得回原话，也都删得掉。</p>
       </div>
