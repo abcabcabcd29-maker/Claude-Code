@@ -1710,7 +1710,7 @@ window.FILM = true;
   var blocked=0, cur=-1;
   function mkVideo(k){
     var sc=scenes[k];
-    if(!sc||sc.dataset.v||LITE||blocked>=3) return;
+    if(!sc||sc.dataset.v||sc.dataset.dead||LITE||blocked>=3) return;
     sc.dataset.v='1';
     var v=document.createElement('video');
     v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline','');
@@ -1720,7 +1720,9 @@ window.FILM = true;
       src.src='ch'+k+'.'+ext; src.type='video/'+ext;
       v.appendChild(src);
     });
-    v.addEventListener('error',function(){ if(v.parentNode===sc){sc.removeChild(v);} sc.dataset.v=''; },true);
+    /* 素材缺席=这一章按设计走静帧（如 ch6「一角」——克制到接近静止，海报即成片）。
+       标 dead 别再试：不标的话每次翻到这一章都 404 一轮。 */
+    v.addEventListener('error',function(){ if(v.parentNode===sc){sc.removeChild(v);} sc.dataset.v=''; sc.dataset.dead='1'; },true);
     sc.appendChild(v);
   }
   function tryPlay(v){
