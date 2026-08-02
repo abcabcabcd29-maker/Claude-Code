@@ -788,7 +788,7 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
     <p class="mailrow fu d3"><span data-en="Or write to us: ">或者写信：</span><a href="mailto:hello@soulor.id">hello@soulor.id</a></p>
   </div>
   <div class="footbar">
-    <div class="l" data-en="Soulor — a mirror for the soul">Soulor·灵镜 — 一面灵魂的镜子</div>
+    <div class="l" data-en="Soulor: a mirror for the soul">Soulor·灵镜：一面灵魂的镜子</div>
     <div class="r">SOULOR.ID · © 2026</div>
   </div>
 </section>
@@ -1765,7 +1765,7 @@ window.FILM = true;
   show(0);
 
   /* 氛围声：默认开（Trev 2026-08-02「音乐默认打开」）。浏览器挡 autoplay 就
-     挂一次首手势解锁——点语言、点 CTA、滚一格，随便哪个都算。 */
+     等首个真手势（点按/按键）解锁——见下面 armUnlock 的注释。 */
   var au=new Audio('bgm.m4a'); au.loop=true; au.volume=0.55;
   var sndOn=true, btn=document.getElementById('snd');
   function lab(){
@@ -1773,22 +1773,30 @@ window.FILM = true;
     btn.textContent=en?(sndOn?'SOUND · ON':'SOUND · OFF'):(sndOn?'声音 · 开':'声音 · 关');
     btn.classList.toggle('on',sndOn);
   }
+  /* autoplay 被拒时的解锁：**滚动不算用户手势**——在 scroll 回调里 play() 照样被拒，
+     而 once 监听已经被那一下滚动吃掉了，音乐就死在"开着却不响"（2026-08-02 Trev 实机
+     逮的「得要重新开才有」，根因就是旧版把 deck scroll 也挂进了一次性解锁）。
+     改成：只挂真手势（pointerdown/keydown），**常驻重试直到 play 成功**才摘监听。 */
+  var armed=false;
+  function armUnlock(){
+    if(armed) return; armed=true;
+    var h=function(){
+      if(!sndOn){ off(); return; }
+      var q=au.play();
+      if(q&&q.then) q.then(off,function(){});
+    };
+    var off=function(){
+      document.removeEventListener('pointerdown',h);
+      document.removeEventListener('keydown',h);
+      armed=false;
+    };
+    document.addEventListener('pointerdown',h);
+    document.addEventListener('keydown',h);
+  }
   function tryAudio(){
     if(!sndOn) return;
     var p=au.play();
-    if(p&&p.catch) p.catch(function(){
-      var un=function(){
-        document.removeEventListener('touchstart',un);
-        document.removeEventListener('click',un);
-        document.removeEventListener('keydown',un);
-        deck.removeEventListener('scroll',un);
-        if(sndOn){ var q=au.play(); if(q&&q.catch) q.catch(function(){}); }
-      };
-      document.addEventListener('touchstart',un,{once:true,passive:true});
-      document.addEventListener('click',un,{once:true});
-      document.addEventListener('keydown',un,{once:true});
-      deck.addEventListener('scroll',un,{once:true,passive:true});
-    });
+    if(p&&p.catch) p.catch(armUnlock);
   }
   btn.addEventListener('click',function(){ sndOn=!sndOn; lab(); if(sndOn) tryAudio(); else au.pause(); });
   new MutationObserver(lab).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
