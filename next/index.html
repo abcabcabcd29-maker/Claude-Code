@@ -181,24 +181,6 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
   .plab{font-size:8.5px;letter-spacing:.1em}
 }
 
-/* 「轻点一下」提示：只在播放被平台拦下时出现（见 markup 注释）。
-   钉在**屏幕最底**：正文已经居中占了中段、画面带贴底且主体落在 80~86% 屏高，
-   只有最下面这一条既不压字、也在主体之下。（试过放"正文和带之间"——那里根本没有
-   空档：带顶 71% 比正文底边还高，两者本来就是叠着的。）做成低调胶囊，不抢戏。 */
-#tapplay{
-  position:fixed;left:50%;transform:translateX(-50%);bottom:18px;
-  z-index:12;appearance:none;cursor:pointer;
-  font-family:var(--mono);font-size:11px;letter-spacing:.1em;
-  color:rgba(255,217,160,.92);background:rgba(12,10,17,.62);
-  border:1px solid rgba(255,217,160,.30);border-radius:999px;
-  padding:9px 16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  animation:tapin .7s ease both;
-}
-#tapplay[hidden]{display:none}
-@keyframes tapin{from{opacity:0;transform:translate(-50%,6px)}to{opacity:1;transform:translate(-50%,0)}}
-@media(prefers-reduced-motion:reduce){#tapplay{animation:none}}
-@media(min-width:821px){#tapplay{bottom:34px}}
-
 /* ── 分页容器 ──
    固定满屏 + 自己滚动：section 用 height:100% 就精确等于视口高，
    完全绕开 vh/svh 和移动端地址栏收合带来的高度抖动。 */
@@ -762,11 +744,6 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   <a class="pill" href="https://testflight.apple.com/join/Y5j5XjUU" target="_blank" rel="noopener" data-en="Join the beta →">进内测 →</a>
 </header>
 
-<!-- 播放被平台拦下时的提示。微信/QQ 内置浏览器对静音视频自动播放是硬拦截
-     （平台规则，绕不过），而中国用户大多从微信点开链接。与其让人对着一张不动的图
-     猜"是不是坏了"，不如把"点一下就会动"说出来——一次点按就全章解锁。
-     默认 hidden，只有真的被拒（armUnlock armed）才现身，播起来立刻消失。 -->
-<button id="tapplay" type="button" hidden></button>
 <nav id="rail" aria-label="章节">
   <div class="railtrack">
     <div class="railline" aria-hidden="true"></div>
@@ -1933,7 +1910,7 @@ window.FILM = true;
     },true);
     /* 视频真开播才显形：海报→视频柔和溶解。ch4 尤其需要（海报是满弧、视频首帧是
        空场，硬切会闪跳——手机解禁视频后这个跳在手机上也会出现）。 */
-    v.addEventListener('playing',function(){ v.classList.add('vp'); tapShow(false); });
+    v.addEventListener('playing',function(){ v.classList.add('vp'); });
     /* 数据就绪即重试：show() 那一下 play() 可能发生在数据到位之前而石沉大海——
        表现就是「要拉一下页面才动」。这里治的是时序型，策略型见 armUnlock。 */
     var retry=function(){ if(sc.classList.contains('on')) tryPlay(v); };
@@ -1944,47 +1921,46 @@ window.FILM = true;
        currentSrc 空 / readyState 0（Trev 真机诊断屏就是这个读数）。 */
     try{ v.load(); }catch(e){}
   }
-  /* 策略型拦截（低电量模式 / App 内置浏览器 / 部分 WebView）**绕不过**，只能等一次真手势。
-     但绝不能用一次性监听：滚动的 touchstart 也会把它吃掉，吃掉之后就再没有第二次机会。
-     bgm 当初「得重新开才有声」就是这个坑（2026-08-02 Trev 实机逮的）——视频这边
-     当年还多一条：play 失败三次就连 video 都不建了，解锁后也只救得回当前这一章。
-     现在改成：常驻监听 + 播成功才摘，且不再因失败停止建 video。 */
-  /* 提示条：被拦下才现身，播起来立刻收。文案跟着中/EN 走。 */
-  var tap=document.getElementById('tapplay');
-  function tapLab(){
-    var en=document.documentElement.getAttribute('data-lang')==='en';
-    tap.textContent=en?'TAP ONCE TO PLAY':'轻点一下 · 让画面动起来';
-  }
-  function tapShow(on){
-    if(!tap) return;
-    if(on===!tap.hidden) return;
-    tap.hidden=!on;
-    if(on) tapLab();
-  }
-  new MutationObserver(tapLab).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']});
-  /* 🔴 名字必须和下面氛围声那套解锁**分开**：两者在同一个 IIFE 作用域里。
-     早先视频这份也叫 armUnlock/armed，被后面音频那份同名声明整个覆盖掉
-     （函数声明提升，后声明的赢），于是 tryPlay 里调到的是**音频**的解锁——
-     视频永远等不到重试，提示条也永远不出现。验收里"提示条该出现却没出现"逮到的。 */
+  /* 策略型拦截（低电量模式 / App 内置浏览器 / 部分 WebView）：拖拽本身就是手势——
+     翻页靠拖，所以**拖动那一下就地激活**，不放任何提示（Trev：「不喜欢轻点一下，
+     UIUX 也不喜欢，拖拽的时候就直接 activate」。2026-08-02 那版「轻点一下」胶囊已删）。
+
+     两条铁律，都是踩过的坑：
+     ① **绝不能用一次性监听**：滚动的 touchstart 会把 once 监听吃掉，之后再无机会
+        （bgm「得重新开才有声」的根因）。改成常驻，播成功也不摘——见②。
+     ② 🔴 **WebKit 的播放授权是按元素发的**：这一次手势里 play 过的那个 video 从此
+        自由，可翻到下一章**新建的 video 又是没授权的**——只解锁当前章的话，
+        每翻一页都得再拖一下才动。所以同一次手势里把**邻章**也各 play 一下"盖章"，
+        非当前章拿到授权立刻 pause（scene 透明，用户看不见）。每次拖动都会重新给
+        新邻居盖章，翻页就永远接得上。监听费用：只在 play 被拒过的环境里才挂。
+
+     🔴 名字必须和下面氛围声那套解锁分开（同一个 IIFE 作用域）：早先这份也叫
+     armUnlock/armed，被音频那份同名声明覆盖（函数声明提升，后声明的赢），
+     视频永远等不到重试。已改名，加同类功能前先 grep 名字。 */
   var vidArmed=false;
+  function blessAround(){
+    var ks=[cur,cur+1,cur-1];
+    for(var j=0;j<ks.length;j++){
+      var k=ks[j];
+      if(k<0||k>=NB) continue;
+      mkVideo(k);
+      var s2=scenes[k], v=s2&&s2.querySelector('video');
+      if(!v) continue;
+      if(!v.readyState){ try{ v.load(); }catch(e){} }   /* 有些 WebView 连取数据都要等手势 */
+      if(k===cur){ if(v.paused) v.play().catch(function(){}); continue; }
+      if(!v.paused) continue;
+      /* ⚠️ 盖章的 play() 是异步的：promise 落定时用户可能**已经翻到了这一章**——
+         无条件 pause 会把正在看的章按停（验收 A 段连翻两页逮到的竞态）。
+         落定那一刻再看它是不是当前章，是就别停，让它接着播。 */
+      (function(vv,kk){
+        var p=vv.play();
+        if(p&&p.then) p.then(function(){ if(kk!==cur) vv.pause(); },function(){});
+      })(v,k);
+    }
+  }
   function armVideoUnlock(){
     if(vidArmed) return; vidArmed=true;
-    tapShow(true);
-    var off=function(){
-      GESTURES.forEach(function(t){ document.removeEventListener(t,h); });
-      vidArmed=false; tapShow(false);
-    };
-    var h=function(){
-      var sc=scenes[cur]; if(!sc) return;
-      mkVideo(cur);
-      var v=sc.querySelector('video'); if(!v) return;
-      /* 手势里先补一次 load()：这类 WebView 连"取数据"都要等手势，
-         没数据的话 play() 拿不到东西可播。 */
-      if(!v.readyState){ try{ v.load(); }catch(e){} }
-      var p=v.play();
-      if(p&&p.then) p.then(off,function(){}); else off();
-    };
-    GESTURES.forEach(function(t){ document.addEventListener(t,h,{passive:true}); });
+    GESTURES.forEach(function(t){ document.addEventListener(t,blessAround,{passive:true}); });
   }
   function tryPlay(v){
     if(!v||!v.paused) return;
@@ -2160,7 +2136,8 @@ window.FILM = true;
                  +'  '+(v.paused?'⏸ 暂停中':'▶ 在播')+'  t='+v.currentTime.toFixed(1))
                 :'没有 video 元素')
         +'\nplay() 最后一次被拒：'+(lastErr||'（没被拒过）')
-        +(vidArmed?'  · 正在等一次手势':'')
+        +(vidArmed?'  · 拖一下即激活(邻章一并盖章)':'')
+        +'\n微信桥:'+(window.WeixinJSBridge?'在(进页即播)':'不在(非微信)')
         /* 视频播不了时，页面还动不动全看这一层——它是下限，必须能一眼确认 */
         +'\n海报推镜：'+(sc?(getComputedStyle(sc).animationName||'none'):'?')
         +'  当前 transform='+(sc?getComputedStyle(sc).transform.slice(0,28):'?');
@@ -2207,6 +2184,22 @@ window.FILM = true;
   document.addEventListener('visibilitychange',function(){
     if(document.hidden) au.pause(); else if(sndOn) tryAudio();
   });
+
+  /* ── 微信：进页即播，零手势（Trev：「最好预设一进去画面就动了」）──
+     微信 WebView 对静音自动播放是硬拦截，但把自家 **WeixinJSBridge.invoke 的回调**
+     当成"已授权上下文"——在里面 play() 等同用户手势。这是微信 H5 的标准自动播做法
+     （背景音乐页都靠它），此前漏了。桥没就绪就等 WeixinJSBridgeReady；
+     不在微信里则两个都不会发生，零成本。视频和氛围声一起解，各自成败互不拖累。 */
+  function wxKick(){
+    try{
+      window.WeixinJSBridge.invoke('getNetworkType',{},function(){
+        show(cur<0?0:cur,true);            /* force：对当前章重新 mkVideo+tryPlay */
+        if(sndOn) tryAudio();
+      });
+    }catch(e){}
+  }
+  if(window.WeixinJSBridge&&window.WeixinJSBridge.invoke) wxKick();
+  else document.addEventListener('WeixinJSBridgeReady',wxKick,false);
 })();
 </script>
 </body>
