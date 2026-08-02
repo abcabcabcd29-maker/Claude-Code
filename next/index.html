@@ -113,30 +113,24 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
    的闪跳；手机 LITE 只看海报，必须是完成态满弧——所以只在桌面覆盖。!important 压 inline。 */
 @media(min-width:821px){.scene[data-i="4"]{background-image:url(ch4-first.jpg)!important}}
 
-/* ══ 手机取景：把裁切窗对准主体（Trev 2026-08-02 实机五连拍：「背景排版都很差」）══
-   竖屏 object-fit:cover 会按高度铺满，16:9 的画面左右各被裁掉 ~35%——
-   402×774 上可见窗只剩中间 [0.354,0.646]，**十章里七章的主体整个在窗外**：
-   实测亮度质心 ch2 .698 / ch3 .646 / ch4 .736 / ch5 .723 / ch6 .722 / ch7 .202 /
-   ch8 .690 / ch9 .499 —— 只有 ch9（正中）和 ch3 侥幸可见，所以只有它俩看着正常，
-   ch7「照亮所有星球」在手机上是**整屏纯黑**。
-   每章按质心解一个 object-position：X% = (s·Wr − Wc/2)/(Wr − Wc)，Wr = 视口高×16/9。
-   ⚠️ 这套数在 375×667 和 402×774 上差 ≤1.5%，一套值全机型通用，别按机型再分档。
-   ⚠️ 改素材＝改质心：换了 chN 的片子必须重量一次（脚本在 LOG 2026-08-02 那条）。 */
+/* ══ 手机版式三版：字上·带下（Trev 2026-08-02：「第4页的排版是最好的，其他字放得过低；
+   字在中间是最重要的，阅读体验做好，再根据手机排版调背景位置」）══
+   二版的思路是「按章裁切竖屏画面」——裁就必有取舍（七章主体曾整个被裁在画外，
+   救回来又压了字）。三版换逻辑：**背景不再竖裁**，整幅 16:9 横带摆在字的下方
+   （ch7 羽化带的推广），主体永远完整、字永远从顶上开始（ch4 范式）。
+   带的几何：宽=屏宽，高=vw×9/16（402→226px），钉在纵向 74%（402×774 上带占
+   [52%,82%] 屏高；375×667 上 [51%,82%]——两档几乎一致，一套羽化段通用）。
+   字的对比度仍由 section::before 暗罩层独立保证（后面的块，上暗下透）。 */
 @media(max-width:820px){
-  .scene{background-position:var(--mx,50%) center}
-  .scene video{object-position:var(--mx,50%) center}
-  .scene[data-i="2"]{--mx:78%}
-  .scene[data-i="3"]{--mx:71%}
-  .scene[data-i="4"]{--mx:83%}
-  .scene[data-i="5"]{--mx:82%}
-  .scene[data-i="6"]{--mx:81%}
-  .scene[data-i="7"]{--mx:8%}
-  .scene[data-i="8"]{--mx:77%}
-  .scene[data-i="9"]{--mx:50%}
-  /* 背景层按章提亮（Trev 底线：字要清晰、背景别挡字、但要有亮点）。
-     字的对比度全靠 section::before 的暗罩层，跟这里无关——所以背景可以放心提亮。
-     ch0~4 的素材天生暗（「黑暗里的微光」那半场），手机 poster 再叠暗罩就只剩污渍；
-     亮章（5/8/9）不提，ch6 烬日只微提（提多了就"点亮"了，违背这一章的意思）。 */
+  .scene{background-size:100% auto!important;background-position:center 74%!important;
+    background-repeat:no-repeat;
+    /* 带上下羽化融进黑底（ch7 学费：段位贴着带算，带顶≈51%、带底≈82%） */
+    -webkit-mask-image:linear-gradient(180deg,transparent 44%,#000 54%,#000 79%,transparent 90%);
+    mask-image:linear-gradient(180deg,transparent 44%,#000 54%,#000 79%,transparent 90%)}
+  /* 视频同几何：contain 到屏宽、钉同一纵位——和海报带严丝合缝，全帧无裁切 */
+  .scene video{object-fit:contain;object-position:center 74%}
+  /* 背景层按章提亮（字的对比度靠暗罩层，与此无关）。暗章 1.4~1.5；
+     烬日只 1.12（提多了就"点亮"了）；亮章不提。 */
   .scene{filter:brightness(var(--mb,1)) saturate(1.05)}
   .scene[data-i="0"]{--mb:1.5}
   .scene[data-i="1"]{--mb:1.45}
@@ -145,54 +139,12 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
   .scene[data-i="4"]{--mb:1.5}
   .scene[data-i="6"]{--mb:1.12}
   .scene[data-i="7"]{--mb:1.25}
-  /* 极缓漂移：静态海报的"活气"。纯 transform 走 GPU、不吃解码；只动当前章。 */
-  .scene{transform:scale(1);}
+  /* 极缓漂移：静态海报的"活气"（纯 transform 走 GPU）；视频真开播后让位 */
   .scene.on{animation:mbdrift 26s ease-in-out infinite alternate}
-  @keyframes mbdrift{from{transform:scale(1) translateY(0)}to{transform:scale(1.07) translateY(-1.2%)}}
   .scene.on:has(video.vp){animation:none}
+  @keyframes mbdrift{from{transform:scale(1) translateY(0)}to{transform:scale(1.05) translateY(-0.8%)}}
   @media(prefers-reduced-motion:reduce){.scene.on{animation:none}}
-  /* ch7 是唯一装不下的一章：核在 x≈.20、四颗星球在 .60~.92，**横跨 0.72 幅宽**，
-     而竖屏可见窗只有 0.29——怎么挪都只能二选一（Trev 截图里就是只剩一个核）。
-     所以这一章不裁：整幅缩到屏宽、摆在正文上方，星球和标签一个不少。
-     背景是近黑的，上下留白看不出接缝，比"裁掉四分之三"诚实得多。 */
-  /* 88% 不是 100%：第四颗星球在 x≈.92，整幅铺满屏宽时它正好落在右侧拉条底下
-     （402 上 x=371，拉条从 356 起），标签怎么摆都会被挤开、和第三颗的标签挤成一团。
-     收到 88% 把它挪进 327，标签夹回来之后星球仍落在标签横跨范围内，读得出归属。 */
-  .scene[data-i="7"]{background-size:88% auto;background-position:left 12%;
-    /* 羽化段贴着图带算（带顶 ≈9%、带底 ≈34.6% 屏高），别按整屏想当然——
-       第一版 0~7% 就收，带顶 69px 根本没盖到，硬边还在（联络表逮的）。 */
-    -webkit-mask-image:linear-gradient(180deg,transparent 4%,#000 12%,#000 31%,transparent 43%),
-      linear-gradient(90deg,#000 78%,transparent 99%);
-    -webkit-mask-composite:source-in;
-    mask-image:linear-gradient(180deg,transparent 4%,#000 12%,#000 31%,transparent 43%),
-      linear-gradient(90deg,#000 78%,transparent 99%);
-    mask-composite:intersect}
   .plab{font-size:8.5px;letter-spacing:.1em}
-  /* 主体回到画面里之后，正文就压在亮部上了——原版手机档把 section::before 关掉
-     （`background:none`），是因为那时候核被 canvas 的 narrowW 分支挪到了正文**下方**，
-     不需要垫。FILM 版没有那套重排（画面是拍死的），所以这层要以**竖向**重新垫回来：
-     上四分之一留给主体（它就在 y≈0.25~0.31），往下逐渐压暗给字。
-     写在 max-width:820 里、放在 799 那条之后——媒体查询不加特异性，顺序说了算。 */
-  section::before{background:linear-gradient(180deg,
-    rgba(5,4,9,0) 0%,rgba(5,4,9,.10) 18%,rgba(5,4,9,.52) 34%,
-    rgba(5,4,9,.74) 52%,rgba(5,4,9,.80) 100%)!important}
-  /* 主体在画面上三分之一是**拍死的**（竖屏只有横向可裁，没有纵向余量可挪），
-     所以让字往下走：这几章的正文在「画面下方」居中，而不是在整屏居中——
-     不然标题正压在太阳最亮处（Trev 截图里 05「它才开口说你是谁」就是这样糊掉的）。
-     ⚠️ 只给主体在上三分之一的章加（实测质心 y：ch2 .29 ch3 .35 ch5 .30 ch6 .30
-     ch7 .12 ch8 .31）；**04 不在其中**——它的弧在 y≈.79 的下方，字反而要待在上面。
-     ⚠️ 用 clamp 跟着视口高走：SE(667) 只让 200px，不然 05 那章内容会被挤出画。 */
-  #drop,#gather,#sun,#honest,#planets,#sovereign{padding-top:clamp(68px,30vh,240px)}
-  /* ch4 反着来：它的弧在画面**下半**（y≈.5~.9），字在上——暗罩也要反向，
-     上半暗给字、下半透出弧。不反的话弧被通用暗罩整个埋掉（实机联络表逮的）。 */
-  #ignite::before{background:linear-gradient(180deg,
-    rgba(5,4,9,.80) 0%,rgba(5,4,9,.72) 42%,rgba(5,4,9,.28) 62%,rgba(5,4,9,0) 82%)!important}
-  #ignite{align-items:flex-start}
-  #ignite .col{padding-top:10px}
-}
-/* 矮屏再收一档：SE 上 05 的内容（两条轴 + 卡）本来就顶格，让位过头会把卡挤出画 */
-@media(max-width:820px) and (max-height:700px){
-  #drop,#gather,#sun,#honest,#planets,#sovereign{padding-top:clamp(68px,27vh,180px)}
 }
 
 /* ── 分页容器 ──
@@ -613,6 +565,20 @@ html[data-lang="en"] h2{font-family:var(--serif);font-weight:400;letter-spacing:
   .ax{gap:5px}
   .axes{gap:7px;margin-top:15px}
   .footbar{bottom:14px}
+}
+/* 手机三版·字上（放在 799 块之后：媒体查询不加特异性，顺序说了算）：
+   所有章照 ch4 范式——字从顶上开始（Trev 点名它排版最好），背景带在下半。 */
+@media(max-width:820px){
+  section:not(#begin){align-items:flex-start}
+  section#hero{align-items:flex-start}
+  /* #begin 是 flex-direction:column：竖轴居中走的是 justify-content（基础规则 301 行），
+     压 align-items 没用——ch9 就是这么漏网的（验收逮的）。 */
+  #begin{justify-content:flex-start}
+  .col{padding-top:8px}
+  #hero .col{padding-top:14px}
+  /* 暗罩配合字上带下：上半暗给字、往下渐透露带。压过 799 块的 background:none。 */
+  section::before{background:linear-gradient(180deg,
+    rgba(5,4,9,.78) 0%,rgba(5,4,9,.70) 40%,rgba(5,4,9,.30) 54%,rgba(5,4,9,0) 68%)!important}
 }
 
 /* 矮视口（不分宽窄）：加了「人格声音 × 生活场景」两条轴之后，
@@ -1839,6 +1805,10 @@ window.FILM = true;
     /* 视频真开播才显形：海报→视频柔和溶解。ch4 尤其需要（海报是满弧、视频首帧是
        空场，硬切会闪跳——手机解禁视频后这个跳在手机上也会出现）。 */
     v.addEventListener('playing',function(){ v.classList.add('vp'); });
+    /* 数据就绪即重试：show() 那一下 play() 可能发生在数据到位之前而石沉大海——
+       表现就是「要拉一下页面才动」。策略型拦截（App 内浏览器/低电量模式）另有
+       首触解锁兜底，这里治的是时序型。 */
+    v.addEventListener('canplay',function(){ if(sc.classList.contains('on')) tryPlay(v); });
     sc.appendChild(v);
   }
   function tryPlay(v){
