@@ -99,6 +99,47 @@ a:focus-visible,button:focus-visible,#deck:focus-visible{outline:2px solid rgba(
    的闪跳；手机 LITE 只看海报，必须是完成态满弧——所以只在桌面覆盖。!important 压 inline。 */
 @media(min-width:821px){.scene[data-i="4"]{background-image:url(ch4-first.jpg)!important}}
 
+/* ══ 手机取景：把裁切窗对准主体（Trev 2026-08-02 实机五连拍：「背景排版都很差」）══
+   竖屏 object-fit:cover 会按高度铺满，16:9 的画面左右各被裁掉 ~35%——
+   402×774 上可见窗只剩中间 [0.354,0.646]，**十章里七章的主体整个在窗外**：
+   实测亮度质心 ch2 .698 / ch3 .646 / ch4 .736 / ch5 .723 / ch6 .722 / ch7 .202 /
+   ch8 .690 / ch9 .499 —— 只有 ch9（正中）和 ch3 侥幸可见，所以只有它俩看着正常，
+   ch7「照亮所有星球」在手机上是**整屏纯黑**。
+   每章按质心解一个 object-position：X% = (s·Wr − Wc/2)/(Wr − Wc)，Wr = 视口高×16/9。
+   ⚠️ 这套数在 375×667 和 402×774 上差 ≤1.5%，一套值全机型通用，别按机型再分档。
+   ⚠️ 改素材＝改质心：换了 chN 的片子必须重量一次（脚本在 LOG 2026-08-02 那条）。 */
+@media(max-width:820px){
+  .scene{background-position:var(--mx,50%) center}
+  .scene video{object-position:var(--mx,50%) center}
+  .scene[data-i="2"]{--mx:78%}
+  .scene[data-i="3"]{--mx:71%}
+  .scene[data-i="4"]{--mx:83%}
+  .scene[data-i="5"]{--mx:82%}
+  .scene[data-i="6"]{--mx:81%}
+  .scene[data-i="7"]{--mx:8%}
+  .scene[data-i="8"]{--mx:77%}
+  .scene[data-i="9"]{--mx:50%}
+  /* 主体回到画面里之后，正文就压在亮部上了——原版手机档把 section::before 关掉
+     （`background:none`），是因为那时候核被 canvas 的 narrowW 分支挪到了正文**下方**，
+     不需要垫。FILM 版没有那套重排（画面是拍死的），所以这层要以**竖向**重新垫回来：
+     上四分之一留给主体（它就在 y≈0.25~0.31），往下逐渐压暗给字。
+     写在 max-width:820 里、放在 799 那条之后——媒体查询不加特异性，顺序说了算。 */
+  section::before{background:linear-gradient(180deg,
+    rgba(5,4,9,0) 0%,rgba(5,4,9,.10) 18%,rgba(5,4,9,.52) 34%,
+    rgba(5,4,9,.74) 52%,rgba(5,4,9,.80) 100%)!important}
+  /* 主体在画面上三分之一是**拍死的**（竖屏只有横向可裁，没有纵向余量可挪），
+     所以让字往下走：这几章的正文在「画面下方」居中，而不是在整屏居中——
+     不然标题正压在太阳最亮处（Trev 截图里 05「它才开口说你是谁」就是这样糊掉的）。
+     ⚠️ 只给主体在上三分之一的章加（实测质心 y：ch2 .29 ch3 .35 ch5 .30 ch6 .30
+     ch7 .12 ch8 .31）；**04 不在其中**——它的弧在 y≈.79 的下方，字反而要待在上面。
+     ⚠️ 用 clamp 跟着视口高走：SE(667) 只让 200px，不然 05 那章内容会被挤出画。 */
+  #drop,#gather,#sun,#honest,#planets,#sovereign{padding-top:clamp(68px,30vh,240px)}
+}
+/* 矮屏再收一档：SE 上 05 的内容（两条轴 + 卡）本来就顶格，让位过头会把卡挤出画 */
+@media(max-width:820px) and (max-height:700px){
+  #drop,#gather,#sun,#honest,#planets,#sovereign{padding-top:clamp(68px,27vh,180px)}
+}
+
 /* ── 分页容器 ──
    固定满屏 + 自己滚动：section 用 height:100% 就精确等于视口高，
    完全绕开 vh/svh 和移动端地址栏收合带来的高度抖动。 */
