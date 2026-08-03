@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>自动播放实测 · Soulor</title>
+<!--
+  微信里到底能不能"一进去画面就动"——七种办法一次全试，页面自己量、自己判。
+  Trev 2026-08-02：「有没有办法做到微信一进去就跟网页版一样动画自动播放，无解么？」
+
+  🔴 这一页的规矩：**不看"我调用了 play()"，只看"画面真的动了没有"**。
+  play() 返回成功但画面纹丝不动、或者 promise 既不 resolve 也不 reject，都是常见情形。
+  所以每一项的判据都是**客观量出来的**：
+    · <video> 类 → currentTime 在 2.5s 内有没有往前走
+    · 动图/雪碧图 → 画面像素 / background-position 有没有变
+  全程零交互：进页面就跑，跑完出表。最后那个按钮是**对照组**（点一下再跑一遍），
+  用来区分"平台拦了"和"根本坏了"。
+-->
+<style>
+  :root{--bg:#050409;--ink:#F2EDE4;--dim:#8B8395;--gold:#FFD9A0;--line:#26202E;
+        --ok:#7BE0A8;--no:#FF8A8A;--wait:#8B8395}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.65 -apple-system,"PingFang SC",system-ui,sans-serif;
+    -webkit-text-size-adjust:100%}
+  .wrap{max-width:680px;margin:0 auto;padding:20px 16px 56px}
+  h1{font-size:19px;margin:0 0 4px;letter-spacing:.01em}
+  .sub{color:var(--dim);font-size:12.5px;margin:0 0 18px}
+  .env{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:18px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.75;
+    color:var(--dim);word-break:break-all}
+  .env b{color:var(--gold);font-weight:400}
+  .row{border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px}
+  .row.pass{border-color:rgba(123,224,168,.42)}
+  .row.fail{border-color:rgba(255,138,138,.34)}
+  .hd{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+  .tag{font-family:ui-monospace,monospace;font-size:10px;color:var(--gold);
+    border:1px solid rgba(255,217,160,.3);border-radius:999px;padding:1px 7px;flex:0 0 auto}
+  .nm{font-size:14px}
+  .verdict{margin-left:auto;font-family:ui-monospace,monospace;font-size:12px;color:var(--wait)}
+  .pass .verdict{color:var(--ok)} .fail .verdict{color:var(--no)}
+  .why{color:var(--dim);font-size:12px;margin:2px 0 0}
+  .num{font-family:ui-monospace,monospace;font-size:11px;color:var(--dim);margin-top:5px}
+  .stage{margin-top:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .stage video,.stage img,.stage canvas,.sprite{
+    width:132px;height:74px;object-fit:cover;border-radius:7px;background:#0b0912;display:block}
+  .sprite{width:130px;height:73px;
+    background-image:url(sun-sprite.jpg);background-size:600% 400%;
+    animation:sp 2s steps(1) infinite}
+  @keyframes sp{
+    0%{background-position:0% 0%}      4.16%{background-position:20% 0%}
+    8.33%{background-position:40% 0%}  12.5%{background-position:60% 0%}
+    16.6%{background-position:80% 0%}  20.8%{background-position:100% 0%}
+    25%{background-position:0% 33.3%}  29.1%{background-position:20% 33.3%}
+    33.3%{background-position:40% 33.3%} 37.5%{background-position:60% 33.3%}
+    41.6%{background-position:80% 33.3%} 45.8%{background-position:100% 33.3%}
+    50%{background-position:0% 66.6%}  54.1%{background-position:20% 66.6%}
+    58.3%{background-position:40% 66.6%} 62.5%{background-position:60% 66.6%}
+    66.6%{background-position:80% 66.6%} 70.8%{background-position:100% 66.6%}
+    75%{background-position:0% 100%}   79.1%{background-position:20% 100%}
+    83.3%{background-position:40% 100%} 87.5%{background-position:60% 100%}
+    91.6%{background-position:80% 100%} 95.8%{background-position:100% 100%}}
+  .foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+  button{appearance:none;font:inherit;font-size:13px;color:var(--gold);
+    background:rgba(255,217,160,.07);border:1px solid rgba(255,217,160,.34);
+    border-radius:999px;padding:11px 18px;margin-top:12px;cursor:pointer}
+  .concl{border:1px solid rgba(255,217,160,.3);border-radius:12px;padding:13px;
+    margin:18px 0 0;background:rgba(255,217,160,.045);font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>微信自动播放实测</h1>
+  <p class="sub">进页面自动开跑，不用点任何东西。约 6 秒出结果。<br>
+     判据是「画面真的动了没有」，不是「play() 有没有报错」。</p>
+
+  <div class="env" id="env">正在采集环境…</div>
+  <div id="rows"></div>
+  <div class="concl" id="concl" hidden></div>
+
+  <div class="foot">
+    <div><b>对照组</b>：下面这个按钮点一下会把七项**再跑一遍**。
+      如果某项「不点不动、点了就动」，说明那一项被平台拦了；
+      如果点了还是不动，那就是这条路本身在这台机器上走不通。</div>
+    <button id="again" type="button">点一下，再跑一遍（对照组）</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ══ 判定工具 ══ */
+var rowsEl=document.getElementById('rows');
+
+/* 每一项都要自证"画面动了"。两种量法：
+   ① 视频：currentTime 走没走（最直接，且不受渲染层影响）
+   ② 图像：把它画进 canvas，比两个时刻的像素差（动图/canvas 都适用）
+   雪碧图是 CSS background-position 动画，画不进 canvas，就直接读计算样式。 */
+function pixelDiff(a,b){
+  var n=Math.min(a.length,b.length), s=0;
+  for(var i=0;i<n;i+=4) s+=Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]);
+  return s/(n/4)/3;                       // 每像素平均通道差
+}
+function grab(el,w,h){
+  var c=document.createElement('canvas'); c.width=w||64; c.height=h||36;
+  try{ c.getContext('2d').drawImage(el,0,0,c.width,c.height);
+       return c.getContext('2d').getImageData(0,0,c.width,c.height).data; }
+  catch(e){ return null; }
+}
+
+var TESTS=[
+ {id:'A', name:'普通 play()（页面一加载就调）',
+  why:'最基本的做法。Safari 允许静音自动播；多数 App 内置浏览器在这里就被拦下。',
+  build:function(box){ var v=mkv(); box.appendChild(v); this.v=v;
+    v.play().then(function(){},function(e){ this.err=e&&e.name; }.bind(this)); },
+  measure:vidMeasure},
+
+ {id:'B', name:'autoplay 属性（不写 JS，让浏览器自己起）',
+  why:'交给浏览器的 autoplay 逻辑。⚠️ 在"自动播放不被允许"的环境里，WebKit 对带 autoplay 的媒体会连资源都不加载——可能比不加还糟。',
+  build:function(box){ var v=mkv(true); box.appendChild(v); this.v=v; },
+  measure:vidMeasure},
+
+ {id:'C', name:'微信桥 WeixinJSBridge.invoke 回调里 play()',
+  why:'微信 H5 的标准自动播做法（背景音乐页都用它）。官网现在上的就是这一条。非微信环境里这一项不适用。',
+  build:function(box){ var v=mkv(); box.appendChild(v); this.v=v; var self=this;
+    function kick(){ try{ window.WeixinJSBridge.invoke('getNetworkType',{},function(){
+        v.play().then(function(){},function(e){ self.err=e&&e.name; }); }); }catch(e){} }
+    if(window.WeixinJSBridge&&window.WeixinJSBridge.invoke) kick();
+    else { document.addEventListener('WeixinJSBridgeReady',kick,false);
+           self.note='桥还没就绪，已挂 WeixinJSBridgeReady'; } },
+  measure:function(){ if(!window.WeixinJSBridge&&!/MicroMessenger/i.test(navigator.userAgent))
+      return {skip:true, txt:'不在微信里，这项不适用'};
+    return vidMeasure.call(this); }},
+
+ {id:'D', name:'桥就绪后，下一帧再 play()',
+  why:'有些 WebView 里"授权上下文"要等一帧才生效。跟 C 的差别只有一个 requestAnimationFrame。',
+  build:function(box){ var v=mkv(); box.appendChild(v); this.v=v; var self=this;
+    function kick(){ requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        v.play().then(function(){},function(e){ self.err=e&&e.name; }); }); }); }
+    if(window.WeixinJSBridge&&window.WeixinJSBridge.invoke)
+      window.WeixinJSBridge.invoke('getNetworkType',{},kick);
+    else document.addEventListener('WeixinJSBridgeReady',function(){
+      window.WeixinJSBridge.invoke('getNetworkType',{},kick); },false); },
+  measure:function(){ if(!window.WeixinJSBridge&&!/MicroMessenger/i.test(navigator.userAgent))
+      return {skip:true, txt:'不在微信里，这项不适用'};
+    return vidMeasure.call(this); }},
+
+ {id:'E', name:'不用 video：改放动图 WebP',
+  why:'🔑 图片的动画**从来不归自动播放策略管**。代价是没有音轨、体积/画质换取，这一段 4 秒 12fps 只有 20KB。',
+  build:function(box){ var im=new Image(); im.src='sun.webp?'+Date.now();
+    im.decoding='async'; box.appendChild(im); this.im=im; },
+  measure:function(){ var a=grab(this.im); if(!a) return {ok:false,txt:'读不到像素'};
+    var self=this;
+    return new Promise(function(res){ setTimeout(function(){
+      var b=grab(self.im);
+      var d=b?pixelDiff(a,b):0;
+      res({ok:d>1.2, txt:(d>1.2?'在动':'没动')+'（帧间像素差 '+d.toFixed(2)+'，判据 >1.2）'});
+    },2400); }); }},
+
+ {id:'F', name:'不用 video：雪碧图 + CSS steps()',
+  why:'🔑 连"浏览器支不支持动图 WebP"都不依赖，纯 CSS 关键帧。最保底的一条路。',
+  build:function(box){ var d=document.createElement('div'); d.className='sprite';
+    box.appendChild(d); this.d=d; },
+  measure:function(){ var self=this;
+    var a=getComputedStyle(this.d).backgroundPosition;
+    return new Promise(function(res){ setTimeout(function(){
+      var b=getComputedStyle(self.d).backgroundPosition;
+      res({ok:a!==b, txt:(a!==b?'在动':'没动')+'（background-position '+a+' → '+b+'）'});
+    },2400); }); }},
+
+ {id:'G', name:'video 不 play()，改用「拖时间轴 + 画到 canvas」',
+  why:'🔑 最有意思的一条：**不调 play()**，而是每帧把 currentTime 往前挪一点，再 drawImage 到 canvas。自动播放策略管的是"播放"，通常不管"跳转"。成了就等于真实拍摄画面零手势动起来。',
+  build:function(box){ var v=mkv(); v.style.display='none'; v.removeAttribute('autoplay');
+    var c=document.createElement('canvas'); c.width=264; c.height=148;
+    box.appendChild(v); box.appendChild(c); this.v=v; this.c=c;
+    var ctx=c.getContext('2d'), t=0, self=this;
+    function loop(){ if(self.stop) return;
+      if(v.readyState>=2){ t=(t+1/12)%(v.duration||4);
+        try{ v.currentTime=t; ctx.drawImage(v,0,0,c.width,c.height); }catch(e){}
+      }
+      self.raf=requestAnimationFrame(loop); }
+    v.addEventListener('loadeddata',function(){ self.ready=true; });
+    loop(); },
+  measure:function(){ var self=this, a=grab(this.c);
+    return new Promise(function(res){ setTimeout(function(){
+      var b=grab(self.c), d=(a&&b)?pixelDiff(a,b):0;
+      res({ok:d>1.2, txt:(d>1.2?'在动':'没动')+'（画面像素差 '+d.toFixed(2)
+           +'，readyState='+self.v.readyState+'，判据 >1.2）'});
+    },2400); }); }}
+];
+
+function mkv(withAutoplay){
+  var v=document.createElement('video');
+  v.muted=true; v.loop=true; v.playsInline=true; v.preload='auto';
+  v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline','');
+  v.setAttribute('muted','');
+  if(withAutoplay) v.setAttribute('autoplay','');
+  var q='?'+Date.now();
+  [['sun.webm','video/webm'],['sun.mp4','video/mp4']].forEach(function(p){
+    var s=document.createElement('source'); s.src=p[0]+q; s.type=p[1]; v.appendChild(s); });
+  return v;
+}
+function vidMeasure(){
+  var v=this.v, self=this, t0=v.currentTime;
+  return new Promise(function(res){ setTimeout(function(){
+    var t1=v.currentTime, moved=t1>t0+0.15;
+    res({ok:moved, txt:(moved?'在动':'没动')
+      +'（currentTime '+t0.toFixed(2)+' → '+t1.toFixed(2)
+      +'，readyState='+v.readyState+(self.err?'，play() 被拒：'+self.err:'')
+      +(v.paused?'，paused':'')+'）'+(self.note?' · '+self.note:'')});
+  },2500); }); }
+
+/* ══ 跑 ══ */
+function render(){
+  rowsEl.innerHTML='';
+  TESTS.forEach(function(t){
+    var r=document.createElement('div'); r.className='row'; r.id='r'+t.id;
+    r.innerHTML='<div class="hd"><span class="tag">'+t.id+'</span>'
+      +'<span class="nm">'+t.name+'</span><span class="verdict">测量中…</span></div>'
+      +'<p class="why">'+t.why+'</p><div class="num"></div>'
+      +'<div class="stage"></div>';
+    rowsEl.appendChild(r);
+    t.el=r; t.stop=false;
+    try{ t.build(r.querySelector('.stage')); }catch(e){ t.buildErr=String(e); }
+  });
+}
+function run(){
+  var done=0;
+  TESTS.forEach(function(t){
+    Promise.resolve().then(function(){ return t.measure(); }).then(function(r){
+      var v=t.el.querySelector('.verdict'), n=t.el.querySelector('.num');
+      if(r.skip){ v.textContent='— 不适用'; n.textContent=r.txt; }
+      else { t.el.classList.add(r.ok?'pass':'fail');
+             v.textContent=r.ok?'✅ 动了':'❌ 没动'; n.textContent=r.txt; }
+      t.result=r.skip?null:r.ok;
+      if(++done===TESTS.length) conclude();
+    });
+  });
+}
+function conclude(){
+  var c=document.getElementById('concl'); c.hidden=false;
+  var vid=TESTS.filter(function(t){return 'ABCD'.indexOf(t.id)>=0 && t.result!==null;});
+  var vidOk=vid.filter(function(t){return t.result;});
+  var alt=TESTS.filter(function(t){return 'EFG'.indexOf(t.id)>=0 && t.result;});
+  var s='<b>结论：</b><br>';
+  if(vidOk.length) s+='✅ <b>这台机器上 &lt;video&gt; 能零手势自动播</b>——'
+      +vidOk.map(function(t){return t.id;}).join('、')+' 这几项动了。官网走的是 C。<br>';
+  else s+='❌ <b>这台机器上 &lt;video&gt; 零手势播不了</b>（A–D 全灭）。这是平台策略，不是 bug。<br>';
+  if(alt.length) s+='🔑 但 <b>'+alt.map(function(t){return t.id;}).join('、')
+      +'</b> 动了——说明<b>不用 &lt;video&gt; 就能拿到零手势动画</b>：'
+      +'E＝动图、F＝CSS 雪碧图、G＝拖时间轴画到 canvas（G 是真实拍摄画面）。';
+  else s+='连 E/F/G 也没动——那多半是这一页本身没跑起来，把整屏截给我。';
+  c.innerHTML=s;
+}
+function envInfo(){
+  var ua=navigator.userAgent, t=document.createElement('video');
+  var wx=(ua.match(/MicroMessenger\/([\d.]+)/i)||[])[1];
+  var ios=(ua.match(/OS (\d+[_\d]*) like Mac/)||[])[1];
+  document.getElementById('env').innerHTML=
+     '环境：<b>'+(wx?'微信 '+wx:(/MicroMessenger/i.test(ua)?'微信':'非微信浏览器'))+'</b>'
+    +(ios?' · iOS '+ios.replace(/_/g,'.'):'')
+    +'<br>微信桥：<b>'+(window.WeixinJSBridge?'已就绪':'不在/未就绪')+'</b>'
+    +' · webm:<b>'+(t.canPlayType('video/webm; codecs="vp9"')||'✗')+'</b>'
+    +' · H.264:<b>'+(t.canPlayType('video/mp4; codecs="avc1.42E01E"')||'✗')+'</b>'
+    +'<br>省流:<b>'+((navigator.connection&&navigator.connection.saveData)?'开':'关')+'</b>'
+    +' · 减动效:<b>'+(matchMedia('(prefers-reduced-motion: reduce)').matches?'开':'关')+'</b>'
+    +'<br>UA：'+ua;
+}
+envInfo(); render(); run();
+
+document.getElementById('again').addEventListener('click',function(){
+  TESTS.forEach(function(t){ t.stop=true; if(t.raf) cancelAnimationFrame(t.raf);
+    t.result=undefined; t.err=null; t.note=null; });
+  document.getElementById('concl').hidden=true;
+  setTimeout(function(){ render(); run(); },60);
+});
+</script>
+</body>
+</html>
