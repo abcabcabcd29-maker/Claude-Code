@@ -259,7 +259,7 @@ function envInfo(){
   document.getElementById('env').innerHTML=
      '环境：<b>'+(wx?'微信 '+wx:(/MicroMessenger/i.test(ua)?'微信':'非微信浏览器'))+'</b>'
     +(ios?' · iOS '+ios.replace(/_/g,'.'):'')
-    +'<br>微信桥：<b>'+(window.WeixinJSBridge?'已就绪':'不在/未就绪')+'</b>'
+    +'<br>微信桥：<b>'+(window.WeixinJSBridge?'已就绪':'尚未就绪（它是延迟到达的，别据此判断没有桥）')+'</b>'
     +' · webm:<b>'+(t.canPlayType('video/webm; codecs="vp9"')||'✗')+'</b>'
     +' · H.264:<b>'+(t.canPlayType('video/mp4; codecs="avc1.42E01E"')||'✗')+'</b>'
     +'<br>省流:<b>'+((navigator.connection&&navigator.connection.saveData)?'开':'关')+'</b>'
@@ -267,6 +267,13 @@ function envInfo(){
     +'<br>UA：'+ua;
 }
 envInfo(); render(); run();
+/* 🔴 桥是**延迟就绪**的：页面加载那一瞬 window.WeixinJSBridge 往往还不存在，
+   而上面那行环境信息是一次性渲染的快照——于是它会显示"不在/未就绪"，
+   让人误以为这台机器没有桥，其实几百毫秒后就绪了、C 也成功了
+   （Trev 2026-08-03 的实测截图就是这样：环境行说"不在"，C 却是 ✅ 1.81s）。
+   所以桥一就绪就把那行重画一次。 */
+document.addEventListener('WeixinJSBridgeReady',function(){ setTimeout(envInfo,0); },false);
+setTimeout(envInfo,1500);
 
 document.getElementById('again').addEventListener('click',function(){
   TESTS.forEach(function(t){ t.stop=true; if(t.raf) cancelAnimationFrame(t.raf);
