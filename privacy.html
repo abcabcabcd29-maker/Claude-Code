@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>隐私政策 · Soulor·灵镜</title>
+<meta name="description" content="Soulor 隐私政策——你的日记和判断只存在你手机里。">
+<meta name="theme-color" content="#050409">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050409;color:#d4d0c8;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;line-height:1.8;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.wrap{max-width:680px;margin:0 auto;padding:60px 28px 80px}
+h1{font-size:28px;font-weight:600;color:#fff;margin-bottom:8px;letter-spacing:-0.3px}
+.meta{font-size:13px;color:#7a756d;margin-bottom:48px}
+h2{font-size:18px;font-weight:600;color:#fff;margin:36px 0 12px;padding-top:24px;border-top:1px solid #1a1915}
+p{margin-bottom:16px;font-size:15px;color:#b8b4aa}
+ul{margin:0 0 16px 20px;font-size:15px;color:#b8b4aa}
+li{margin-bottom:6px}
+strong{color:#fff}
+a{color:#c9a96e;text-decoration:none}
+.back{display:inline-block;margin-top:48px;font-size:14px;color:#7a756d;border:1px solid #2a2720;border-radius:6px;padding:8px 16px;text-decoration:none;transition:border-color .2s}
+.back:hover{border-color:#c9a96e}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>隐私政策</h1>
+<p class="meta">最后更新：2026 年 8 月 4 日 · 版本 2</p>
+
+<h2>一句话版本</h2>
+<p>你的日记和判断只存在你手机里，我们服务器上没有你的账号，也没有你的历史。生成回应那一刻，相关内容会临时发给 AI 处理一次，处理完就完事，不落库、不用来训练任何模型。我们不卖数据、不放广告。</p>
+
+<h2>我们收集什么</h2>
+<p>你主动写下/说出/拍下的内容（Drop 的一句话、Chat 的对话、照片、心情读数）——这些只存在你手机本地的存储里（AsyncStorage），我们的服务器上没有副本，也没有能读到这些内容的账号系统（因为压根没有账号系统）。</p>
+<p>另外我们会记一份匿名使用统计：哪个功能被打开过（比如"打开了关于你"）、App 版本号、一个随机生成、跟你身份无关的设备编号。这份统计里没有你写的任何一个字，只有"发生过什么事件"这一类信息。</p>
+<p>崩溃监控只数"崩了没崩、致命不致命"这两个数字，不收集报错的具体内容或堆栈信息。</p>
+
+<h2>你的内容会不会发出去</h2>
+<p>会，但只在一种情况下：需要 AI 帮你生成回应、日记或"关于你"里的判断时，那一刻相关的文字会发给我们的 AI 处理服务商处理一次。处理是即时的、一次性的——我们不会把这些内容存进自己的数据库，也不会用它来训练任何模型，无论是我们自己的还是第三方的。</p>
+<p>目前主力 AI 服务商是火山方舟（字节跳动旗下 Ark 平台，承载 DeepSeek V4 Flash 模型）；部分场景（视觉理解、主力账号额度不足时的降级备用）也会调用智谱 GLM。无论哪家，处理逻辑相同：只在你主动书写触发时才调用，不做训练用途。</p>
+<p><strong>如果你写的内容涉及自伤/危机等红线信息，这类内容永远不会发给任何外部 AI 服务，只留在你本机。</strong></p>
+
+<h2>第三方服务商</h2>
+<ul>
+<li><strong>火山方舟</strong>（字节跳动旗下 Ark 平台）——处理你的文字、生成回应/日记/判断，目前承载 DeepSeek V4 Flash 模型。仅在你主动书写触发时才调用，不做训练用途。</li>
+<li><strong>智谱 GLM</strong>——视觉理解（识别照片内容）和主力账号额度不足时的降级备用文字处理。同样仅在你主动触发时调用，不做训练用途。</li>
+<li><strong>中转服务器</strong>——你的内容在发往上述 AI 服务商之前经我们的代理服务器中转（不存储、不记录内容），目的是集中管理 API 密钥、避免密钥泄露进 App 本身，属于我们这边的安全措施，不影响你的内容的处理方式。</li>
+<li><strong>匿名统计接收端</strong>——只接收不含内容的事件记录（事件名 + 随机设备编号 + 版本号 + 时间戳），见前文"我们收集什么"。</li>
+</ul>
+<p>我们不会把你的数据卖给、租给或以任何方式共享给上述以外的任何第三方，不用于广告投放。</p>
+
+<h2>你能做什么</h2>
+<p><strong>导出</strong>——"数据主权中心"里随时能把你的全部记录打包导出，带走、备份到你自己的地方，我们不干涉。</p>
+<p><strong>删除</strong>——"数据主权中心"的"永久删除全部数据"会清空本机存储的一切（记录、日记、判断、使用统计、随机设备编号），是真正的删除，不是标记隐藏；删完这台设备上不会再留有任何副本。这个操作不可撤销，删之前请先导出你想留的部分。</p>
+
+<h2>关于 AI 生成内容</h2>
+<p>App 内由 AI 生成的内容（回应、日记草稿、判断、镜子仪式的卡面解读等）会有清晰标识，不会被伪装成人工撰写或专业意见；App 本身不做心理诊断、不代替专业医疗/心理咨询。</p>
+
+<h2>未成年人</h2>
+<p>这款 App 面向能够独立理解并同意本政策的用户。如果你是未成年人，请在监护人的了解和同意下使用。</p>
+
+<h2>政策变更</h2>
+<p>如果这份政策有实质性修改（比如收集的内容类型变了、多了新的第三方服务商），我们会更新版本号，你会在下次打开 App 时重新看到确认页——不会用旧的同意默默套用到新的做法上。</p>
+
+<h2>联系我们</h2>
+<p>有任何问题、想反馈的地方，加微信直接找我们（见"数据主权中心"的反馈入口），我们真的会看。</p>
+
+<a class="back" href="https://soulor.id/">← 回到首页</a>
+
+</div>
+</body>
+</html>
