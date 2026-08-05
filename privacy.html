@@ -82,6 +82,19 @@ a{color:#c9a96e;text-decoration:none}
   var zhBtn=document.getElementById('langToggle');
   var html=document.documentElement;
 
+  function swapTo(lang){
+    var els=document.querySelectorAll('[data-zh]');
+    for(var i=0;i<els.length;i++){
+      var el=els[i];
+      if(lang==='zh'){
+        if(!el.hasAttribute('data-en')) el.setAttribute('data-en',el.textContent);
+        el.textContent=el.getAttribute('data-zh');
+      }else{
+        if(el.hasAttribute('data-en')) el.textContent=el.getAttribute('data-en');
+      }
+    }
+  }
+
   function setLang(lang){
     html.setAttribute('data-lang',lang);
     html.setAttribute('lang',lang==='zh'?'zh-CN':'en');
@@ -91,6 +104,7 @@ a{color:#c9a96e;text-decoration:none}
       lang==='zh'?'Soulor 隐私政策——你的日记和判断只存在你手机里。'
       :'Soulor Privacy Policy — your journal and reflections live only on your phone.');
     zhBtn.textContent=lang==='zh'?'English':'中文';
+    swapTo(lang);
     localStorage.setItem(KEY,lang);
   }
 
